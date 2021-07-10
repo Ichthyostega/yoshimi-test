@@ -19,7 +19,13 @@ Similar to Yoshimi itself, this Testsuite is GPL licensed free software.
 ## Building
 
 The '`yoshimi-testrunner`' subdirectory holds a C++ / CMake project to build a standalone testrunner application.
-In addition you need a Yoshimi executable, to be invoked by this testrunner as a test subject.
+In addition you need a Yoshimi executable, to be invoked by this testrunner as a test subject. There are various
+ways to handle a CMake project, e.g. with `cmake-gui` or `ccmake` or with your IDE of choice. However, in its
+simplest form, the build can be started with...
+
+    cmake -S yoshimi-testrunner -B yoshimi-testrunner/build
+    cmake --build yoshimi-testrunner/build
+
 
 ### Dependencies
 
