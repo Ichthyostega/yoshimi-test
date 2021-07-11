@@ -26,7 +26,8 @@
  */
 
 
-#include "util/utils.hpp"
+#include "util/error.hpp"
+//#include "util/utils.hpp"
 #include "Stage.hpp"
 
 
@@ -34,7 +35,7 @@
  * Setup the stage for performing a concrete test suite.
  * @param config parametrisation to control some aspects of the test run.
  */
-Stage::Stage(Config config)
+Stage::Stage(Config const& config)
 { }
 
 

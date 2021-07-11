@@ -59,7 +59,7 @@ public:
      * in a complete and executable representation of all test cases to perform.
      * @param config the setup parametrisation.
      */
-    Suite(Config config)
+    Suite(Config const& config)
     { }
 };
 

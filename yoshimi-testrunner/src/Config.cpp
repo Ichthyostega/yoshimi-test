@@ -33,7 +33,8 @@
 
 
 #include "Config.hpp"
-#include "util/utils.hpp"
+#include "util/error.hpp"
+//#include "util/utils.hpp"
 
 
 /**
@@ -51,7 +52,7 @@ ConfigSource Config::fromFile(string path)
  * which is located in the root of a testsuite definition tree.
  * @note since this config file is located in the testsuite tree,
  *       this parser/builder can only work if the previously established
- *       configuration already defines the "testLocation" setting.
+ *       configuration already defines the "suitePath" setting.
  * @remark this "defaults.ini" serves as base layer of the configuration
  *       and shall provide all mandatory settings; failure to do so
  *       results in an exception while establishing the explicit
@@ -70,5 +71,18 @@ ConfigSource Config::fromDefaultsIni()
  */
 ConfigSource Config::fromCmdline(int argc, char *argv[])
 {
-    UNIMPLEMENTED("parse command line");
+    using Map = ConfigSource::Map;
+
+    if (argc > 1)
+        UNIMPLEMENTED("parse command line");
+    else
+        return ConfigSource{
+            [=](Map const& upperLayer)
+                {
+                    Map combinedSettings;
+                    combinedSettings.insert({"TODO", "actually parse cmdline"});
+                    combinedSettings.insert(upperLayer.begin(), upperLayer.end());
+                    return combinedSettings;
+                }
+        };
 }

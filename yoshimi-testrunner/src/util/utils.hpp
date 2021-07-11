@@ -20,7 +20,10 @@
 
 /** @file utils.hpp
  ** Collection of helper functions and abbreviations used to simplify code.
- ** 
+ ** - `isnil(arg)` checks if the argument is "empty"; argument can be a string or a container
+ ** - some helper functions for working with strings (`startsWith`, `endsWith`, `removePrefix|Suffix`
+ ** - generic containment check for maps, strings and iterable containers
+ ** - Macro \ref STRINGIFY
  ** @todo WIP as of 7/21
  **
  */
@@ -31,21 +34,125 @@
 #define TESTRUNNER_UTIL_UTILS_HPP_
 
 
-#include <stdexcept>
+#include <algorithm>
 #include <string>
+#include <set>
 
 using std::string;
 
-
-#define UNIMPLEMENTED(_MSG_) \
-    throw std::logic_error(string{"UNIMPLEMENTED: "} + _MSG_);
 
 
 namespace util
 {
 
-/** SEVEN MORE WONDERS OF THE WORLD... */
+/*  ======== generic empty check =========  */
+
+/** a family of util functions providing a "no value whatsoever" test.
+ *  Works on strings and all STL containers, includes NULL test for pointers
+ */
+template<class CONT>
+inline bool isnil(const CONT &container)
+{
+    return container.empty();
+}
+
+template<class CONT>
+inline bool isnil(const CONT *pContainer)
+{
+    return !pContainer or pContainer->empty();
+}
+
+template<class CONT>
+inline bool isnil(CONT *pContainer)
+{
+    return !pContainer or pContainer->empty();
+}
+
+inline bool isnil(const char *pCStr)
+{
+    return !pCStr or !(*pCStr);
+}
+
+/** check if string starts with a given prefix */
+inline bool startsWith(string const &str, string const &prefix)
+{
+    return 0 == str.rfind(prefix, 0);
+}
+
+inline bool startsWith(string const &str, const char *prefix)
+{
+    return 0 == str.rfind(prefix, 0);
+}
+
+/** check if string ends with the given suffix */
+inline bool endsWith(string const &str, string const &suffix)
+{
+    size_t l = suffix.length();
+    if (l > str.length())
+        return false;
+    size_t pos = str.length() - l;
+    return pos == str.find(suffix, pos);
+}
+
+inline bool endsWith(string const &str, const char *suffix)
+{
+    return endsWith(str, string(suffix));
+}
+
+inline void removePrefix(string &str, string const &prefix)
+{
+    if (not startsWith(str, prefix))
+        return;
+    str = str.substr(prefix.length());
+}
+
+inline void removeSuffix(string &str, string const &suffix)
+{
+    if (not endsWith(str, suffix))
+        return;
+    str.resize(str.length() - suffix.length());
+}
+
+
+/** shortcut for containment test on a map */
+template<typename MAP>
+inline bool contains(MAP &map, typename MAP::key_type const &key)
+{
+    return map.find(key) != map.end();
+}
+
+/** shortcut for set value containment test */
+template<typename T>
+inline bool contains(std::set<T> const &set, T const &val)
+{
+    return set.end() != set.find(val);
+}
+
+/** shortcut for string value containment test */
+template<typename T>
+inline bool contains(std::string const &str, const T &val)
+{
+    return str.find(val) != std::string::npos;
+}
+
+/** shortcut for brute-force containment test
+ *  in any sequential container */
+template<typename SEQ>
+inline bool contains(SEQ const &cont, typename SEQ::const_reference val)
+{
+    typename SEQ::const_iterator begin = cont.begin();
+    typename SEQ::const_iterator end = cont.end();
+
+    return end != std::find(begin, end, val);
+}
 
 
 } // namespace util
+
+
+/** this macro wraps its parameter into a cstring literal */
+#define STRINGIFY(TOKEN) __STRNGFY(TOKEN)
+#define __STRNGFY(TOKEN) #TOKEN
+
+
 #endif /*TESTRUNNER_UTIL_UTILS_HPP_*/

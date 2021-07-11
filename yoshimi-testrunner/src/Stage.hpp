@@ -50,7 +50,7 @@ class Stage
     : util::NonCopyable
 {
 public:
-    Stage(Config config);
+    Stage(Config const& config);
 
     void perform(Suite const& suite);
     void renderReport();

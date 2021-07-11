@@ -35,11 +35,18 @@
 #define TESTRUNNER_CONFIG_HPP_
 
 
+#include "util/error.hpp"
+#include "util/utils.hpp"
 #include "util/nocopy.hpp"
 
+#include <functional>
+#include <utility>
 #include <string>
+#include <map>
 
+using util::contains;
 using std::string;
+using std::move;
 
 
 /**
@@ -54,8 +61,37 @@ using std::string;
 class ConfigSource
 {
 public:
-    string get(string key);
+    using Map = std::map<string,string>;
+    using Src = std::function<Map(Map const&)>;
+
+
+    ConfigSource() = default;
+
+    ConfigSource(Src parseFun)
+        : rawSettings_{}
+        , populateCfg_{parseFun}
+    { }
+
+
+    ConfigSource& fillSettings(ConfigSource const& upperLayer)
+    {
+        rawSettings_ = move(populateCfg_(upperLayer.rawSettings_));
+        return *this;
+    }
+
+
+    string get(string key)
+    {
+        if (not contains(rawSettings_, key))
+            throw error::Misconfig("'"+key+"' not defined by config or commandline.");
+        return rawSettings_[key];
+    }
+
+private:
+    Map rawSettings_;
+    Src populateCfg_;
 };
+
 
 
 /**
@@ -64,7 +100,15 @@ public:
  * as typed fields within this class.
  */
 class Config
+    : util::NonCopyable
 {
+#define ConfigParam(_TYPE_, _NAME_)\
+    static constexpr const char* KEY_##_NAME_ = STRINGIFY(_NAME_); \
+    _TYPE_ _NAME_;                                                 \
+
+public:
+    ConfigParam(string, suitePath);
+
 public:
     /**
      * Setup the effective parametrisation of the Testsuite.
@@ -75,12 +119,33 @@ public:
      *        if it hasn't been established already by previous sources.
      */
     Config(std::initializer_list<ConfigSource> sources)
+        : Config(combine_with_decreasing_precedence(sources))
     { }
 
     /* === Builder Functions === */
     static ConfigSource fromFile(string path);
     static ConfigSource fromDefaultsIni();
     static ConfigSource fromCmdline(int argc, char *argv[]);
+
+
+private:
+    /* === Initialisation from raw settings === */
+
+    /** @internal extract all relevant parameters from the combined configuration
+     *            and initialise the member fields in this Config instance. */
+    Config(ConfigSource rawSettings)
+        : suitePath{rawSettings.get(KEY_suitePath)}
+    { }
+
+
+    static ConfigSource combine_with_decreasing_precedence(std::initializer_list<ConfigSource> sources)
+    {
+        ConfigSource rawSettings;
+        for (auto src : sources)
+            rawSettings = move(src.fillSettings(rawSettings));
+        return rawSettings;
+    }
 };
+#undef ConfigParam
 
 #endif /*TESTRUNNER_CONFIG_HPP_*/
