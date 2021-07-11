@@ -18,14 +18,49 @@
  ***************************************************************/
 
 
+/** @file Main.cpp
+ ** Entry point to the Yoshimi-Testrunner.
+ ** Invocation will perform a fixed sequence of actions:
+ ** - load default configuration and user defined setup
+ ** - parse the command line
+ ** - build a complete testsuite definition from the specification directory tree
+ ** - perform this testsuite, capturing results
+ ** - generate a result report
+ ** The [exit code](\ref Stage::getReturnCode) indicates success (0) or failure.
+ ** 
+ ** @todo WIP as of 7/21
+ **
+ */
+
+
+#include "Config.hpp"
+#include "Suite.hpp"
+#include "Stage.hpp"
+
 #include <iostream>
 
-using std::cout;
+using std::cerr;
 using std::endl;
 
 
 int main(int argc, char *argv[])
 {
-    cout << "Hello vile world"<<endl;
-    return 0;
+    try {
+        Config config{Config::fromCmdline(argc,argv)
+                     ,Config::fromFile("setup.ini")
+                     ,Config::fromDefaultsIni()
+                     };
+        Suite suite{config};
+        Stage stage{config};
+        stage.perform(suite);
+        stage.renderReport();
+        return stage.getReturnCode();
+
+
+    } catch(std::exception const& ex) {
+        cerr << "Yoshimi-Testsuite failed: "<<ex.what()<< endl;
+    } catch(...) {
+        cerr << "Yoshimi-Testsuite floundered. So sad."<< endl;
+    }
+    return -1;
 }
