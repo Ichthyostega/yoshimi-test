@@ -39,14 +39,19 @@
 #include "util/utils.hpp"
 #include "util/nocopy.hpp"
 
+#include <filesystem>
 #include <functional>
 #include <utility>
 #include <string>
 #include <map>
 
+namespace fs = std::filesystem;
+
 using util::contains;
 using std::string;
 using std::move;
+
+class Config;
 
 
 /**
@@ -60,36 +65,33 @@ using std::move;
  */
 class ConfigSource
 {
+    struct Settings : std::map<string,string>
+    {
+        using MapS = std::map<string,string>;
+        using MapS::MapS;
+
+        string operator[](string key)
+        {
+            if (not contains(*this, key))
+                throw error::Misconfig("'" + key + "' not defined by config or commandline.");
+            return MapS::operator[](key);
+        }
+    };
+
+    using Injector = std::function<void(Settings&)>;
+    Injector populateCfg_;
+
+    void injectSettingsInto(Settings& upperLayer)
+    {
+        populateCfg_(upperLayer);
+    }
+
+    friend class Config;
+
 public:
-    using Map = std::map<string,string>;
-    using Src = std::function<Map(Map const&)>;
-
-
-    ConfigSource() = default;
-
-    ConfigSource(Src parseFun)
-        : rawSettings_{}
-        , populateCfg_{parseFun}
+    ConfigSource(Injector parseFun)
+        : populateCfg_{parseFun}
     { }
-
-
-    ConfigSource& fillSettings(ConfigSource const& upperLayer)
-    {
-        rawSettings_ = move(populateCfg_(upperLayer.rawSettings_));
-        return *this;
-    }
-
-
-    string get(string key)
-    {
-        if (not contains(rawSettings_, key))
-            throw error::Misconfig("'"+key+"' not defined by config or commandline.");
-        return rawSettings_[key];
-    }
-
-private:
-    Map rawSettings_;
-    Src populateCfg_;
 };
 
 
@@ -109,6 +111,18 @@ class Config
 public:
     ConfigParam(string, suitePath);
 
+
+private: /* ===== Initialisation from raw settings ===== */
+
+    using Settings = ConfigSource::Settings;
+
+    /** @internal extract all relevant parameters from the combined configuration
+     *            and initialise the member fields in this Config instance. */
+    Config(Settings rawSettings)
+        : suitePath{rawSettings[KEY_suitePath]}
+    { }
+
+
 public:
     /**
      * Setup the effective parametrisation of the Testsuite.
@@ -123,26 +137,18 @@ public:
     { }
 
     /* === Builder Functions === */
-    static ConfigSource fromFile(string path);
+    static ConfigSource fromFile(fs::path path);
     static ConfigSource fromDefaultsIni();
     static ConfigSource fromCmdline(int argc, char *argv[]);
 
 
+
 private:
-    /* === Initialisation from raw settings === */
-
-    /** @internal extract all relevant parameters from the combined configuration
-     *            and initialise the member fields in this Config instance. */
-    Config(ConfigSource rawSettings)
-        : suitePath{rawSettings.get(KEY_suitePath)}
-    { }
-
-
-    static ConfigSource combine_with_decreasing_precedence(std::initializer_list<ConfigSource> sources)
+    static Settings combine_with_decreasing_precedence(std::initializer_list<ConfigSource> sources)
     {
-        ConfigSource rawSettings;
+        Settings rawSettings;
         for (auto src : sources)
-            rawSettings = move(src.fillSettings(rawSettings));
+            src.injectSettingsInto(rawSettings);
         return rawSettings;
     }
 };

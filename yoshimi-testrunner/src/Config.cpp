@@ -36,14 +36,63 @@
 #include "util/error.hpp"
 //#include "util/utils.hpp"
 
+#include <fstream>
+#include <iostream> ///////////////////////TODO
+
+using std::ifstream;
+
+
+
+namespace { // Implementation details
+
+using MapS = std::map<string,string>;
+
+/**
+ * Extend the existing configuration settings to fill in additional bindings with lower precedence.
+ * @remark implementation relies on the behaviour of `std::map` to insert a new binding
+ *         `key = value` only if this key is not already present in the map.
+ */
+void supplySettings(MapS& existingSettings, MapS const& additionalSettings)
+{
+    existingSettings.insert(additionalSettings.begin(), additionalSettings.end());
+}
+
+
+MapS parseConfig(fs::path path)
+{
+    MapS settings;
+    if (fs::exists(path))
+    {
+        ifstream configFile(path);
+        if (not configFile.good())
+            throw error::Misconfig{"unable to read config file '"+string{path}+"'"};
+
+        for (string line; std::getline(configFile, line); )
+        {
+            std::cout << ">>|"<<line <<std::endl;
+        }
+        UNIMPLEMENTED("parse config file");
+    }
+    return settings;
+}
+
+}//(End)Implementation details
+
+
+
 
 /**
  * Configuration builder to parse a ini-style config file.
  * @param path filename spec to read from
  */
-ConfigSource Config::fromFile(string path)
+ConfigSource Config::fromFile(fs::path path)
 {
-    UNIMPLEMENTED("parse config file");
+    return ConfigSource{
+        [=](Settings& upperLayer)
+            {
+                supplySettings(upperLayer, parseConfig(path));
+            }
+    };
 }
 
 
@@ -60,7 +109,15 @@ ConfigSource Config::fromFile(string path)
  */
 ConfigSource Config::fromDefaultsIni()
 {
-    UNIMPLEMENTED("parse magic defaults config file");
+    return ConfigSource{
+        [=](Settings& upperLayer) -> void
+            {
+                supplySettings(upperLayer,
+                               parseConfig(
+                                   fs::path{upperLayer[Config::KEY_suitePath]} / "defaults.ini"
+                              ));
+            }
+    };
 }
 
 
@@ -71,18 +128,15 @@ ConfigSource Config::fromDefaultsIni()
  */
 ConfigSource Config::fromCmdline(int argc, char *argv[])
 {
-    using Map = ConfigSource::Map;
+    return ConfigSource{
+        [=](Settings& combinedSettings)
+            {
+                if (argc > 1)
+                    UNIMPLEMENTED("parse command line");
 
-    if (argc > 1)
-        UNIMPLEMENTED("parse command line");
-    else
-        return ConfigSource{
-            [=](Map const& upperLayer)
-                {
-                    Map combinedSettings;
-                    combinedSettings.insert({"TODO", "actually parse cmdline"});
-                    combinedSettings.insert(upperLayer.begin(), upperLayer.end());
-                    return combinedSettings;
-                }
-        };
+                MapS parsedOptions;
+                parsedOptions.insert({"TODO", "actually parse cmdline"});
+                supplySettings(combinedSettings, parsedOptions);
+            }
+    };
 }
