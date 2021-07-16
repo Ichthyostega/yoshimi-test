@@ -40,6 +40,7 @@
 
 using std::string;
 
+using uint = unsigned int;
 
 
 namespace util

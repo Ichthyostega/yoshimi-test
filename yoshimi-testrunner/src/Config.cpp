@@ -34,18 +34,30 @@
 
 #include "Config.hpp"
 #include "util/error.hpp"
-//#include "util/utils.hpp"
+#include "util/utils.hpp"
+#include "util/format.hpp"
 
+#include <regex>
 #include <fstream>
-#include <iostream> ///////////////////////TODO
+#include <iostream>
 
 using std::ifstream;
+using std::regex;
+using std::smatch;
+using std::regex_match;
+using std::regex_search;
+using std::cout;
+using std::endl;
+
+using util::isnil;
+using util::str;
 
 
 
 namespace { // Implementation details
 
 using MapS = std::map<string,string>;
+
 
 /**
  * Extend the existing configuration settings to fill in additional bindings with lower precedence.
@@ -58,6 +70,19 @@ void supplySettings(MapS& existingSettings, MapS const& additionalSettings)
 }
 
 
+/* ========= INI-File Syntax ========= */
+
+const string KEYWORD           = "[A-Za-z]\\w*";
+const string VAL_TRIMMED       = "\\s*(.+?)\\s*";
+const string KEY_TRIMMED       = "\\s*("+KEYWORD+"(?:\\."+KEYWORD+")*)\\s*";
+const string TRAILING_COMMENT  = "(?:#[^#]*)?";
+
+const string DEFINITION_SYNTAX = KEY_TRIMMED +"="+ VAL_TRIMMED + TRAILING_COMMENT;
+
+const regex PARSE_COMMENT_LINE{"^\\s*#"};
+const regex PARSE_DEFINITION{DEFINITION_SYNTAX, regex::ECMAScript | regex::optimize};
+
+
 MapS parseConfig(fs::path path)
 {
     MapS settings;
@@ -67,11 +92,17 @@ MapS parseConfig(fs::path path)
         if (not configFile.good())
             throw error::Misconfig{"unable to read config file '"+string{path}+"'"};
 
+        uint n=0;
         for (string line; std::getline(configFile, line); )
         {
-            std::cout << ">>|"<<line <<std::endl;
+            ++n;
+            if (isnil(line) or regex_search(line, PARSE_COMMENT_LINE))
+                continue;
+            smatch mat;
+            if (not regex_match(line, mat, PARSE_DEFINITION))
+                throw error::Misconfig{"invalid config line "+str(n)+" in '"+string{path}+"': "+line};
+            settings.insert({mat[1], mat[2]});
         }
-        UNIMPLEMENTED("parse config file");
     }
     return settings;
 }
@@ -140,3 +171,21 @@ ConfigSource Config::fromCmdline(int argc, char *argv[])
             }
     };
 }
+
+
+/** @internal dump effective config settings to STDOUT */
+void Config::dumpSettings(Settings rawSettings)
+{
+    cout << "Config::combined-settings..."<<endl;
+    for (auto& entry : rawSettings)
+        cout << "      ::"<< entry.first <<"="<< entry.second <<endl;
+    cout << "Config::effective..."<<endl;
+
+#define DUMP_CFG(_KEY_) \
+    cout << "      ::" << KEY_##_KEY_ << ":=" << util::formatVal(this->_KEY_) <<endl
+
+    DUMP_CFG(suitePath);
+
+    cout << "Config(End)"<<endl<<endl;
+}
+#undef DUMP_CFG

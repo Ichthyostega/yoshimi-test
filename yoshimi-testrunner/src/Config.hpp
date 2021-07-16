@@ -120,7 +120,9 @@ private: /* ===== Initialisation from raw settings ===== */
      *            and initialise the member fields in this Config instance. */
     Config(Settings rawSettings)
         : suitePath{rawSettings[KEY_suitePath]}
-    { }
+    {
+        dumpSettings(rawSettings);
+    }
 
 
 public:
@@ -151,6 +153,8 @@ private:
             src.injectSettingsInto(rawSettings);
         return rawSettings;
     }
+
+    void dumpSettings(Settings);
 };
 #undef ConfigParam
 
