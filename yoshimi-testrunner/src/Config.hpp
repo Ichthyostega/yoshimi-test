@@ -37,6 +37,7 @@
 
 #include "util/error.hpp"
 #include "util/utils.hpp"
+#include "util/format.hpp"
 #include "util/nocopy.hpp"
 
 #include <filesystem>
@@ -104,12 +105,16 @@ public:
 class Config
     : util::NonCopyable
 {
-#define ConfigParam(_TYPE_, _NAME_)\
+#define CFG_PARAM(_TYPE_, _NAME_)\
     static constexpr const char* KEY_##_NAME_ = STRINGIFY(_NAME_); \
-    _TYPE_ _NAME_;                                                 \
+    _TYPE_ _NAME_
+
+#define CFG_DUMP(_KEY_) \
+    dump(KEY_##_KEY_, this->_KEY_)
+
 
 public:
-    ConfigParam(string, suitePath);
+    CFG_PARAM(string, suitePath);
 
 
 private: /* ===== Initialisation from raw settings ===== */
@@ -121,7 +126,8 @@ private: /* ===== Initialisation from raw settings ===== */
     Config(Settings rawSettings)
         : suitePath{rawSettings[KEY_suitePath]}
     {
-        dumpSettings(rawSettings);
+        dump(rawSettings);
+        CFG_DUMP(suitePath);
     }
 
 
@@ -154,8 +160,16 @@ private:
         return rawSettings;
     }
 
-    void dumpSettings(Settings);
+    static void dump(Settings);
+    static void dump(string);
+
+    template<typename VAL>
+    static void dump(string key, VAL val)
+    {
+        dump(key+":="+util::formatVal(val));
+    }
 };
-#undef ConfigParam
+#undef CFG_PARAM
+#undef CFG_DUMP
 
 #endif /*TESTRUNNER_CONFIG_HPP_*/

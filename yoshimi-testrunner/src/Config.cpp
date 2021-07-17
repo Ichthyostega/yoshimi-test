@@ -26,8 +26,6 @@
  ** partially populated ConfigSource; it will on activation perform the parsing work
  ** on its specific source and possibly fill in missing settings into the combined
  ** key-value bindings stored in its internal map.
- ** 
- ** @todo WIP as of 7/21
  **
  */
 
@@ -35,11 +33,11 @@
 #include "Config.hpp"
 #include "util/error.hpp"
 #include "util/utils.hpp"
-#include "util/format.hpp"
 
 #include <regex>
 #include <fstream>
 #include <iostream>
+#include <argp.h>
 
 using std::ifstream;
 using std::regex;
@@ -70,6 +68,7 @@ void supplySettings(MapS& existingSettings, MapS const& additionalSettings)
 }
 
 
+
 /* ========= INI-File Syntax ========= */
 
 const string KEYWORD           = "[A-Za-z]\\w*";
@@ -77,7 +76,7 @@ const string VAL_TRIMMED       = "\\s*(.+?)\\s*";
 const string KEY_TRIMMED       = "\\s*("+KEYWORD+"(?:\\."+KEYWORD+")*)\\s*";
 const string TRAILING_COMMENT  = "(?:#[^#]*)?";
 
-const string DEFINITION_SYNTAX = KEY_TRIMMED +"="+ VAL_TRIMMED + TRAILING_COMMENT;
+const string DEFINITION_SYNTAX = KEY_TRIMMED +"[:=]"+ VAL_TRIMMED + TRAILING_COMMENT;
 
 const regex PARSE_COMMENT_LINE{"^\\s*#"};
 const regex PARSE_DEFINITION{DEFINITION_SYNTAX, regex::ECMAScript | regex::optimize};
@@ -107,13 +106,73 @@ MapS parseConfig(fs::path path)
     return settings;
 }
 
+
+
+/* ========= Program Options ========= */
+
+const char* PROG_DOC = "Perform automated test suite for the Yoshimi soft synth.";
+const char* ARGS_DOC = "<suitePath>";
+
+/** @note the long option name _must match_ with the key and variable name used in
+ *        class Config; the same key can then also be used within a config file */
+const argp_option OPTIONS[] =
+    {{"subject",    10,  "<exe>", 0, "Yoshimi executable (default /usr/bin/yoshimi)", 0}
+    ,{"baseline",   11,  nullptr, 0, "activate baseline capturing mode: overwrite baseline WAV when detecting difference", 1}
+    ,{"verbose",   'v',  nullptr, 0, "verbose diagnostic output while running tests", 2}
+    ,{ nullptr }
+    };
+
+
+/** @internal parser function, called by Argp for each option */
+error_t handleOption (int key, char *arg, argp_state *state)
+{
+    MapS& settings = *static_cast<MapS*>(state->input);
+    switch (key)
+    {
+    case ARGP_KEY_ARG:  // positional argument...
+        if (state->arg_num >= 1)
+            argp_error(state
+                      ,"Got %d positional arguments; expect only the <suitePath>"
+                      , state->arg_num + 1);
+        settings.insert({"suitePath", arg});
+        break;
+    case ARGP_KEY_END:
+        /* could do consistency checks here */
+        break;
+    default:
+        for (uint i=0; OPTIONS[i].name != nullptr; ++i)
+            if (OPTIONS[i].key == key)
+            {   // use long option name as key for the settings map
+                settings.insert({OPTIONS[i].name, arg? arg:"true"});
+                return 0; // success
+            }
+        return ARGP_ERR_UNKNOWN;
+    }
+    return 0; // success
+}
+
+
+const argp PARSER_SETUP = {OPTIONS, handleOption, ARGS_DOC, PROG_DOC, 0, 0, 0};
+
+/**
+ * use the Argp-Library to parse the commandline
+ * @return a Map populated with the actual options present
+ */
+MapS parseCommandline(int argc, char *argv[])
+{
+    MapS parsedOptions;
+    argp_parse (&PARSER_SETUP, argc, argv, 0, 0, &parsedOptions);
+    return parsedOptions;
+}
+
 }//(End)Implementation details
 
 
 
 
+
 /**
- * Configuration builder to parse a ini-style config file.
+ * Configuration builder to parse an INI-style config file.
  * @param path filename spec to read from
  */
 ConfigSource Config::fromFile(fs::path path)
@@ -162,30 +221,23 @@ ConfigSource Config::fromCmdline(int argc, char *argv[])
     return ConfigSource{
         [=](Settings& combinedSettings)
             {
-                if (argc > 1)
-                    UNIMPLEMENTED("parse command line");
-
-                MapS parsedOptions;
-                parsedOptions.insert({"TODO", "actually parse cmdline"});
-                supplySettings(combinedSettings, parsedOptions);
+                supplySettings(combinedSettings,
+                               parseCommandline(argc,argv));
             }
     };
 }
 
 
+
 /** @internal dump effective config settings to STDOUT */
-void Config::dumpSettings(Settings rawSettings)
+void Config::dump(Settings rawSettings)
 {
-    cout << "Config::combined-settings..."<<endl;
+    cout << "Config::combined-settings..." <<endl;
     for (auto& entry : rawSettings)
-        cout << "      ::"<< entry.first <<"="<< entry.second <<endl;
-    cout << "Config::effective..."<<endl;
-
-#define DUMP_CFG(_KEY_) \
-    cout << "      ::" << KEY_##_KEY_ << ":=" << util::formatVal(this->_KEY_) <<endl
-
-    DUMP_CFG(suitePath);
-
-    cout << "Config(End)"<<endl<<endl;
+        dump(entry.first+"="+entry.second);
+    cout << "Config::effective-settings..." <<endl;
 }
-#undef DUMP_CFG
+void Config::dump(string msg)
+{
+    cout << "      ::"<<msg <<endl;
+}
