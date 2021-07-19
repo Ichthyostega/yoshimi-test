@@ -26,5 +26,6 @@ file(GLOB_RECURSE testrunner_headers CONFIGURE_DEPENDS "src/*.hpp")
 
 add_executable(testrunner ${testrunner_sources} ${testrunner_headers})
 target_compile_features(testrunner PUBLIC cxx_std_17)
+target_include_directories(testrunner PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/src)
 target_link_libraries(testrunner PRIVATE PkgConfig::LIBSOX)
 target_link_libraries(testrunner PRIVATE stdc++fs)

@@ -43,8 +43,7 @@ using std::string;
 using uint = unsigned int;
 
 
-namespace util
-{
+namespace util {
 
 /*  ======== generic empty check =========  */
 
@@ -147,6 +146,16 @@ inline bool contains(SEQ const &cont, typename SEQ::const_reference val)
     return end != std::find(begin, end, val);
 }
 
+/** interpret the given text as boolean value
+ * @throws error::Invalid when the text is not any valid bool token
+ * @remark allowed are `true false yes no on off 1 0 + -` in upper and lower case
+ */
+bool boolVal(string const& textForm);
+
+/** evaluate the given text form as boolean value for `true`
+ * @note other than (\ref boolVal), this function treats _everything else_ as `false`
+ */
+bool isYes (string const& textForm) noexcept;
 
 } // namespace util
 

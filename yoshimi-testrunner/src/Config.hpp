@@ -24,9 +24,9 @@
  ** typed parameters to represent the settings. These settings are populated from
  ** several ConfigSource elements, allowing to overlay and combine the basic
  ** setup, a local setup for the use and the commandline arguments.
- ** 
- ** @todo WIP as of 7/21
+ **
  ** @see Main.cpp usage
+ ** @see Config.cpp for details of commandline and INI file parsing
  **
  */
 
@@ -43,6 +43,7 @@
 #include <filesystem>
 #include <functional>
 #include <utility>
+#include <sstream>
 #include <string>
 #include <map>
 
@@ -52,6 +53,10 @@ using util::contains;
 using std::string;
 using std::move;
 
+namespace {
+    using MapS = std::map<string,string>;
+}
+
 class Config;
 
 
@@ -59,19 +64,33 @@ class Config;
  * A raw partial configuration (key-value map) drawn from some source of configuration.
  * The actual source is implicitly embedded as a function, which, when invoked, parses
  * the source and overlays the resulting raw config settings.
- * @note the #get(key) function deliberately throws an exception when the requested
+ * @note the #operator[](key) deliberately throws an exception when the requested
  *       setting does not exist. This mechanism helps to enforce that all mandatory
  *       settings are defined at some config location eventually. At least the
  *       "defaults.ini" should fill in all required settings.
  */
 class ConfigSource
 {
-    struct Settings : std::map<string,string>
+    class Val
     {
-        using MapS = std::map<string,string>;
-        using MapS::MapS;
+        string rawVal_;
+    public:
+        Val(string setting)
+            : rawVal_{setting}
+        { }
 
-        string operator[](string key)
+        operator string()
+        { return rawVal_; }
+
+        /** convert string representation of a config setting
+         *  into typed value used in the Config instance. */
+        template<typename TAR>
+        TAR as();
+    };
+
+    struct Settings : MapS
+    {
+        Val operator[](string key)
         {
             if (not contains(*this, key))
                 throw error::Misconfig("'" + key + "' not defined by config or commandline.");
@@ -80,27 +99,47 @@ class ConfigSource
     };
 
     using Injector = std::function<void(Settings&)>;
+
+    /** function to evaluate the config source */
     Injector populateCfg_;
 
-    void injectSettingsInto(Settings& upperLayer)
-    {
-        populateCfg_(upperLayer);
-    }
+    ConfigSource(Injector parseFun)
+        : populateCfg_{parseFun}
+    { }
 
     friend class Config;
 
 public:
-    ConfigSource(Injector parseFun)
-        : populateCfg_{parseFun}
-    { }
+    void injectSettingsInto(Settings& upperLayer)  const
+    {
+        populateCfg_(upperLayer);
+    }
 };
+
+
+/* == conversion string -> typed value == */
+
+template<typename TAR>
+inline TAR ConfigSource::Val::as()
+{
+    std::istringstream converter{rawVal_};
+    TAR value;
+    converter >> value;
+    return value;
+}
+template<>
+inline bool ConfigSource::Val::as()
+{
+    return util::boolVal(rawVal_);
+}
+
 
 
 
 /**
  * Actual parametrisation of the Testsuite to be performed.
- * All settings to control details of test execution are represented
- * as typed fields within this class.
+ * All settings to control details of test execution
+ * are represented as typed fields within this class.
  */
 class Config
     : util::NonCopyable
@@ -114,7 +153,10 @@ class Config
 
 
 public:
-    CFG_PARAM(string, suitePath);
+    CFG_PARAM(fs::path, subject);
+    CFG_PARAM(fs::path, suitePath);
+    CFG_PARAM(bool,     baseline);
+    CFG_PARAM(bool,     verbose);
 
 
 private: /* ===== Initialisation from raw settings ===== */
@@ -124,10 +166,19 @@ private: /* ===== Initialisation from raw settings ===== */
     /** @internal extract all relevant parameters from the combined configuration
      *            and initialise the member fields in this Config instance. */
     Config(Settings rawSettings)
-        : suitePath{rawSettings[KEY_suitePath]}
+        : subject  {rawSettings[KEY_subject]}
+        , suitePath{rawSettings[KEY_suitePath]}
+        , baseline {rawSettings[KEY_baseline].as<bool>()}
+        , verbose  {rawSettings[KEY_verbose].as<bool>()}
     {
-        dump(rawSettings);
-        CFG_DUMP(suitePath);
+        if (verbose)
+        {
+            dump(rawSettings);
+            CFG_DUMP(subject);
+            CFG_DUMP(suitePath);
+            CFG_DUMP(baseline);
+            CFG_DUMP(verbose);
+        }
     }
 
 
@@ -155,7 +206,7 @@ private:
     static Settings combine_with_decreasing_precedence(std::initializer_list<ConfigSource> sources)
     {
         Settings rawSettings;
-        for (auto src : sources)
+        for (auto& src : sources)
             src.injectSettingsInto(rawSettings);
         return rawSettings;
     }

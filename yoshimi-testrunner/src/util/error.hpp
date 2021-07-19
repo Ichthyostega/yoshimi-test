@@ -68,6 +68,15 @@ public:
 };
 
 
+class Invalid : public logic_error
+{
+public:
+    Invalid(string msg) :
+        logic_error{"Invalid Data: "+msg}
+    { }
+};
+
+
 class ToDo : public logic_error
 {
 public:

@@ -1,5 +1,5 @@
 /*
- *  format - collection of test formatting helpers
+ *  utils - collection of general purpose helpers and tools
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,64 +18,40 @@
  ***************************************************************/
 
 
-/** @file format.hpp
- ** Collection of helper functions for text and number output and formatting.
+/** @file utils.cpp
+ ** Implementation details for some of the generic utils.
+ ** 
  ** @todo WIP as of 7/21
  **
  */
 
 
+#include "util/utils.hpp"
+#include "util/error.hpp"
 
-#ifndef TESTRUNNER_UTIL_FORMAT_HPP_
-#define TESTRUNNER_UTIL_FORMAT_HPP_
+#include <regex>
 
+using std::regex;
 
-//#include <algorithm>
-#include <string>
-#include <sstream>
+namespace util {
 
-using std::string;
-
-
-
-namespace util
-{
-
-
-/** format number as string */
-template<typename NUM>
-inline string str(NUM n)
-{
-   std::ostringstream oss;
-   oss << n;
-   return oss.str();
+namespace {
+    regex trueTokens { "\\s*(true|yes|on|1|\\+)\\s*",  regex::icase | regex::optimize };
+    regex falseTokens{ "\\s*(false|no|off|0|\\-)\\s*", regex::icase | regex::optimize };
 }
 
-
-template<typename X>
-inline string formatVal(X x)
+bool boolVal(string const& textForm)
 {
-    return str(x);
+    if (regex_match(textForm, trueTokens))
+        return true;
+    if (regex_match(textForm, falseTokens))
+        return false;
+    throw error::Invalid{"String '"+textForm+"' can not be interpreted as bool value" };
 }
 
-inline string formatVal(string s)
+bool isYes (string const& textForm) noexcept
 {
-    return "\""+s+"\"";
+    return regex_match (textForm, trueTokens);
 }
 
-inline string formatVal(bool yes)
-{
-    return yes? "true":"false";
-}
-
-inline string formatVal(float f)
-{
-   std::ostringstream oss;
-   oss.precision(3);
-   oss.width(5);
-   oss << f;
-   return oss.str();
-}
-
-}//namespace util
-#endif /*TESTRUNNER_UTIL_FORMAT_HPP_*/
+}//(End)namespace util

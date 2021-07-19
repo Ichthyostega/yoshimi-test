@@ -33,6 +33,7 @@
 #include "Config.hpp"
 #include "util/error.hpp"
 #include "util/utils.hpp"
+#include "util/format.hpp"
 
 #include <regex>
 #include <fstream>
@@ -66,6 +67,14 @@ void supplySettings(MapS& existingSettings, MapS const& additionalSettings)
 {
     existingSettings.insert(additionalSettings.begin(), additionalSettings.end());
 }
+
+string showAbsolute(fs::path path)
+{
+    return util::formatVal(
+                fs::absolute(
+                    fs::canonical(path)));
+}
+
 
 
 
@@ -187,6 +196,23 @@ ConfigSource Config::fromFile(fs::path path)
 
 
 /**
+ * Configuration builder to evaluate the commandline arguments;
+ * these are translated into the appropriate key-value bindings to
+ * possibly override defaults from previously loaded config files.
+ */
+ConfigSource Config::fromCmdline(int argc, char *argv[])
+{
+    return ConfigSource{
+        [=](Settings& combinedSettings)
+            {
+                supplySettings(combinedSettings,
+                               parseCommandline(argc,argv));
+            }
+    };
+}
+
+
+/**
  * Configuration builder to parse a special "defaults.ini",
  * which is located in the root of a testsuite definition tree.
  * @note since this config file is located in the testsuite tree,
@@ -202,27 +228,24 @@ ConfigSource Config::fromDefaultsIni()
     return ConfigSource{
         [=](Settings& upperLayer) -> void
             {
+                if (not contains(upperLayer, Config::KEY_suitePath))
+                    throw error::Misconfig{"It is mandatory to indicate the path location of the testsuite, "
+                                           "as program argument. In the standard directory layout, this is the "
+                                           "subdirectory 'testsuite'. Alternatively you may create a file 'setup.ini' "
+                                           "within the current working directory, and define 'suitePath=...' there."};
+
+                auto testsuiteDir = fs::path{upperLayer[Config::KEY_suitePath]};
+                auto defaultsIni = testsuiteDir / "defaults.ini";
+
+                if (not fs::is_directory(testsuiteDir))
+                    throw error::Misconfig{"Directory "+showAbsolute(testsuiteDir)+" not accessible."};
+                if (not fs::exists(defaultsIni))
+                    throw error::Misconfig{"Could not find 'defaults.ini' within the testsuite dir. "
+                                           "Does the path "+showAbsolute(testsuiteDir)
+                                          +" really point at a Yoshimi-testsuite?"};
+
                 supplySettings(upperLayer,
-                               parseConfig(
-                                   fs::path{upperLayer[Config::KEY_suitePath]} / "defaults.ini"
-                              ));
-            }
-    };
-}
-
-
-/**
- * Configuration builder to evaluate the commandline arguments;
- * these are translated into the appropriate key-value bindings to
- * possibly override defaults from previously loaded config files.
- */
-ConfigSource Config::fromCmdline(int argc, char *argv[])
-{
-    return ConfigSource{
-        [=](Settings& combinedSettings)
-            {
-                supplySettings(combinedSettings,
-                               parseCommandline(argc,argv));
+                               parseConfig(defaultsIni));
             }
     };
 }
