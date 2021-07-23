@@ -1,5 +1,5 @@
 /*
- *  Stage - statefull environment used once for running the Testsuite
+ *  Scaffolding - prepare the subject for launching a test case
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,47 +18,43 @@
  ***************************************************************/
 
 
-/** @file Stage.hpp
- ** Execution environment for performing the Testsuite.
- ** The testsuite is assembled by a TestBuilder, based on the test case definitions,
- ** resulting in a sequence of TestStep elements. These can then be invoked one by one
- ** on the \ref Stage, which is a one-way statefull environment, allowing to log any
- ** failures and to collect results.
+/** @file Scaffolding.hpp
+ ** Create the setup necessary for launching Yoshimi and capturing behaviour.
+ ** The Yoshimi-Testsuite encompasses several methods for performing reproducible tests,
+ ** employing a suitable setup for loading presets, configuring the voices and defining
+ ** the parameters for the actual test case. The Scaffolding ensures the test can be
+ ** launched, and resulting behaviour can be observed.
  ** 
  ** @todo WIP as of 7/21
- ** @see Main.cpp usage
- ** @see Suite
+ ** @see Invoker.hpp
+ ** @see TestStep.hpp
  ** 
  */
 
 
-#ifndef TESTRUNNER_STAGE_HPP_
-#define TESTRUNNER_STAGE_HPP_
+#ifndef TESTRUNNER_SUITE_STEP_SCAFFOLDING_HPP_
+#define TESTRUNNER_SUITE_STEP_SCAFFOLDING_HPP_
 
 
 #include "util/nocopy.hpp"
-#include "suite/TestLog.hpp"
-#include "Config.hpp"
-#include "Suite.hpp"
+#include "suite/TestStep.hpp"
 
 //#include <string>
 
+namespace suite{
+namespace step {
+
 
 /**
- * Execution environment to perform a test suite once.
+ * Adapter for launching a test case into Yoshimi.
  */
-class Stage
-    : util::NonCopyable
+class Scaffolding
+    : public TestStep
 {
-    suite::TestLog results_;
-
 public:
-    Stage(Config const& config);
-
-    void perform(Suite& suite);
-    void renderReport();
-    suite::ResCode getReturnCode()  const;
+    Scaffolding();
 };
 
 
-#endif /*TESTRUNNER_STAGE_HPP_*/
+}}//(End)namespace suite::step
+#endif /*TESTRUNNER_SUITE_STEP_SCAFFOLDING_HPP_*/

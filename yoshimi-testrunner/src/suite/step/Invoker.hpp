@@ -1,5 +1,5 @@
 /*
- *  Stage - statefull environment used once for running the Testsuite
+ *  Invoker - actually launch the test operations
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,47 +18,41 @@
  ***************************************************************/
 
 
-/** @file Stage.hpp
- ** Execution environment for performing the Testsuite.
- ** The testsuite is assembled by a TestBuilder, based on the test case definitions,
- ** resulting in a sequence of TestStep elements. These can then be invoked one by one
- ** on the \ref Stage, which is a one-way statefull environment, allowing to log any
- ** failures and to collect results.
+/** @file Invoker.hpp
+ ** Launch the test subject (Yoshimi) and perform the test operations.
+ ** This central TestStep uses the specific Scaffolding established for the test case
+ ** to activate the actual sound calculation within Yoshimi.
  ** 
  ** @todo WIP as of 7/21
- ** @see Main.cpp usage
- ** @see Suite
+ ** @see Scaffolding.hpp
+ ** @see TestStep.hpp
  ** 
  */
 
 
-#ifndef TESTRUNNER_STAGE_HPP_
-#define TESTRUNNER_STAGE_HPP_
+#ifndef TESTRUNNER_SUITE_STEP_INVOKER_HPP_
+#define TESTRUNNER_SUITE_STEP_INVOKER_HPP_
 
 
 #include "util/nocopy.hpp"
-#include "suite/TestLog.hpp"
-#include "Config.hpp"
-#include "Suite.hpp"
+#include "suite/TestStep.hpp"
 
 //#include <string>
 
+namespace suite{
+namespace step {
+
 
 /**
- * Execution environment to perform a test suite once.
+ * Launch Yoshimi and execute the test sound calculation.
  */
-class Stage
-    : util::NonCopyable
+class Invoker
+    : public TestStep
 {
-    suite::TestLog results_;
-
 public:
-    Stage(Config const& config);
-
-    void perform(Suite& suite);
-    void renderReport();
-    suite::ResCode getReturnCode()  const;
+    Invoker();
 };
 
 
-#endif /*TESTRUNNER_STAGE_HPP_*/
+}}//(End)namespace suite::step
+#endif /*TESTRUNNER_SUITE_STEP_INVOKER_HPP_*/

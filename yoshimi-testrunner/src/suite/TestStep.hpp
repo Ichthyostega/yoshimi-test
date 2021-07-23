@@ -1,5 +1,5 @@
 /*
- *  Stage - statefull environment used once for running the Testsuite
+ *  TestStep - basic building block of the Testsuite
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,47 +18,43 @@
  ***************************************************************/
 
 
-/** @file Stage.hpp
- ** Execution environment for performing the Testsuite.
- ** The testsuite is assembled by a TestBuilder, based on the test case definitions,
- ** resulting in a sequence of TestStep elements. These can then be invoked one by one
- ** on the \ref Stage, which is a one-way statefull environment, allowing to log any
- ** failures and to collect results.
+/** @file TestStep
+ ** Interface of the fundamental Testsuite building block.
+ ** The testsuite is a sequence of test steps, assembled and wired by a TestBuilder.
+ ** Performing the testsuite equates to triggering each test step, capturing results.
  ** 
  ** @todo WIP as of 7/21
- ** @see Main.cpp usage
- ** @see Suite
+ ** @see Builder.hpp
+ ** @see suite::step
+ ** @see Stage::perform(Suite)
  ** 
  */
 
 
-#ifndef TESTRUNNER_STAGE_HPP_
-#define TESTRUNNER_STAGE_HPP_
+#ifndef TESTRUNNER_SUITE_TESTSTEP_HPP_
+#define TESTRUNNER_SUITE_TESTSTEP_HPP_
 
 
 #include "util/nocopy.hpp"
-#include "suite/TestLog.hpp"
-#include "Config.hpp"
-#include "Suite.hpp"
+#include "suite/Result.hpp"
 
 //#include <string>
 
+namespace suite {
+
 
 /**
- * Execution environment to perform a test suite once.
+ * Interface: elementary testsuite building block.
  */
-class Stage
+class TestStep
     : util::NonCopyable
 {
-    suite::TestLog results_;
-
 public:
-    Stage(Config const& config);
+    virtual ~TestStep() { }  ///< this is an interface
 
-    void perform(Suite& suite);
-    void renderReport();
-    suite::ResCode getReturnCode()  const;
+    virtual Result perform()  =0;
 };
 
 
-#endif /*TESTRUNNER_STAGE_HPP_*/
+}//(End)namespace suite
+#endif /*TESTRUNNER_SUITE_TESTSTEP_HPP_*/

@@ -1,5 +1,5 @@
 /*
- *  Stage - statefull environment used once for running the Testsuite
+ *  Observation - extract relevant findings from the captured execution data
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,47 +18,43 @@
  ***************************************************************/
 
 
-/** @file Stage.hpp
- ** Execution environment for performing the Testsuite.
- ** The testsuite is assembled by a TestBuilder, based on the test case definitions,
- ** resulting in a sequence of TestStep elements. These can then be invoked one by one
- ** on the \ref Stage, which is a one-way statefull environment, allowing to log any
- ** failures and to collect results.
+/** @file Observation.hpp
+ ** Establish the actual observations from performing the test within Yoshimi.
+ ** After the Invoker step has launched Yoshimi and awaited termination of the test,
+ ** the Observation steps have to identify relevant traits within the captured data.
  ** 
  ** @todo WIP as of 7/21
- ** @see Main.cpp usage
- ** @see Suite
+ ** @see Invoker.hpp
+ ** @see Scaffolding.hpp
+ ** @see Judgement.hpp
+ ** @see TestStep.hpp
  ** 
  */
 
 
-#ifndef TESTRUNNER_STAGE_HPP_
-#define TESTRUNNER_STAGE_HPP_
+#ifndef TESTRUNNER_SUITE_STEP_OBSERVATION_HPP_
+#define TESTRUNNER_SUITE_STEP_OBSERVATION_HPP_
 
 
 #include "util/nocopy.hpp"
-#include "suite/TestLog.hpp"
-#include "Config.hpp"
-#include "Suite.hpp"
+#include "suite/TestStep.hpp"
 
 //#include <string>
 
+namespace suite{
+namespace step {
+
 
 /**
- * Execution environment to perform a test suite once.
+ * Extract focused observations from captured behaviour.
  */
-class Stage
-    : util::NonCopyable
+class Observation
+    : public TestStep
 {
-    suite::TestLog results_;
-
 public:
-    Stage(Config const& config);
-
-    void perform(Suite& suite);
-    void renderReport();
-    suite::ResCode getReturnCode()  const;
+    Observation();
 };
 
 
-#endif /*TESTRUNNER_STAGE_HPP_*/
+}}//(End)namespace suite::step
+#endif /*TESTRUNNER_SUITE_STEP_OBSERVATION_HPP_*/

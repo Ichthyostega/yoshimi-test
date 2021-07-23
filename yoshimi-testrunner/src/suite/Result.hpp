@@ -1,5 +1,5 @@
 /*
- *  Stage - statefull environment used once for running the Testsuite
+ *  Result - status record documenting a single test step's execution
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,47 +18,48 @@
  ***************************************************************/
 
 
-/** @file Stage.hpp
- ** Execution environment for performing the Testsuite.
- ** The testsuite is assembled by a TestBuilder, based on the test case definitions,
- ** resulting in a sequence of TestStep elements. These can then be invoked one by one
- ** on the \ref Stage, which is a one-way statefull environment, allowing to log any
- ** failures and to collect results.
+/** @file Result.hpp
+ ** Findings captured during execution of a suite::TestStep.
+ ** This data record is returned from the invocation of the step and can be collected
+ ** within the suite::TestLog.
  ** 
  ** @todo WIP as of 7/21
- ** @see Main.cpp usage
- ** @see Suite
+ ** @see TestLog.hpp
+ ** @see Stage::perform(Suite)
  ** 
  */
 
 
-#ifndef TESTRUNNER_STAGE_HPP_
-#define TESTRUNNER_STAGE_HPP_
+#ifndef TESTRUNNER_SUITE_RESULT_HPP_
+#define TESTRUNNER_SUITE_RESULT_HPP_
 
 
 #include "util/nocopy.hpp"
-#include "suite/TestLog.hpp"
-#include "Config.hpp"
-#include "Suite.hpp"
 
 //#include <string>
 
+namespace suite {
 
-/**
- * Execution environment to perform a test suite once.
- */
-class Stage
-    : util::NonCopyable
-{
-    suite::TestLog results_;
-
-public:
-    Stage(Config const& config);
-
-    void perform(Suite& suite);
-    void renderReport();
-    suite::ResCode getReturnCode()  const;
+enum class ResCode : int
+{   GREEN     =0
+,   WARNING
+,   VIOLATION
+,   MALFUNCTION
+,   DEBACLE = -1
 };
 
 
-#endif /*TESTRUNNER_STAGE_HPP_*/
+
+/**
+ * Captured status and findings from a single test case.
+ */
+class Result
+    : util::MoveOnly
+{
+public:
+    Result();
+};
+
+
+}//(End)namespace suite
+#endif /*TESTRUNNER_SUITE_RESULT_HPP_*/

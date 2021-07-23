@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
         Stage stage{config};
         stage.perform(suite);
         stage.renderReport();
-        return stage.getReturnCode();
+        return int(stage.getReturnCode());
 
 
     } catch(std::exception const& ex) {
@@ -62,5 +62,5 @@ int main(int argc, char *argv[])
     } catch(...) {
         cerr << "Yoshimi-Testsuite floundered. So sad."<< endl;
     }
-    return -1;
+    return int(suite::ResCode::DEBACLE);
 }

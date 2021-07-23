@@ -1,5 +1,5 @@
 /*
- *  Stage - statefull environment used once for running the Testsuite
+ *  TestLog - collected test results
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,47 +18,25 @@
  ***************************************************************/
 
 
-/** @file Stage.hpp
- ** Execution environment for performing the Testsuite.
- ** The testsuite is assembled by a TestBuilder, based on the test case definitions,
- ** resulting in a sequence of TestStep elements. These can then be invoked one by one
- ** on the \ref Stage, which is a one-way statefull environment, allowing to log any
- ** failures and to collect results.
+/** @file TestLog.hpp
+ ** Implementation details regarding test result aggregation.
  ** 
  ** @todo WIP as of 7/21
- ** @see Main.cpp usage
- ** @see Suite
+ ** @see Result.hpp
+ ** @see Suite::perform()
  ** 
  */
 
 
-#ifndef TESTRUNNER_STAGE_HPP_
-#define TESTRUNNER_STAGE_HPP_
 
-
-#include "util/nocopy.hpp"
 #include "suite/TestLog.hpp"
-#include "Config.hpp"
-#include "Suite.hpp"
 
 //#include <string>
 
-
-/**
- * Execution environment to perform a test suite once.
- */
-class Stage
-    : util::NonCopyable
-{
-    suite::TestLog results_;
-
-public:
-    Stage(Config const& config);
-
-    void perform(Suite& suite);
-    void renderReport();
-    suite::ResCode getReturnCode()  const;
-};
+namespace suite {
 
 
-#endif /*TESTRUNNER_STAGE_HPP_*/
+/** */
+
+
+}//(End)namespace suite

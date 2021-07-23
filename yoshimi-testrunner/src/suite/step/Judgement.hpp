@@ -1,5 +1,5 @@
 /*
- *  Stage - statefull environment used once for running the Testsuite
+ *  Judgement - test steps to assess and judge the captured behaviour
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,47 +18,43 @@
  ***************************************************************/
 
 
-/** @file Stage.hpp
- ** Execution environment for performing the Testsuite.
- ** The testsuite is assembled by a TestBuilder, based on the test case definitions,
- ** resulting in a sequence of TestStep elements. These can then be invoked one by one
- ** on the \ref Stage, which is a one-way statefull environment, allowing to log any
- ** failures and to collect results.
+/** @file Judgement.hpp
+ ** Investigate captured behaviour of the subject and judge about success or failure.
+ ** After the Invoker step has launched the actual test and the Observation steps have
+ ** extracted and documented the behaviour, this step performs the assessment against
+ ** the predefined baseline to decide if the subject's behaviour was within limits.
  ** 
  ** @todo WIP as of 7/21
- ** @see Main.cpp usage
- ** @see Suite
+ ** @see Invoker.hpp
+ ** @see Observation.hpp
+ ** @see TestStep.hpp
  ** 
  */
 
 
-#ifndef TESTRUNNER_STAGE_HPP_
-#define TESTRUNNER_STAGE_HPP_
+#ifndef TESTRUNNER_SUITE_STEP_JUDGEMENT_HPP_
+#define TESTRUNNER_SUITE_STEP_JUDGEMENT_HPP_
 
 
 #include "util/nocopy.hpp"
-#include "suite/TestLog.hpp"
-#include "Config.hpp"
-#include "Suite.hpp"
+#include "suite/TestStep.hpp"
 
 //#include <string>
 
+namespace suite{
+namespace step {
+
 
 /**
- * Execution environment to perform a test suite once.
+ * Step to assess the behaviour and decide about success or failure.
  */
-class Stage
-    : util::NonCopyable
+class Judgement
+    : public TestStep
 {
-    suite::TestLog results_;
-
 public:
-    Stage(Config const& config);
-
-    void perform(Suite& suite);
-    void renderReport();
-    suite::ResCode getReturnCode()  const;
+    Judgement();
 };
 
 
-#endif /*TESTRUNNER_STAGE_HPP_*/
+}}//(End)namespace suite::step
+#endif /*TESTRUNNER_SUITE_STEP_JUDGEMENT_HPP_*/

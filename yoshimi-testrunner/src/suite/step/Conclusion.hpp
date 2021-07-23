@@ -1,5 +1,5 @@
 /*
- *  Stage - statefull environment used once for running the Testsuite
+ *  Conclusion - test steps to summarise a test case's outcome
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,47 +18,42 @@
  ***************************************************************/
 
 
-/** @file Stage.hpp
- ** Execution environment for performing the Testsuite.
- ** The testsuite is assembled by a TestBuilder, based on the test case definitions,
- ** resulting in a sequence of TestStep elements. These can then be invoked one by one
- ** on the \ref Stage, which is a one-way statefull environment, allowing to log any
- ** failures and to collect results.
+/** @file Conclusion.hpp
+ ** Recording the results and outcome of a single test case.
+ ** The testsuite is structured as a sequence of suite::TestStep components, established
+ ** and wired by TestBuilder. Several specialised steps together form a single test case.
+ ** The role of the last step for each test case is to derive and document an overall result.
  ** 
  ** @todo WIP as of 7/21
- ** @see Main.cpp usage
- ** @see Suite
+ ** @see TestCase.hpp
+ ** @see Invoker.hpp
  ** 
  */
 
 
-#ifndef TESTRUNNER_STAGE_HPP_
-#define TESTRUNNER_STAGE_HPP_
+#ifndef TESTRUNNER_SUITE_STEP_CONCLUSION_HPP_
+#define TESTRUNNER_SUITE_STEP_CONCLUSION_HPP_
 
 
 #include "util/nocopy.hpp"
-#include "suite/TestLog.hpp"
-#include "Config.hpp"
-#include "Suite.hpp"
+#include "suite/TestStep.hpp"
 
 //#include <string>
 
+namespace suite{
+namespace step {
+
 
 /**
- * Execution environment to perform a test suite once.
+ * Terminal step for each test case: produce overall result.
  */
-class Stage
-    : util::NonCopyable
+class Conclusion
+    : public TestStep
 {
-    suite::TestLog results_;
-
 public:
-    Stage(Config const& config);
-
-    void perform(Suite& suite);
-    void renderReport();
-    suite::ResCode getReturnCode()  const;
+    Conclusion();
 };
 
 
-#endif /*TESTRUNNER_STAGE_HPP_*/
+}}//(End)namespace suite::step
+#endif /*TESTRUNNER_SUITE_STEP_CONCLUSION_HPP_*/

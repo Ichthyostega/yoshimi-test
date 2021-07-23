@@ -40,10 +40,26 @@
 #define TESTRUNNER_SUITE_HPP_
 
 
-#include "util/nocopy.hpp"
 #include "Config.hpp"
+#include "setup/Builder.hpp"
+#include "suite/TestStep.hpp"
+#include "suite/Result.hpp"
+#include "util/nocopy.hpp"
 
+//#include <vector>
 //#include <string>
+
+
+/** Parsing of test definitions and Testsuite buildup */
+namespace setup { }
+
+/** Testsuite components and definitions */
+namespace suite {
+    /** Implementation of test building blocks */
+    namespace step { }
+}
+
+using setup::StepSeq;
 
 
 /**
@@ -53,6 +69,8 @@
 class Suite
     : util::NonCopyable
 {
+    StepSeq steps_;
+
 public:
     /**
      * Use the TestBuilder to interpret the test case specifications, resulting
@@ -60,7 +78,13 @@ public:
      * @param config the setup parametrisation.
      */
     Suite(Config const& config)
+        : steps_(setup::build(config))
     { }
+
+    using iterator = StepSeq::iterator;
+
+    iterator begin() { return steps_.begin(); }
+    iterator end()   { return steps_.end(); }
 };
 
 #endif /*TESTRUNNER_SUITE_HPP_*/

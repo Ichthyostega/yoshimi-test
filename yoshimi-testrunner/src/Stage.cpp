@@ -29,6 +29,9 @@
 #include "util/error.hpp"
 //#include "util/utils.hpp"
 #include "Stage.hpp"
+#include "suite/Result.hpp"
+
+using suite::ResCode;
 
 
 /**
@@ -36,6 +39,7 @@
  * @param config parametrisation to control some aspects of the test run.
  */
 Stage::Stage(Config const& config)
+    : results_{}
 { }
 
 
@@ -46,9 +50,10 @@ Stage::Stage(Config const& config)
  * test execution will be marked by output into the progress sink, which was
  * established on initialisation and based on the Config (typically -> STDOUT).
  */
-void Stage::perform(Suite const& suite)
+void Stage::perform(Suite& suite)
 {
-    UNIMPLEMENTED("actually execute the test suite within this stage");
+    for (auto& step : suite)
+        results_ << step.perform();
 }
 
 
@@ -70,7 +75,10 @@ void Stage::renderReport()
  *      - `code == 3` malfunction during test execution
  *      - `code == 4` fatal error and bail-out
  */
-int Stage::getReturnCode()  const
+suite::ResCode Stage::getReturnCode()  const
 {
-    UNIMPLEMENTED("generate exit code to indicate success or failure");
+    return results_.hasMalfunction()? ResCode::MALFUNCTION
+         : results_.hasViolations()?  ResCode::VIOLATION
+         : results_.hasWarnings()?    ResCode::WARNING
+         :                            ResCode::GREEN;
 }
