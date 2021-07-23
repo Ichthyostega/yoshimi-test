@@ -53,7 +53,7 @@ Stage::Stage(Config const& config)
 void Stage::perform(Suite& suite)
 {
     for (auto& step : suite)
-        results_ << step.perform();
+        results_ << step->perform();
 }
 
 

@@ -42,12 +42,30 @@
 #include "util/nocopy.hpp"
 #include "suite/TestStep.hpp"
 
+#include <filesystem>
+#include <algorithm>
 #include <vector>
+#include <deque>
 //#include <string>
 
 namespace setup {
 
-using StepSeq = std::vector<suite::TestStep>;
+/**
+ * A thin wrapper around the STL sequence container,
+ * with the ability to move-append a sequence of items
+ */
+class StepSeq
+    : public std::deque<std::unique_ptr<suite::TestStep>>
+{
+public:
+    template<class CON>
+    StepSeq& moveAppendAll(CON sequence)
+    {
+        std::move(std::begin(sequence), std::end(sequence), std::back_inserter(*this));
+        return *this;
+    }
+};
+
 
 
 /**
@@ -56,13 +74,52 @@ using StepSeq = std::vector<suite::TestStep>;
 class Builder
     : util::NonCopyable
 {
+    struct SubTraversal : std::vector<fs::path>
+    {
+        SubTraversal(fs::path root, fs::path item);
+        static bool isTestDefinition(fs::path);
+    };
+
+    const fs::path root_;
+    const fs::path topic_;
+    SubTraversal items_;
+
+    /* === Suite feature toggles === */
+    static bool verboseProgress_;
+    static bool updateBaseline_;
+
 public:
-    Builder();
+    Builder(fs::path root, fs::path topic ="")
+        : root_{root}
+        , topic_{topic}
+        , items_{root,topic}
+    { }
+
+    Builder& verboseProgress(bool indeed)
+    {
+        verboseProgress_ = indeed;
+        return *this;
+    }
+
+    Builder& updateBaseline(bool indeed)
+    {
+        updateBaseline_ = indeed;
+        return *this;
+    }
+
+    /** actually setup the test suite definition */
+    StepSeq build();
+
+private:
+    StepSeq buildTestcase(fs::path);
 };
 
 
 
-/** */
+/**
+ * Evaluate and interpret the test suite definition, as indicated by application Config.
+ * @return complete internally wired sequence of test steps, ready to be executed as Testsuite
+ */
 StepSeq build(Config const&);
 
 

@@ -1,0 +1,13 @@
+#
+# Yoshimi-Testsuite: the simple and the stupid
+#
+description = This is how the world ends...
+
+[Test]
+Script
+    set test target sound
+    execute
+End-Script
+
+checkBaseline = On
+checkTimings = Off
