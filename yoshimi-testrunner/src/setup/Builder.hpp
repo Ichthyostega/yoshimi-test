@@ -70,6 +70,7 @@ public:
 
 /**
  * Tool for evaluating test case definitions and building a TestStep graph.
+ * @note a Builder is always created for a directory tree.
  */
 class Builder
     : util::NonCopyable

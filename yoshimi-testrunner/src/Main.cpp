@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 {
     try {
         Config config{Config::fromCmdline(argc,argv)
-                     ,Config::fromFile("setup.ini")
+                     ,Config::fromFile(def::SETUP_INI)
                      ,Config::fromDefaultsIni()
                      };
         Suite suite{config};

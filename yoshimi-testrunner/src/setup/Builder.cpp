@@ -32,7 +32,10 @@
 #include "util/format.hpp"
 
 #include <cassert>
+#include <set>
 //#include <string>
+
+using std::set;
 
 namespace setup {
 
@@ -64,14 +67,26 @@ bool Builder::updateBaseline_;
 
 Builder::SubTraversal::SubTraversal(fs::path root, fs::path item)
 {
-    assert(fs::is_directory(root));
-    assert(fs::exists(root / item));
-    UNIMPLEMENTED("read directory, filter relevant items");
+    assert(fs::is_directory(root / item));
+
+    // filter relevant children sorted by name
+    set<fs::path> testcases;
+    set<fs::path> subfolders;
+    for (fs::directory_entry const& entry : fs::directory_iterator(root / item))
+        if (isTestDefinition(entry))
+            testcases.insert(entry.path().filename());
+        else if (fs::is_directory(entry))
+            subfolders.insert(entry.path().filename());
+
+    // consolidate into one list, testcases first, each part sorted (std::set)
+    std::move(testcases.begin(), testcases.end(), std::back_inserter(*this));
+    std::move(subfolders.begin(), subfolders.end(), std::back_inserter(*this));
 }
 
-bool Builder::SubTraversal::isTestDefinition(fs::path)
+bool Builder::SubTraversal::isTestDefinition(fs::path item)
 {
-    UNIMPLEMENTED("classify a directory entry as test definition spec");
+    return fs::is_regular_file(item)
+       and item.extension() == def::TESTSPEC_FILE_EXTENSION;
 }
 
 
@@ -80,10 +95,10 @@ StepSeq Builder::build()
 {
     StepSeq wiredSteps;
     for (auto subItem : items_)
-        if (SubTraversal::isTestDefinition(subItem))
-            wiredSteps.moveAppendAll(buildTestcase(subItem));
+        if (SubTraversal::isTestDefinition(root_ / topic_ / subItem))
+            wiredSteps.moveAppendAll(buildTestcase(topic_ / subItem));
         else
-            wiredSteps.moveAppendAll(Builder(root_, subItem).build());
+            wiredSteps.moveAppendAll(Builder(root_, topic_ / subItem).build());
     return wiredSteps;
 }
 
@@ -98,7 +113,7 @@ StepSeq Builder::build()
  */
 StepSeq Builder::buildTestcase(fs::path topicPath)
 {
-    UNIMPLEMENTED("Setup a suitable Mould and actually trigger wiring of all Steps for this testcase");
+    UNIMPLEMENTED("Setup a suitable Mould and actually trigger wiring of all Steps for testcase:" + util::formatVal(topicPath));
 }
 
 

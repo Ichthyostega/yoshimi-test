@@ -53,6 +53,13 @@ using util::contains;
 using std::string;
 using std::move;
 
+/** global hard wired default definitions */
+namespace def {
+    const char* const TESTSPEC_FILE_EXTENSION = ".test";
+    const char* const DEFAULTS_INI = "defaults.ini";
+    const char* const SETUP_INI = "setup.ini";
+}
+
 namespace {
     using MapS = std::map<string,string>;
 }

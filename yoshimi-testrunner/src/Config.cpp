@@ -235,7 +235,7 @@ ConfigSource Config::fromDefaultsIni()
                                            "within the current working directory, and define 'suitePath=...' there."};
 
                 auto testsuiteDir = fs::path{upperLayer[Config::KEY_suitePath]};
-                auto defaultsIni = testsuiteDir / "defaults.ini";
+                auto defaultsIni = testsuiteDir / def::DEFAULTS_INI;
 
                 if (not fs::is_directory(testsuiteDir))
                     throw error::Misconfig{"Directory "+showAbsolute(testsuiteDir)+" not accessible."};
