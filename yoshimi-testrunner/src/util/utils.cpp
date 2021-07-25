@@ -36,22 +36,33 @@ using std::regex;
 namespace util {
 
 namespace {
-    regex trueTokens { "\\s*(true|yes|on|1|\\+)\\s*",  regex::icase | regex::optimize };
-    regex falseTokens{ "\\s*(false|no|off|0|\\-)\\s*", regex::icase | regex::optimize };
+    const regex TRUE_TOKENS { "\\s*(true|yes|on|1|\\+)\\s*",  regex::icase | regex::optimize };
+    const regex FALSE_TOKENS{ "\\s*(false|no|off|0|\\-)\\s*", regex::icase | regex::optimize };
+
+    const regex TRIMMER{"\\s*(.*?)\\s*"};
 }
 
 bool boolVal(string const& textForm)
 {
-    if (regex_match(textForm, trueTokens))
+    if (regex_match(textForm, TRUE_TOKENS))
         return true;
-    if (regex_match(textForm, falseTokens))
+    if (regex_match(textForm, FALSE_TOKENS))
         return false;
     throw error::Invalid{"String '"+textForm+"' can not be interpreted as bool value" };
 }
 
 bool isYes (string const& textForm) noexcept
 {
-    return regex_match (textForm, trueTokens);
+    return regex_match (textForm, TRUE_TOKENS);
 }
+
+
+string trimmed(string text)
+{
+    std::smatch mat;
+    regex_match(text, mat, TRIMMER);
+    return mat[1];
+}
+
 
 }//(End)namespace util

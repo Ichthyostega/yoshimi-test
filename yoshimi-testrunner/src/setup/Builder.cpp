@@ -30,12 +30,18 @@
 
 #include "setup/Builder.hpp"
 #include "util/format.hpp"
+#include "util/parse.hpp"
 
+#include <iostream>
 #include <cassert>
 #include <set>
 //#include <string>
 
 using std::set;
+using std::cout;
+using std::endl;
+
+using util::formatVal;
 
 namespace setup {
 
@@ -49,7 +55,7 @@ StepSeq build(Config const& config)
 {
     fs::path suiteRoot = fs::absolute(fs::canonical(config.suitePath));
     if (not fs::is_directory(suiteRoot))
-        throw error::LogicBroken{"Entry point to Testsuite definition must be a Directory: "+util::formatVal(suiteRoot)};
+        throw error::LogicBroken{"Entry point to Testsuite definition must be a Directory: "+formatVal(suiteRoot)};
 
     return Builder(suiteRoot)
                 .verboseProgress(config.verbose)
@@ -79,7 +85,7 @@ Builder::SubTraversal::SubTraversal(fs::path root, fs::path item)
             subfolders.insert(entry.path().filename());
 
     // consolidate into one list, testcases first, each part sorted (std::set)
-    std::move(testcases.begin(), testcases.end(), std::back_inserter(*this));
+    std::move(testcases.begin(), testcases.end(),   std::back_inserter(*this));
     std::move(subfolders.begin(), subfolders.end(), std::back_inserter(*this));
 }
 
@@ -113,6 +119,14 @@ StepSeq Builder::build()
  */
 StepSeq Builder::buildTestcase(fs::path topicPath)
 {
+    MapS spec = util::parseSpec(root_ / topicPath);
+    if (verboseProgress_)
+    {
+        cout << ".\nTest-Spec("<<formatVal(topicPath)<<"):\n";
+        for (auto& entry : spec)
+            cout << entry.first<<"="<<entry.second<<"\n";
+        cout << "." << endl;
+    }
     UNIMPLEMENTED("Setup a suitable Mould and actually trigger wiring of all Steps for testcase:" + util::formatVal(topicPath));
 }
 

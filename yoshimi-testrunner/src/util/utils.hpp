@@ -20,9 +20,11 @@
 
 /** @file utils.hpp
  ** Collection of helper functions and abbreviations used to simplify code.
- ** - `isnil(arg)` checks if the argument is "empty"; argument can be a string or a container
- ** - some helper functions for working with strings (`startsWith`, `endsWith`, `removePrefix|Suffix`
- ** - generic containment check for maps, strings and iterable containers
+ ** - \ref isnil(arg) checks if the argument is "empty"; argument can be a string or a container
+ ** - some helper functions for working with strings (`startsWith`, `endsWith`, `removePrefix|Suffix`)
+ ** - \ref trim(string) extracts the content without leading and trailing whitespace
+ ** - \ref boolVal() and \ref isYes() interpret a string as boolean value
+ ** - \ref contains() generic containment check for maps, strings and iterable containers
  ** - Macro \ref STRINGIFY
  ** @todo WIP as of 7/21
  **
@@ -145,6 +147,9 @@ inline bool contains(SEQ const &cont, typename SEQ::const_reference val)
 
     return end != std::find(begin, end, val);
 }
+
+/** @return content without leading or trailing whitespace */
+string trimmed(string);
 
 /** interpret the given text as boolean value
  * @throws error::Invalid when the text is not any valid bool token

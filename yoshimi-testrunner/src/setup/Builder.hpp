@@ -26,11 +26,11 @@
  ** the definitions given for this test; a graph of suite::TestStep components
  ** can then be wired and lined up into the suite, which thus is a sequence
  ** of steps ready to be performed.
- ** 
- ** @todo WIP as of 7/21
+ **
  ** @see Suite.hpp usage
+ ** @see parseSpec(fs::path) for the test spec syntax
  ** @see Stage.hpp
- ** 
+ **
  */
 
 
@@ -46,7 +46,6 @@
 #include <algorithm>
 #include <vector>
 #include <deque>
-//#include <string>
 
 namespace setup {
 

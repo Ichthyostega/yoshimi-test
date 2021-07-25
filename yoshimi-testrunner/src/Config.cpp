@@ -34,20 +34,15 @@
 #include "util/error.hpp"
 #include "util/utils.hpp"
 #include "util/format.hpp"
+#include "util/parse.hpp"
 
-#include <regex>
-#include <fstream>
 #include <iostream>
 #include <argp.h>
 
-using std::ifstream;
-using std::regex;
-using std::smatch;
-using std::regex_match;
-using std::regex_search;
 using std::cout;
 using std::endl;
 
+using util::parseSpec;
 using util::isnil;
 using util::str;
 
@@ -78,46 +73,7 @@ string showAbsolute(fs::path path)
 
 
 
-/* ========= INI-File Syntax ========= */
-
-const string KEYWORD           = "[A-Za-z]\\w*";
-const string VAL_TRIMMED       = "\\s*(.+?)\\s*";
-const string KEY_TRIMMED       = "\\s*("+KEYWORD+"(?:\\."+KEYWORD+")*)\\s*";
-const string TRAILING_COMMENT  = "(?:#[^#]*)?";
-
-const string DEFINITION_SYNTAX = KEY_TRIMMED +"[:=]"+ VAL_TRIMMED + TRAILING_COMMENT;
-
-const regex PARSE_COMMENT_LINE{"^\\s*#"};
-const regex PARSE_DEFINITION{DEFINITION_SYNTAX, regex::ECMAScript | regex::optimize};
-
-
-MapS parseConfig(fs::path path)
-{
-    MapS settings;
-    if (fs::exists(path))
-    {
-        ifstream configFile(path);
-        if (not configFile.good())
-            throw error::Misconfig{"unable to read config file '"+string{path}+"'"};
-
-        uint n=0;
-        for (string line; std::getline(configFile, line); )
-        {
-            ++n;
-            if (isnil(line) or regex_search(line, PARSE_COMMENT_LINE))
-                continue;
-            smatch mat;
-            if (not regex_match(line, mat, PARSE_DEFINITION))
-                throw error::Misconfig{"invalid config line "+str(n)+" in '"+string{path}+"': "+line};
-            settings.insert({mat[1], mat[2]});
-        }
-    }
-    return settings;
-}
-
-
-
-/* ========= Program Options ========= */
+/* ========= Program Commandline Options ========= */
 
 const char* PROG_DOC = "Perform automated test suite for the Yoshimi soft synth.";
 const char* ARGS_DOC = "<suitePath>";
@@ -189,7 +145,7 @@ ConfigSource Config::fromFile(fs::path path)
     return ConfigSource{
         [=](Settings& upperLayer)
             {
-                supplySettings(upperLayer, parseConfig(path));
+                supplySettings(upperLayer, parseSpec(path));
             }
     };
 }
@@ -240,12 +196,12 @@ ConfigSource Config::fromDefaultsIni()
                 if (not fs::is_directory(testsuiteDir))
                     throw error::Misconfig{"Directory "+showAbsolute(testsuiteDir)+" not accessible."};
                 if (not fs::exists(defaultsIni))
-                    throw error::Misconfig{"Could not find 'defaults.ini' within the testsuite dir. "
+                    throw error::Misconfig{"Could not find '"+string{def::DEFAULTS_INI}+"' within the testsuite dir. "
                                            "Does the path "+showAbsolute(testsuiteDir)
                                           +" really point at a Yoshimi-testsuite?"};
 
                 supplySettings(upperLayer,
-                               parseConfig(defaultsIni));
+                               parseSpec(defaultsIni));
             }
     };
 }
@@ -255,12 +211,12 @@ ConfigSource Config::fromDefaultsIni()
 /** @internal dump effective config settings to STDOUT */
 void Config::dump(Settings rawSettings)
 {
-    cout << "Config::combined-settings..." <<endl;
+    cout << "Config::combined-settings...\n";
     for (auto& entry : rawSettings)
         dump(entry.first+"="+entry.second);
     cout << "Config::effective-settings..." <<endl;
 }
 void Config::dump(string msg)
 {
-    cout << "      ::"<<msg <<endl;
+    cout << "      ::"<<msg <<'\n';
 }
