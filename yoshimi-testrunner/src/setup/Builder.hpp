@@ -66,6 +66,9 @@ public:
 };
 
 
+/** hard wired defaults for test specifications */
+extern const MapS DEFAULT_TEST_SPEC;
+
 
 /**
  * Tool for evaluating test case definitions and building a TestStep graph.
@@ -84,31 +87,20 @@ class Builder
     const fs::path topic_;
     SubTraversal items_;
 
-    /* === Suite feature toggles === */
-    static bool verboseProgress_;
-    static bool updateBaseline_;
+    /** expose Config throughout the build */
+    Config const& config_;
 
 public:
-    Builder(fs::path root, fs::path topic ="")
+    Builder(Config const& config,
+            fs::path root, fs::path topic ="")
         : root_{root}
         , topic_{topic}
         , items_{root,topic}
+        , config_{config}
     { }
 
-    Builder& verboseProgress(bool indeed)
-    {
-        verboseProgress_ = indeed;
-        return *this;
-    }
-
-    Builder& updateBaseline(bool indeed)
-    {
-        updateBaseline_ = indeed;
-        return *this;
-    }
-
     /** actually setup the test suite definition */
-    StepSeq build();
+    StepSeq buildTree();
 
 private:
     StepSeq buildTestcase(fs::path);

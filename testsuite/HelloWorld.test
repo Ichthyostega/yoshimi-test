@@ -9,5 +9,5 @@ Script
     execute
 End-Script
 
-checkBaseline = On
-checkTimings = Off
+verifySound = On
+verifyTimes = Off

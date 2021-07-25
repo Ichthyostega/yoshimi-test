@@ -53,16 +53,6 @@ namespace { // Implementation details
 using MapS = std::map<string,string>;
 
 
-/**
- * Extend the existing configuration settings to fill in additional bindings with lower precedence.
- * @remark implementation relies on the behaviour of `std::map` to insert a new binding
- *         `key = value` only if this key is not already present in the map.
- */
-void supplySettings(MapS& existingSettings, MapS const& additionalSettings)
-{
-    existingSettings.insert(additionalSettings.begin(), additionalSettings.end());
-}
-
 string showAbsolute(fs::path path)
 {
     return util::formatVal(
@@ -134,6 +124,17 @@ MapS parseCommandline(int argc, char *argv[])
 
 
 
+
+
+/**
+ * Extend the existing specification settings to fill in additional bindings with lower precedence.
+ * @remark implementation relies on the behaviour of `std::map` to insert a new binding
+ *         `key = value` only if this key is not already present in the map.
+ */
+void Config::supplySettings(MapS& existingSettings, MapS const& additionalSettings)
+{
+    existingSettings.insert(additionalSettings.begin(), additionalSettings.end());
+}
 
 
 /**

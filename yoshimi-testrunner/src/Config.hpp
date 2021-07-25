@@ -58,6 +58,14 @@ namespace def {
     const char* const TESTSPEC_FILE_EXTENSION = ".test";
     const char* const DEFAULTS_INI = "defaults.ini";
     const char* const SETUP_INI = "setup.ini";
+
+    const char* const TYPE_CLI = "CLI";
+    const char* const TYPE_LV2 = "LV2";
+
+    const char* const KEY_Test_type    = "Test.type";
+    const char* const KEY_YoshimiExe   = "Test.YoshimiExe";
+    const char* const KEY_verifySound  = "Test.verifySound";
+    const char* const KEY_verifyTimes  = "Test.verifyTimes";
 }
 
 namespace {
@@ -208,6 +216,8 @@ public:
     static ConfigSource fromCmdline(int argc, char *argv[]);
 
 
+    static void supplySettings(MapS& existingSettings,
+                               MapS const& additionalSettings);
 
 private:
     static Settings combine_with_decreasing_precedence(std::initializer_list<ConfigSource> sources)

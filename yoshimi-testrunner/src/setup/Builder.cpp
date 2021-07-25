@@ -29,19 +29,26 @@
 
 
 #include "setup/Builder.hpp"
+#include "setup/Mould.hpp"
+#include "suite/Progress.hpp"
 #include "util/format.hpp"
 #include "util/parse.hpp"
 
 #include <iostream>
 #include <cassert>
+//#include <memory>
 #include <set>
 //#include <string>
 
 using std::set;
 using std::cout;
 using std::endl;
+//using std::make_shared;
 
 using util::formatVal;
+
+using namespace def;
+
 
 namespace setup {
 
@@ -57,17 +64,11 @@ StepSeq build(Config const& config)
     if (not fs::is_directory(suiteRoot))
         throw error::LogicBroken{"Entry point to Testsuite definition must be a Directory: "+formatVal(suiteRoot)};
 
-    return Builder(suiteRoot)
-                .verboseProgress(config.verbose)
-                .updateBaseline(config.baseline)
-                .build();
+    return Builder(config, suiteRoot)
+                .buildTree();
 }
 
 
-/* === Suite feature toggles === */
-
-bool Builder::verboseProgress_;
-bool Builder::updateBaseline_;
 
 
 
@@ -97,16 +98,29 @@ bool Builder::SubTraversal::isTestDefinition(fs::path item)
 
 
 
-StepSeq Builder::build()
+StepSeq Builder::buildTree()
 {
     StepSeq wiredSteps;
     for (auto subItem : items_)
         if (SubTraversal::isTestDefinition(root_ / topic_ / subItem))
             wiredSteps.moveAppendAll(buildTestcase(topic_ / subItem));
         else
-            wiredSteps.moveAppendAll(Builder(root_, topic_ / subItem).build());
+            wiredSteps.moveAppendAll(Builder(config_, root_, topic_ / subItem)
+                                            .buildTree());
     return wiredSteps;
 }
+
+
+
+
+/**
+ * @note all defaults for test specifications defined here
+ *       can be omitted within the actual *.test files.
+ */
+const MapS DEFAULT_TEST_SPEC{{KEY_Test_type,  TYPE_CLI}
+                            ,{KEY_verifySound, "Off"}
+                            ,{KEY_verifyTimes, "Off"}
+                            };
 
 
 /**
@@ -120,14 +134,23 @@ StepSeq Builder::build()
 StepSeq Builder::buildTestcase(fs::path topicPath)
 {
     MapS spec = util::parseSpec(root_ / topicPath);
-    if (verboseProgress_)
+    Config::supplySettings(spec, DEFAULT_TEST_SPEC);
+    spec.insert({KEY_YoshimiExe, config_.subject});
+
+    if (config_.verbose)
     {
         cout << ".\nTest-Spec("<<formatVal(topicPath)<<"):\n";
         for (auto& entry : spec)
             cout << entry.first<<"="<<entry.second<<"\n";
         cout << "." << endl;
     }
-    UNIMPLEMENTED("Setup a suitable Mould and actually trigger wiring of all Steps for testcase:" + util::formatVal(topicPath));
+
+    auto logger = config_.verbose? suite::Progress::diagnostic()
+                                 : suite::Progress::showTestName();
+
+    return useMould_for(spec[KEY_Test_type])
+                    .withProgress(logger)
+                    .generateStps(spec);
 }
 
 

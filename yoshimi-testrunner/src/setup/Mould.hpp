@@ -37,10 +37,20 @@
 
 
 #include "util/nocopy.hpp"
+#include "setup/Builder.hpp"
+#include "suite/Progress.hpp"
 
-//#include <string>
+#include <memory>
+#include <string>
+
 
 namespace setup {
+
+using std::string;
+using std::shared_ptr;
+
+using suite::PProgress;
+
 
 
 /**
@@ -49,9 +59,45 @@ namespace setup {
 class Mould
     : util::NonCopyable
 {
+    PProgress progressLog_;
+    StepSeq steps_;
+
 public:
-    Mould();
+    virtual ~Mould();  ///< this is an interface
+
+
+    Mould& withProgress(PProgress logger)
+    {
+        progressLog_ = logger;
+        return *this;
+    }
+
+    /** prepare this Mould for the next generation cycle */
+    virtual Mould& startCycle();
+
+    /** terminal builder operation: trigger generation. */
+    StepSeq generateStps(MapS const& spec)
+    {
+        materialise(spec);
+        StepSeq generatedSteps{std::move(this->steps_)};
+        this->steps_.clear();
+        return generatedSteps;
+    }
+
+private:
+    /**
+     * Extension Point: build actual test steps,
+     * according to the »blueprint« represented by this Mould
+     * @param spec specific definition of a single test case.
+     * @remark after invocation, #steps_ holds the planned actions.
+     */
+    virtual void materialise(MapS const& spec)  =0;
 };
+
+
+
+/** Entry point for the Builder: pick suitable Mould for testcase */
+Mould& useMould_for(string testTypeID);
 
 
 }//(End)namespace setup
