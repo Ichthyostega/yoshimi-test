@@ -36,6 +36,7 @@
 
 #include "util/nocopy.hpp"
 #include "suite/TestStep.hpp"
+#include "suite/step/Scaffolding.hpp"
 
 //#include <string>
 
@@ -49,8 +50,20 @@ namespace step {
 class Invoker
     : public TestStep
 {
+    Scaffolding& scaffolding_;
+
+
+    Result perform()  override
+    {
+        int retCode = scaffolding_.triggerTest();
+        return retCode==0? Result::OK()
+                         : Result{ResCode::MALFUNCTION, "Yoshimi exited with failure code."};
+    }
+
 public:
-    Invoker();
+    Invoker(Scaffolding& scaf)
+        : scaffolding_{scaf}
+    { }
 };
 
 

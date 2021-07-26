@@ -70,6 +70,7 @@ public:
 extern const MapS DEFAULT_TEST_SPEC;
 
 
+
 /**
  * Tool for evaluating test case definitions and building a TestStep graph.
  * @note a Builder is always created for a directory tree.
@@ -109,7 +110,7 @@ private:
 
 
 /**
- * Evaluate and interpret the test suite definition, as indicated by application Config.
+ * Entry Point: Evaluate and interpret the test suite definition, as indicated by application Config.
  * @return complete internally wired sequence of test steps, ready to be executed as Testsuite
  */
 StepSeq build(Config const&);

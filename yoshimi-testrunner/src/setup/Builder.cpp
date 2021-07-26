@@ -136,6 +136,7 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
     MapS spec = util::parseSpec(root_ / topicPath);
     Config::supplySettings(spec, DEFAULT_TEST_SPEC);
     spec.insert({KEY_YoshimiExe, config_.subject});
+    spec.insert({KEY_Test_topic, topicPath});
 
     if (config_.verbose)
     {

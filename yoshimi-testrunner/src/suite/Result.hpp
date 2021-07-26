@@ -34,6 +34,9 @@
 #define TESTRUNNER_SUITE_RESULT_HPP_
 
 
+#include "util/error.hpp"
+#include "util/utils.hpp"
+#include "util/format.hpp"
 #include "util/nocopy.hpp"
 
 //#include <string>
@@ -48,16 +51,39 @@ enum class ResCode : int
 ,   DEBACLE = -1
 };
 
+inline string showRes(ResCode code)
+{
+    switch (code)
+    {
+        case ResCode::GREEN:       return "OK";
+        case ResCode::WARNING:     return "Warn";
+        case ResCode::VIOLATION:   return "FAIL";
+        case ResCode::MALFUNCTION: return "Malfunction";
+        case ResCode::DEBACLE:     return "Abort";
+        default:
+            throw error::LogicBroken("Unknown Result Code "+util::str(int(code)));
+    }
+}
 
 
 /**
  * Captured status and findings from a single test case.
  */
-class Result
+struct Result
     : util::MoveOnly
 {
-public:
-    Result();
+    const ResCode code;
+    const string log;
+
+    Result(ResCode c, string msg="")
+        : code{c}
+        , log{showRes(c) +  (util::isnil(msg)? "." : ": "+msg)}
+    { }
+
+
+    static Result OK()             { return Result{ResCode::GREEN}; }
+    static Result Warn(string msg) { return Result{ResCode::WARNING, msg}; }
+    static Result Fail(string msg) { return Result{ResCode::VIOLATION, msg}; }
 };
 
 

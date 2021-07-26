@@ -39,6 +39,8 @@
 #include "suite/Result.hpp"
 
 //#include <string>
+#include <utility>
+#include <deque>
 
 namespace suite {
 
@@ -49,12 +51,20 @@ namespace suite {
 class TestLog
     : util::NonCopyable
 {
+    std::deque<Result> results_;
+
 public:
     TestLog() { };
 
     bool hasMalfunction() const;
     bool hasViolations()  const;
     bool hasWarnings()    const;
+
+    friend TestLog& operator<<(TestLog& log, Result res)
+    {
+        log.results_.emplace_back(std::move(res));
+        return log;
+    }
 };
 
 
@@ -74,10 +84,6 @@ inline bool TestLog::hasWarnings()  const
 }
 
 
-inline TestLog& operator<<(TestLog&, Result)
-{
-    UNIMPLEMENTED("add and account for a single test result");
-}
 
 
 

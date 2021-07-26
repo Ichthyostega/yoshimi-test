@@ -37,6 +37,8 @@
 #include "Config.hpp"
 #include "util/error.hpp"
 #include "setup/Mould.hpp"
+#include "suite/step/Scaffolding.hpp"
+#include "suite/step/Invoker.hpp"
 //#include "util/format.hpp"
 
 //#include <iostream>
@@ -56,6 +58,10 @@
 
 
 namespace setup {
+
+using namespace def;
+using namespace suite::step;
+
 
 // emit VTables here...
 Mould::~Mould() { }
@@ -77,7 +83,10 @@ class ExeCliMould
 {
     void materialise(MapS const& spec)  override
     {
-        UNIMPLEMENTED("wire a test setup for tests via CLI");
+        auto& launcher = addStep<ExeLauncher>(spec.at(KEY_YoshimiExe)
+                                             ,spec.at(KEY_Test_topic)
+                                             ,*progressLog_);
+        addStep<Invoker>(launcher);
     }
 public:
 };
@@ -98,6 +107,7 @@ public:
         UNIMPLEMENTED("Launching Tests via LV2 plugin");
     }
 };
+
 
 
 

@@ -38,8 +38,9 @@
 
 #include "util/nocopy.hpp"
 #include "suite/TestStep.hpp"
+#include "suite/Progress.hpp"
 
-//#include <string>
+#include <filesystem>
 
 namespace suite{
 namespace step {
@@ -47,12 +48,40 @@ namespace step {
 
 /**
  * Adapter for launching a test case into Yoshimi.
+ * This is both a TestStep as well as an interface on its own.
+ * - performing this step will load the Exe or LV2 plugin, possibly
+ *   feeding startup configuration
+ * - the following steps might then add a CLI script or MIDI data
+ * - an Invoker step will then call #triggerTest
+ * - further steps will investigate the generated output
  */
 class Scaffolding
     : public TestStep
 {
 public:
-    Scaffolding();
+    virtual ~Scaffolding();  ///< this is an interface
+
+    virtual int triggerTest()  =0;
+};
+
+
+class ExeLauncher
+    : public Scaffolding
+{
+    fs::path subject_;
+    fs::path topicPath_;
+    Progress& progressLog_;
+
+
+    Result perform()  override;
+
+public:
+    ExeLauncher(fs::path testSubject
+               ,fs::path topicPath
+               ,Progress& progress);
+
+
+    int triggerTest()  override;
 };
 
 

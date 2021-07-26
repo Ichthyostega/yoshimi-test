@@ -36,7 +36,16 @@
 #include "util/error.hpp"
 #include "suite/Progress.hpp"
 
-//#include <string>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <deque>
+
+using std::string;
+using std::deque;
+using std::cout;
+using std::endl;
+
 
 namespace suite {
 
@@ -46,15 +55,45 @@ namespace suite {
 Progress::~Progress() { }
 
 
+class OutputCapturingSimpleProgress
+    : public Progress
+{
+    bool echo_;
+    deque<string> output_;
+
+
+    void indicateTest(fs::path topicPath)  override
+    {
+        output_.clear();
+        output_.emplace_back("Running: "+topicPath.string());
+        cout << output_.back() <<endl;
+    }
+
+    void indicateOutput(string line)  override
+    {
+        output_.emplace_back(line);
+        if (echo_)
+            cout << output_.back() <<endl;
+    }
+
+public:
+    OutputCapturingSimpleProgress(bool shallEchoOutput =false)
+        : echo_{shallEchoOutput}
+    { }
+};
+
+
+
 PProgress Progress::showTestName()
 {
-    UNIMPLEMENTED("build Progress subclass just indicating the name of each test");
+    return std::make_shared<OutputCapturingSimpleProgress>();
 }
 
 
 PProgress Progress::diagnostic()
 {
-    UNIMPLEMENTED("build Progress subclass to forward output of the subject to STDOUT");
+    return std::make_shared<OutputCapturingSimpleProgress>(true);
 }
+
 
 }//(End)namespace suite

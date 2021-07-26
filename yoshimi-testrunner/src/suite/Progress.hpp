@@ -41,14 +41,17 @@
 
 #include "util/nocopy.hpp"
 
-//#include <string>
 #include <filesystem>
 #include <memory>
+#include <string>
 
 namespace fs = std::filesystem;
 
 
 namespace suite {
+
+using std::string;
+
 
 class Progress;
 using PProgress = std::shared_ptr<Progress>;
@@ -75,6 +78,9 @@ public:
 
     /** indicate name of the next test launched now */
     virtual void indicateTest(fs::path topicPath)   =0;
+
+    /** capture and maybe show ongoing output */
+    virtual void indicateOutput(string line)        =0;
 };
 
 

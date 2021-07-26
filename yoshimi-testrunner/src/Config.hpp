@@ -63,6 +63,7 @@ namespace def {
     const char* const TYPE_LV2 = "LV2";
 
     const char* const KEY_Test_type    = "Test.type";
+    const char* const KEY_Test_topic   = "Test.topic";
     const char* const KEY_YoshimiExe   = "Test.YoshimiExe";
     const char* const KEY_verifySound  = "Test.verifySound";
     const char* const KEY_verifyTimes  = "Test.verifyTimes";
