@@ -46,9 +46,6 @@ using std::regex_search;
 using std::filesystem::path;
 using std::filesystem::exists;
 
-using util::isnil;
-using util::str;
-
 
 
 namespace { // Implementation details
@@ -78,6 +75,16 @@ namespace { // Implementation details
     inline string indicate(path path, uint lineno, string content)
     {
         return " (File "+formatVal(path)+", line:"+str(lineno)+": '"+content+"')";
+    }
+
+    inline string stripQuotes(string text)
+    {
+        if (startsWith(text, "\"") and endsWith(text, "\""))
+        {
+            text = text.substr(1);
+            text.resize(text.length() - 1);
+        }
+        return text;
     }
 }//(End)Implementation namespace
 
@@ -130,7 +137,7 @@ MapS parseSpec(path path)
                 sectionID = string{mat[1]} + ".";
             else
             if (regex_match(line, mat, PARSE_DEFINITION))
-                settings[sectionID+string{mat[1]}] = mat[2];
+                settings[sectionID+string{mat[1]}] = stripQuotes(mat[2]);
             else
                 throw error::Misconfig{"Invalid definition."+indicate(path,n,line)};
         }

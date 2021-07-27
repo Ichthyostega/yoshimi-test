@@ -38,10 +38,20 @@
 
 #include "util/nocopy.hpp"
 #include "suite/TestLog.hpp"
+#include "util/tee.hpp"
 #include "Config.hpp"
 #include "Suite.hpp"
 
 //#include <string>
+#include <memory>
+
+
+
+namespace suite {
+    class Report;
+
+    using PReport = std::unique_ptr<Report>;
+}
 
 
 /**
@@ -51,9 +61,11 @@ class Stage
     : util::NonCopyable
 {
     suite::TestLog results_;
+    suite::PReport report_;
 
 public:
     Stage(Config const& config);
+   ~Stage();
 
     void perform(Suite& suite);
     void renderReport();

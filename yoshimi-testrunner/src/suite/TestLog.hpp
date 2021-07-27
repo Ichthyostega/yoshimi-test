@@ -60,31 +60,44 @@ public:
     bool hasViolations()  const;
     bool hasWarnings()    const;
 
-    friend TestLog& operator<<(TestLog& log, Result res)
-    {
-        log.results_.emplace_back(std::move(res));
-        return log;
-    }
+    uint cntTests()       const;
+
+    friend TestLog& operator<<(TestLog&, Result);
 };
+
+
+inline TestLog& operator<<(TestLog& log, Result res)
+{
+    log.results_.emplace_back(std::move(res));
+    return log;
+}
 
 
 inline bool TestLog::hasMalfunction()  const
 {
-    UNIMPLEMENTED("find out if a malfunction happened during test suite execution");
+    return std::any_of(results_.begin(), results_.end(),
+                       [](Result const& result){ return result.code == ResCode::MALFUNCTION; });
 }
 
 inline bool TestLog::hasViolations()  const
 {
-    UNIMPLEMENTED("find out if some test case(s) detected violation of expectations");
+    return std::any_of(results_.begin(), results_.end(),
+                       [](Result const& result){ return result.code == ResCode::VIOLATION; });
 }
 
 inline bool TestLog::hasWarnings()  const
 {
-    UNIMPLEMENTED("find out if some test case(s) produced a warning");
+    return std::any_of(results_.begin(), results_.end(),
+                       [](Result const& result){ return result.code == ResCode::WARNING; });
 }
 
 
-
+/** @remark by convention there one suite::Statistics entry is emitted for each test case */
+inline uint TestLog::cntTests()  const
+{
+    return std::count_if(results_.begin(), results_.end(),
+                       [](Result const& result){ return result.stats.has_value(); } );
+}
 
 
 }//(End)namespace suite

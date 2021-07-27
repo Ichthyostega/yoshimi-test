@@ -39,9 +39,17 @@
 #include "util/format.hpp"
 #include "util/nocopy.hpp"
 
-//#include <string>
+#include <filesystem>
+#include <optional>
+
+
+namespace fs = std::filesystem;
 
 namespace suite {
+
+using util::isnil;
+using std::optional;
+
 
 enum class ResCode : int
 {   GREEN     =0
@@ -67,6 +75,15 @@ inline string showRes(ResCode code)
 
 
 /**
+ * Statistics Data collected after completing a single test case.
+ */
+struct Statistics
+{
+    const fs::path topic;
+};
+
+
+/**
  * Captured status and findings from a single test case.
  */
 struct Result
@@ -74,12 +91,19 @@ struct Result
 {
     const ResCode code;
     const string log;
+    const optional<Statistics> stats;
+
 
     Result(ResCode c, string msg="")
         : code{c}
-        , log{showRes(c) +  (util::isnil(msg)? "." : ": "+msg)}
+        , log{showRes(c) +  (isnil(msg)? "." : ": "+msg)}
     { }
 
+    Result(Statistics data, string msg="")
+        : code(ResCode::GREEN)
+        , log{msg}
+        , stats{std::move(data)}
+    { }
 
     static Result OK()             { return Result{ResCode::GREEN}; }
     static Result Warn(string msg) { return Result{ResCode::WARNING, msg}; }

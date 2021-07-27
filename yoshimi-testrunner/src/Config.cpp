@@ -74,6 +74,7 @@ const argp_option OPTIONS[] =
     {{"subject",    10,  "<exe>", 0, "Yoshimi executable (default /usr/bin/yoshimi)", 0}
     ,{"baseline",   11,  nullptr, 0, "activate baseline capturing mode: overwrite baseline WAV when detecting difference", 1}
     ,{"verbose",   'v',  nullptr, 0, "verbose diagnostic output while running tests", 2}
+    ,{"report",     12,  "<file>",0, "save test report into the given file", 3}
     ,{ nullptr }
     };
 

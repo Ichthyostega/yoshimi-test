@@ -173,6 +173,7 @@ public:
     CFG_PARAM(fs::path, suitePath);
     CFG_PARAM(bool,     baseline);
     CFG_PARAM(bool,     verbose);
+    CFG_PARAM(fs::path, report);
 
 
 private: /* ===== Initialisation from raw settings ===== */
@@ -186,6 +187,7 @@ private: /* ===== Initialisation from raw settings ===== */
         , suitePath{rawSettings[KEY_suitePath]}
         , baseline {rawSettings[KEY_baseline].as<bool>()}
         , verbose  {rawSettings[KEY_verbose].as<bool>()}
+        , report   {rawSettings[KEY_report]}
     {
         if (verbose)
         {
@@ -194,6 +196,7 @@ private: /* ===== Initialisation from raw settings ===== */
             CFG_DUMP(suitePath);
             CFG_DUMP(baseline);
             CFG_DUMP(verbose);
+            CFG_DUMP(report);
         }
     }
 

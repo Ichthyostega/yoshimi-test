@@ -30,8 +30,14 @@
 //#include "util/utils.hpp"
 #include "Stage.hpp"
 #include "suite/Result.hpp"
+#include "suite/Report.hpp"
 
 using suite::ResCode;
+
+
+
+// emit dtors here...
+Stage::~Stage() { }
 
 
 /**
@@ -40,6 +46,7 @@ using suite::ResCode;
  */
 Stage::Stage(Config const& config)
     : results_{}
+    , report_{new suite::Report{config}}
 { }
 
 
@@ -63,7 +70,7 @@ void Stage::perform(Suite& suite)
  */
 void Stage::renderReport()
 {
-    UNIMPLEMENTED("render a test report based on captured log");
+    report_->generate(results_);
 }
 
 

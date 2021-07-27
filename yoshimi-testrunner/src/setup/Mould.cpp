@@ -39,6 +39,7 @@
 #include "setup/Mould.hpp"
 #include "suite/step/Scaffolding.hpp"
 #include "suite/step/Invoker.hpp"
+#include "suite/step/Summary.hpp"
 //#include "util/format.hpp"
 
 //#include <iostream>
@@ -86,7 +87,9 @@ class ExeCliMould
         auto& launcher = addStep<ExeLauncher>(spec.at(KEY_YoshimiExe)
                                              ,spec.at(KEY_Test_topic)
                                              ,*progressLog_);
-        addStep<Invoker>(launcher);
+        auto& invoker  = addStep<Invoker>(launcher);
+
+        /*mark done*/    addStep<Summary>(spec.at(KEY_Test_topic), invoker);
     }
 public:
 };
@@ -101,11 +104,11 @@ public:
 class LV2PluginMould
     : public Mould
 {
-public:
     void materialise(MapS const& spec)  override
     {
         UNIMPLEMENTED("Launching Tests via LV2 plugin");
     }
+public:
 };
 
 

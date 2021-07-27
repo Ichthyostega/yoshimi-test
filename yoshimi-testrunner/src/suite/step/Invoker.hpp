@@ -51,12 +51,14 @@ class Invoker
     : public TestStep
 {
     Scaffolding& scaffolding_;
+    bool performed_ = false;
 
 
     Result perform()  override
     {
         int retCode = scaffolding_.triggerTest();
-        return retCode==0? Result::OK()
+        performed_ = (retCode==0);
+        return performed_? Result::OK()
                          : Result{ResCode::MALFUNCTION, "Yoshimi exited with failure code."};
     }
 
@@ -64,6 +66,8 @@ public:
     Invoker(Scaffolding& scaf)
         : scaffolding_{scaf}
     { }
+
+    bool isPerformed() { return performed_; }
 };
 
 
