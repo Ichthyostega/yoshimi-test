@@ -41,9 +41,14 @@
 #include "suite/Progress.hpp"
 
 #include <filesystem>
+#include <memory>
 
 namespace suite{
 namespace step {
+
+using std::unique_ptr;
+
+class Watcher;
 
 
 /**
@@ -72,10 +77,13 @@ class ExeLauncher
     fs::path topicPath_;
     Progress& progressLog_;
 
+    unique_ptr<Watcher> subprocess_;
+
 
     Result perform()  override;
 
 public:
+   ~ExeLauncher();
     ExeLauncher(fs::path testSubject
                ,fs::path topicPath
                ,Progress& progress);

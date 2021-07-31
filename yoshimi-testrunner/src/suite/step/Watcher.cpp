@@ -1,5 +1,5 @@
 /*
- *  Scaffolding - prepare the subject for launching a test case
+ *  Watcher - to oversee output and termination of a subprocess
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -32,50 +32,29 @@
 
 
 
-#include "suite/step/Scaffolding.hpp"
 #include "suite/step/Watcher.hpp"
-#include "util/format.hpp"
+#include "util/error.hpp"
+//#include "util/format.hpp"
 
 //#include <string>
 
-using util::formatVal;
+//using util::formatVal;
 
 namespace suite{
 namespace step {
 
 
-// Emit VTables and dtors here....
-Scaffolding::~Scaffolding() { }
-ExeLauncher::~ExeLauncher() { }
+SubProcHandle launchSubprocess(fs::path executable)
+{
+    UNIMPLEMENTED("launch Subprocess and arrange for connected input/output pipes");
+}
 
 
-/** */
-ExeLauncher::ExeLauncher(fs::path testSubject
-                        ,fs::path topicPath
-                        ,Progress& progress)
-    : subject_{testSubject}
-    , topicPath_{topicPath}
-    , progressLog_{progress}
+// xxEmit VTables here....
+Watcher::Watcher(SubProcHandle chld)
+    : child_{chld}
 { }
 
-
-Result ExeLauncher::perform()
-{
-    progressLog_.indicateTest(topicPath_);
-    if (not fs::exists(subject_))
-        return Result{ResCode::MALFUNCTION, "Executable not found: "+formatVal(subject_)};
-
-    progressLog_.indicateOutput("ExeLaucher: start Yoshimi subprocess...");
-    subprocess_.reset(new Watcher(launchSubprocess(subject_)));
-    return Result::OK();
-}
-
-
-int ExeLauncher::triggerTest()
-{
-    progressLog_.indicateOutput("TODO: trigger test in Yoshimi...");
-    return int(ResCode::DEBACLE);
-}
 
 
 }}//(End)namespace suite::step
