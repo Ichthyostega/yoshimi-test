@@ -24,6 +24,7 @@
  **                        Typically raising this exception implies a programming error.
  ** - error::Misconfig   : settings in configuration files or commandline miss expectations.
  ** - error::ToDo        : marker for "Stubs" or planned functionality during development.
+ ** - error::State       : unexpected state or failure in system call.
  **
  ** \par Shortcuts and Helpers
  ** - Macro \ref UNIMPLEMENTED : shortcut for raising a error::ToDo
@@ -73,6 +74,15 @@ class Invalid : public logic_error
 public:
     Invalid(string msg) :
         logic_error{"Invalid Data: "+msg}
+    { }
+};
+
+
+class State : public logic_error
+{
+public:
+    State(string msg) :
+        logic_error{"Unforeseen state: "+msg}
     { }
 };
 

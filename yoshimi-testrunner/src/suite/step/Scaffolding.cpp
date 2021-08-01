@@ -49,7 +49,7 @@ Scaffolding::~Scaffolding() { }
 ExeLauncher::~ExeLauncher() { }
 
 
-/** */
+
 ExeLauncher::ExeLauncher(fs::path testSubject
                         ,fs::path topicPath
                         ,Progress& progress)
@@ -66,7 +66,7 @@ Result ExeLauncher::perform()
         return Result{ResCode::MALFUNCTION, "Executable not found: "+formatVal(subject_)};
 
     progressLog_.indicateOutput("ExeLaucher: start Yoshimi subprocess...");
-    subprocess_.reset(new Watcher(launchSubprocess(subject_)));
+    subprocess_.reset(new Watcher(launchSubprocess(subject_, ArgVect{})));
     return Result::OK();
 }
 

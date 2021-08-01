@@ -24,21 +24,21 @@
  ** launched as a subprocess. After successfully starting, the setup- and test scripts
  ** are fed into the STDIN of this process to reach the Yoshimi CLI; at the same time the
  ** STDOUT and STDERR of the test subject must be captured to observe the progress of testing.
- ** 
+ **
  ** # Technology
- ** 
+ **
  ** We use `posix_spawn()` to start a child process; this setup is equivalent to the well known
  ** sequence of `fork()` to create a clone of the current process (the yoshimi-testrunner) as
  ** child process, sharing all open files and pipes with the parent, then followed by a call to
  ** the `exec*()` family of POSIX functions, which replace the address space of the child with
- ** the executable launched thereby. The result is a child process running the desired excutable
+ ** the executable launched thereby. The result is a child process running the desired executable
  ** under a known PID, and a set of _pipes_ connected to the subject's STDIN, STDOUT and STDERR.
- ** 
+ **
  ** The \ref Watcher component encapsulates the setup for supervision; a dedicated thread is
- ** spawned to receive and evaluate the output channels, possibly to kille the subject and
+ ** spawned to receive and evaluate the output channels, possibly to kill the subject and
  ** to reap the exit value. The main thread, which performs the test suite, can tap into
  ** this supervision by blocking on Futures, to await expected stages of the test to
- ** be reached with a timeout as safequard.
+ ** be reached with a timeout as safeguard.
  ** 
  ** @todo WIP as of 7/21
  ** @see Schaffolding.hpp
@@ -54,6 +54,7 @@
 #include "util/nocopy.hpp"
 
 #include <filesystem>
+#include <vector>
 
 namespace suite{
 namespace step {
@@ -63,19 +64,24 @@ namespace fs = std::filesystem;
 
 struct SubProcHandle
 {
-    size_t pid;
+    int pid;
     int pipeSTDIN;
     int pipeSTDOUT;
     int pipeSTDERR;
 };
 
+using ArgVect = std::vector<const char*>;
+
 /**
  * Launch a subprocess and connect it's input/output pipes.
+ * @arg executable a complete path to the executable to launch
+ * @arg arguments a vector with the actual arguments to pass;
+ *      the 0th argument (=filename) will be injected automatically.
  * @remark the implementation is based on [posix_spawn()]
  *
  * [posix_spawn()]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/posix_spawn.html
  */
-SubProcHandle launchSubprocess(fs::path executable);
+SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments);
 
 
 
