@@ -69,7 +69,14 @@ class OutputCapturingSimpleProgress
         cout << output_.back() <<endl;
     }
 
-    void indicateOutput(string line)  override
+    void out(string line)  override
+    {
+        output_.emplace_back(line);
+        if (echo_)
+            cout << output_.back() <<endl;
+    }
+
+    void err(string line)  override
     {
         output_.emplace_back(line);
         if (echo_)

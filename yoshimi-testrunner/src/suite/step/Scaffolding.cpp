@@ -65,15 +65,20 @@ Result ExeLauncher::perform()
     if (not fs::exists(subject_))
         return Result{ResCode::MALFUNCTION, "Executable not found: "+formatVal(subject_)};
 
-    progressLog_.indicateOutput("ExeLaucher: start Yoshimi subprocess...");
-    subprocess_.reset(new Watcher(launchSubprocess(subject_, ArgVect{})));
+    arguments_.push_back("--null");   // instruct Yoshimi not to connect to any Audio/MIDI.
+    arguments_.push_back("--no-gui"); //              ... and to run CLI only.
+    progressLog_.out("ExeLaucher: start Yoshimi subprocess...");
+    subprocess_.reset(new Watcher(launchSubprocess(subject_, arguments_), progressLog_));
     return Result::OK();
 }
 
 
 int ExeLauncher::triggerTest()
 {
-    progressLog_.indicateOutput("TODO: trigger test in Yoshimi...");
+    progressLog_.out("TODO: trigger test in Yoshimi...");
+    /////////////////////////////////////////////////////////TODO have a test script in a string field within ExeLauncher
+    /////////////////////////////////////////////////////////TODO use the Watcher to feed this into the child process
+    subprocess_->TODO_forceQuit();
     return int(ResCode::DEBACLE);
 }
 

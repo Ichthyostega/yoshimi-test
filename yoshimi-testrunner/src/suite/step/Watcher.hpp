@@ -52,8 +52,10 @@
 
 
 #include "util/nocopy.hpp"
+#include "suite/Progress.hpp"
 
 #include <filesystem>
+#include <thread>
 #include <vector>
 
 namespace suite{
@@ -65,9 +67,8 @@ namespace fs = std::filesystem;
 struct SubProcHandle
 {
     int pid;
-    int pipeSTDIN;
-    int pipeSTDOUT;
-    int pipeSTDERR;
+    int pipeChildIN;
+    int pipeChildOUT;
 };
 
 using ArgVect = std::vector<const char*>;
@@ -92,10 +93,16 @@ SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments);
 class Watcher
     : util::NonCopyable
 {
-    SubProcHandle child_;
+    const SubProcHandle child_;
+    std::thread listener_;
 
 public:
-    Watcher(SubProcHandle chld);
+    Watcher(SubProcHandle chld, Progress&);
+   ~Watcher();
+
+    void TODO_forceQuit();
+private:
+    void observeOutput(Progress&);
 };
 
 

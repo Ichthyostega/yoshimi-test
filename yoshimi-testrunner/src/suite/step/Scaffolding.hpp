@@ -41,12 +41,16 @@
 #include "suite/Progress.hpp"
 
 #include <filesystem>
+#include <vector>
 #include <memory>
 
 namespace suite{
 namespace step {
 
 using std::unique_ptr;
+
+using ArgVect = std::vector<const char*>;
+
 
 class Watcher;
 
@@ -76,6 +80,7 @@ class ExeLauncher
     fs::path subject_;
     fs::path topicPath_;
     Progress& progressLog_;
+    ArgVect arguments_;
 
     unique_ptr<Watcher> subprocess_;
 

@@ -40,14 +40,29 @@
 
 #include "suite/step/Watcher.hpp"
 #include "util/error.hpp"
-//#include "util/format.hpp"
+#include "util/format.hpp"///////TODO
 
 #include <unistd.h>
 #include <spawn.h>
 #include <cassert>
+#include <iostream>
 #include <string>
 
-//using util::formatVal;
+/// @note non-standard GNU extension to open POSIX filehandle
+#include <ext/stdio_filebuf.h>
+
+using std::cerr;
+using std::endl;
+using util::formatVal;//////////TODO
+
+
+/**
+ * A null terminated list holding current process environment in `key=value` format.
+ * @remark nonstandard but defined by all known compilers
+ */
+extern char** environ;
+
+
 
 namespace suite{
 namespace step {
@@ -58,20 +73,17 @@ SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments)
     enum PipeEnd{ READ=0, WRITE };
 
     SubProcHandle childHandle;
-    int parent2childSTDIN[2];
-    int child2parentSTDOUT[2];
-    int child2parentSTDERR[2];
+    int parent2child[2];
+    int child2parent[2];
 
     int res;
 #define ___MAYBE_FAIL(_MSG_) \
     if (res < 0) throw error::State("failed to " _MSG_)
 
     // Create pipes to connect with child process...
-    res = pipe(parent2childSTDIN);
+    res = pipe(parent2child);
     ___MAYBE_FAIL("create pipe parent->child");
-    res = pipe(child2parentSTDOUT);
-    ___MAYBE_FAIL("create pipe child->parent");
-    res = pipe(child2parentSTDERR);
+    res = pipe(child2parent);
     ___MAYBE_FAIL("create pipe child->parent");
 
     // Define I/O connections to be wired within child *after* the fork()
@@ -79,19 +91,17 @@ SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments)
     res = posix_spawn_file_actions_init(&actions_after_fork);
     ___MAYBE_FAIL("init POSIX spawn-file-actions");
 
-    res = posix_spawn_file_actions_adddup2 (&actions_after_fork, parent2childSTDIN[PipeEnd::READ],    STDIN_FILENO);
+    res = posix_spawn_file_actions_adddup2 (&actions_after_fork, parent2child[PipeEnd::READ],   STDIN_FILENO);
     ___MAYBE_FAIL("prepare connection of child STDIN");
-    res = posix_spawn_file_actions_adddup2 (&actions_after_fork, child2parentSTDOUT[PipeEnd::WRITE], STDOUT_FILENO);
+    res = posix_spawn_file_actions_adddup2 (&actions_after_fork, child2parent[PipeEnd::WRITE], STDOUT_FILENO);
     ___MAYBE_FAIL("prepare connection of child STDOUT");
-    res = posix_spawn_file_actions_adddup2 (&actions_after_fork, child2parentSTDERR[PipeEnd::WRITE], STDERR_FILENO);
-    ___MAYBE_FAIL("prepare connection of child STDERR");
+    res = posix_spawn_file_actions_adddup2 (&actions_after_fork, child2parent[PipeEnd::WRITE], STDERR_FILENO);
+    ___MAYBE_FAIL("prepare redirect child STDERR");
 
     // Child must close those pipe ends to be used by the parent
-    res = posix_spawn_file_actions_addclose(&actions_after_fork, parent2childSTDIN[PipeEnd::WRITE]);
+    res = posix_spawn_file_actions_addclose(&actions_after_fork, parent2child[PipeEnd::WRITE]);
     ___MAYBE_FAIL("prepare to close write end of parent->child");
-    res = posix_spawn_file_actions_addclose(&actions_after_fork, child2parentSTDOUT[PipeEnd::READ]);
-    ___MAYBE_FAIL("prepare to close read end of child->parent");
-    res = posix_spawn_file_actions_addclose(&actions_after_fork, child2parentSTDERR[PipeEnd::READ]);
+    res = posix_spawn_file_actions_addclose(&actions_after_fork, child2parent[PipeEnd::READ]);
     ___MAYBE_FAIL("prepare to close read end of child->parent");
 
     // Setup further child attributes
@@ -108,7 +118,7 @@ SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments)
     auto args = const_cast<char* const*>(arguments.data());
 
     // pass Environment of the test-runner unaltered into child process
-    char* const * environment = nullptr;
+    char* const * environment = environ;
 
     // Spawn the child process...
     res = posix_spawnp (&childHandle.pid, exePath, &actions_after_fork, &childAttribs, args, environment);
@@ -116,26 +126,64 @@ SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments)
 
 
     // After child process is launched, parent must close the pipe ends to be used by the child
-    res = close(parent2childSTDIN[PipeEnd::READ]);
+    res = close(parent2child[PipeEnd::READ]);
     ___MAYBE_FAIL("close read end of STDIN-pipe within parent");
-    res = close(child2parentSTDOUT[PipeEnd::WRITE]);
+    res = close(child2parent[PipeEnd::WRITE]);
     ___MAYBE_FAIL("close write end of STDOUT-pipe within parent");
-    res = close(child2parentSTDERR[PipeEnd::WRITE]);
-    ___MAYBE_FAIL("close write end of STDERR-pipe within parent");
 
     // and these are the pipe ends to retain for communication...
-    childHandle.pipeSTDIN  = parent2childSTDIN[PipeEnd::WRITE];
-    childHandle.pipeSTDOUT = child2parentSTDOUT[PipeEnd::READ];
-    childHandle.pipeSTDERR = child2parentSTDERR[PipeEnd::READ];
+    childHandle.pipeChildIN  = parent2child[PipeEnd::WRITE];
+    childHandle.pipeChildOUT = child2parent[PipeEnd::READ];
     assert(childHandle.pid > 0);
     return childHandle;
 }
 
 
 
-Watcher::Watcher(SubProcHandle chld)
+Watcher::Watcher(SubProcHandle chld, Progress& log)
     : child_{chld}
+    , listener_{[this,&log]() { observeOutput(log); }}
 { }
+
+
+Watcher::~Watcher() ///< @note blocks until the child output listener thread has terminated
+try {
+     if (listener_.joinable())
+         listener_.join();
+}
+catch(std::exception const& ex) {
+    cerr << "WARNING: failure while disposing Watcher thread: "<<ex.what()<< endl;
+} catch(...) {
+    cerr << "WARNING: unidentified problems in Watcher destructor."<< endl;
+}
+
+
+/**
+ * Output listener thread: receive and watch output from child process
+ */
+void Watcher::observeOutput(Progress& log)
+{
+    __gnu_cxx::stdio_filebuf<char> filebuf(child_.pipeChildOUT, std::ios::in);
+    std::istream outputFromChild(&filebuf);
+
+    log.out("==Listener=Thread==");
+    for (string line; std::getline(outputFromChild, line); )
+    {
+        log.out(line);
+    }
+}
+
+/**
+ * @todo placeholder code to terminate Yoshimi instead of launching a test
+ */
+void Watcher::TODO_forceQuit()
+{
+    __gnu_cxx::stdio_filebuf<char> filebuf(child_.pipeChildIN, std::ios::out);
+    std::ostream intputToChild(&filebuf);
+
+    usleep(2*1000*1000);
+    intputToChild << "exit force"<<endl;
+}
 
 
 

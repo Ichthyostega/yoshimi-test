@@ -79,8 +79,10 @@ public:
     /** indicate name of the next test launched now */
     virtual void indicateTest(fs::path topicPath)   =0;
 
-    /** capture and maybe show ongoing output */
-    virtual void indicateOutput(string line)        =0;
+    /** capture and maybe show ongoing output  */
+    virtual void out(string line)                   =0;
+    /** capture and maybe show error condition */
+    virtual void err(string line)                   =0;
 };
 
 
