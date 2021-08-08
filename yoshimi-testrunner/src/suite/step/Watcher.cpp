@@ -41,15 +41,13 @@
 #include "suite/step/Watcher.hpp"
 #include "util/error.hpp"
 #include "util/format.hpp"///////TODO
+#include "util/filehandle.hpp"
 
 #include <unistd.h>
 #include <spawn.h>
 #include <cassert>
 #include <iostream>
 #include <string>
-
-/// @note non-standard GNU extension to open POSIX filehandle
-#include <ext/stdio_filebuf.h>
 
 using std::cerr;
 using std::endl;
@@ -140,6 +138,8 @@ SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments)
 
 
 
+
+
 Watcher::Watcher(SubProcHandle chld, Progress& log)
     : child_{chld}
     , listener_{[this,&log]() { observeOutput(log); }}
@@ -163,8 +163,7 @@ catch(std::exception const& ex) {
  */
 void Watcher::observeOutput(Progress& log)
 {
-    __gnu_cxx::stdio_filebuf<char> filebuf(child_.pipeChildOUT, std::ios::in);
-    std::istream outputFromChild(&filebuf);
+    util::IStreamFilehandle outputFromChild(child_.pipeChildOUT);
 
     log.out("==Listener=Thread==");
     for (string line; std::getline(outputFromChild, line); )
@@ -178,8 +177,7 @@ void Watcher::observeOutput(Progress& log)
  */
 void Watcher::TODO_forceQuit()
 {
-    __gnu_cxx::stdio_filebuf<char> filebuf(child_.pipeChildIN, std::ios::out);
-    std::ostream intputToChild(&filebuf);
+    util::OStreamFilehandle intputToChild(child_.pipeChildIN);
 
     usleep(2*1000*1000);
     intputToChild << "exit force"<<endl;
