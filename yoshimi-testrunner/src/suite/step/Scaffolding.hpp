@@ -58,10 +58,10 @@ class Watcher;
 /**
  * Adapter for launching a test case into Yoshimi.
  * This is both a TestStep as well as an interface on its own.
- * - performing this step will load the Exe or LV2 plugin, possibly
- *   feeding startup configuration
+ * - performing this step will load the Exe or LV2 plugin,
+ *   possibly feeding startup configuration
  * - the following steps might then add a CLI script or MIDI data
- * - an Invoker step will then call #triggerTest
+ * - an Invoker step will at some point call #triggerTest
  * - further steps will investigate the generated output
  */
 class Scaffolding

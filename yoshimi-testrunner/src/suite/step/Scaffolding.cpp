@@ -68,13 +68,23 @@ Result ExeLauncher::perform()
     arguments_.push_back("--null");   // instruct Yoshimi not to connect to any Audio/MIDI.
     arguments_.push_back("--no-gui"); //              ... and to run CLI only.
     progressLog_.out("ExeLaucher: start Yoshimi subprocess...");
-    subprocess_.reset(new Watcher(launchSubprocess(subject_, arguments_), progressLog_));
+    subprocess_.reset(
+        new Watcher(launchSubprocess(subject_, arguments_)
+                   ,progressLog_));
     return Result::OK();
 }
 
 
 int ExeLauncher::triggerTest()
 {
+    auto condition = subprocess_->matchTask
+            .onCondition(MATCH_YOSHIMI_PROMPT)
+            .activate();
+
+    auto res = condition.wait_for(std::chrono::seconds(5));
+    if (res == std::future_status::timeout)
+        throw error::State("Yoshimi-the-subject not ready"); ///TODO kill subject first
+
     progressLog_.out("TODO: trigger test in Yoshimi...");
     /////////////////////////////////////////////////////////TODO have a test script in a string field within ExeLauncher
     /////////////////////////////////////////////////////////TODO use the Watcher to feed this into the child process

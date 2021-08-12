@@ -53,15 +53,23 @@
 
 #include "util/nocopy.hpp"
 #include "suite/Progress.hpp"
+#include "suite/step/MatchTask.hpp"
 
 #include <filesystem>
+#include <functional>
+#include <memory>
+#include <future>
+#include <atomic>
 #include <thread>
 #include <vector>
+#include <regex>
 
 namespace suite{
 namespace step {
 
 namespace fs = std::filesystem;
+
+using std::move;
 
 
 struct SubProcHandle
@@ -97,6 +105,8 @@ class Watcher
     std::thread listener_;
 
 public:
+    MatchTask matchTask;
+
     Watcher(SubProcHandle chld, Progress&);
    ~Watcher();
 

@@ -168,7 +168,8 @@ void Watcher::observeOutput(Progress& log)
     log.out("==Listener=Thread==");
     for (string line; std::getline(outputFromChild, line); )
     {
-        log.out(line);
+        log.out(line); ///////////TODO logging shall be done by the MatchCond, and only on demand...
+        matchTask.evaluate(line);
     }
 }
 

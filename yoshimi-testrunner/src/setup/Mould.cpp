@@ -97,7 +97,7 @@ public:
 /**
  * Specialised concrete Mould to build a test case
  * by loading Yoshimi as a LV2 plugin and then feeding
- * MIDI events and retrieving calculated sound throught
+ * MIDI events and retrieving calculated sound through
  * the LV2 plugin interface.
  * @todo planned, not yet implemented as of 7/2021
  */
@@ -130,7 +130,7 @@ Mould& useMould_for(string testTypeID)
     if (def::TYPE_LV2 == testTypeID)
         return testViaLV2.startCycle();
     else
-        throw error::Misconfig("Unknown Test.test '"+testTypeID+"' requested");
+        throw error::Misconfig("Unknown Test.type='"+testTypeID+"' requested");
 }
 
 
