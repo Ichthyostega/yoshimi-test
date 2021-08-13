@@ -85,16 +85,14 @@ class ExeLauncher
     unique_ptr<Watcher> subprocess_;
 
 
-    Result perform()  override;
+    Result perform()   override;
+    int triggerTest()  override;
 
 public:
    ~ExeLauncher();
     ExeLauncher(fs::path testSubject
                ,fs::path topicPath
                ,Progress& progress);
-
-
-    int triggerTest()  override;
 };
 
 

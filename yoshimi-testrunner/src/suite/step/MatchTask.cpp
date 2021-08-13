@@ -58,9 +58,7 @@ namespace { // text matching implementation details
     {
         return [&](string const& line)
                 {
-                    smatch mat;
-                    regex_match(line, mat, match2find);
-                    return mat;
+                    return regex_match(line, match2find);
                 };
     }
 
@@ -111,10 +109,10 @@ namespace { // handling the atomic flag...
  *         MatchTask::evaluate() on each line of output, and fed a successful
  *         match into this promise to unblock the future.
  */
-future<smatch> MatchTask::MatchBuilder::activate()
+future<void> MatchTask::MatchBuilder::activate()
 {
     matchTask_.condition_ = make_unique<MatchCond>(primary_,precond_);
-    promise<smatch> newPromise;
+    promise<void> newPromise;
     std::swap(matchTask_.promise_, newPromise);
     enable(matchTask_.active_);
     return matchTask_.promise_.get_future();
@@ -126,11 +124,10 @@ void MatchTask::evaluate(string const& outputLine)
 {
     if (not isEnabled(active_)) return;
     assert(condition_);
-    smatch matchFound = condition_->doCheck(outputLine);
-    if (not matchFound.empty())
-    {   // condition fulfilled => publish result
+    if (condition_->doCheck(outputLine))
+    {   // condition fulfilled
         disable(active_);
-        promise_.set_value(move(matchFound));
+        promise_.set_value(); // => signal successful match
     }
 }
 
@@ -142,14 +139,13 @@ void MatchTask::evaluate(string const& outputLine)
  * @return the RegEx match performed on the given line,
  *     will be `empty()` when the match was not successful.
  */
-smatch MatchCond::doCheck(string const& line)
+bool MatchCond::doCheck(string const& line)
 {
     if (precond_ and not fulfilledPrecond_)
     {
-        smatch precondMatch = precond_(line);
-        fulfilledPrecond_ = not precondMatch.empty();
+        fulfilledPrecond_ = precond_(line);
         if (not fulfilledPrecond_)
-            return precondMatch; // bail out
+            return false; // bail out
     }
     return primary_(line);
 }

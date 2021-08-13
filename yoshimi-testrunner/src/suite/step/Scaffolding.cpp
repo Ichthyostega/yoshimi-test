@@ -38,6 +38,7 @@
 
 //#include <string>
 
+using std::future_status;
 using util::formatVal;
 
 namespace suite{
@@ -81,9 +82,9 @@ int ExeLauncher::triggerTest()
             .onCondition(MATCH_YOSHIMI_READY)
             .activate();
 
-    auto res = condition.wait_for(std::chrono::seconds(60));
-    if (res == std::future_status::timeout)
+    if (future_status::timeout == condition.wait_for(std::chrono::seconds(60)))
         throw error::State("Yoshimi-the-subject not ready"); ///TODO kill subject first
+    condition.get();
 
     progressLog_.out("TODO: trigger test in Yoshimi...");
     /////////////////////////////////////////////////////////TODO have a test script in a string field within ExeLauncher

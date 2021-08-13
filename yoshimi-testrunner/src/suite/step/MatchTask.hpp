@@ -63,7 +63,6 @@
 #include <atomic>
 #include <thread>
 #include <string>
-#include <regex>
 
 namespace suite{
 namespace step {
@@ -81,7 +80,7 @@ class MatchCond
     : util::NonCopyable
 {
 public:
-    using Matcher = std::function<std::smatch(string const&)>;
+    using Matcher = std::function<bool(string const&)>;
 
     MatchCond(Matcher targetCond, Matcher precond)
         : primary_{targetCond}
@@ -89,7 +88,7 @@ public:
     { }
 
     /** invoke the matching functor(s). */
-    std::smatch doCheck(string const& line);
+    bool doCheck(string const& line);
 
 private:
     Matcher primary_;
@@ -117,7 +116,7 @@ class MatchTask
     : util::NonCopyable
 {
     std::atomic<bool> active_ = false;
-    std::promise<std::smatch> promise_;
+    std::promise<void> promise_;
     std::unique_ptr<MatchCond> condition_;
 
     using Matcher = MatchCond::Matcher;
@@ -144,9 +143,9 @@ public:
         }
 
         /** terminal: establish and activate matching */
-        std::future<std::smatch> activate();
+        std::future<void> activate();
     };
-    friend std::future<std::smatch> MatchBuilder::activate();
+    friend std::future<void> MatchBuilder::activate();
 
 
     /** initiate the setup of a new active condition */
