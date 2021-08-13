@@ -38,7 +38,7 @@
  ** - conditions are given as functor, referring to an output line string, returning a RegExp match.
  ** - a MatchCond state object is heap allocated with the main condition and possibly a precondition.
  ** - then the atomic flag is flipped, activating the match evaluation in the Watcher thread.
- ** - now each further line of output is fed into the MatchCond instance for evaluation
+ ** - this causes each further line of output to be fed into the MatchCond instance for evaluation...
  ** - if a match is detected, the atomic flag is flipped to deactivate evaluation
  ** - and then the resulting `std::smatch` object is stored into the `promise`
  ** - which in turn will unblock the main thread waiting on the `future` end of the channel.
@@ -88,7 +88,8 @@ public:
         , precond_{precond}
     { }
 
-    bool doCheck(string const&);
+    /** invoke the matching functor(s). */
+    std::smatch doCheck(string const& line);
 
 private:
     Matcher primary_;
@@ -96,8 +97,9 @@ private:
     bool fulfilledPrecond_ = false;
 };
 
-using PMatchCond = std::unique_ptr<MatchCond>;
+/* ========= predefined matchers ================= */
 
+extern const MatchCond::Matcher MATCH_YOSHIMI_READY;
 extern const MatchCond::Matcher MATCH_YOSHIMI_PROMPT;
 
 
@@ -105,15 +107,19 @@ extern const MatchCond::Matcher MATCH_YOSHIMI_PROMPT;
 
 /**
  * A protocol to install and enable a MatchCond and then to block waiting
- * on that condition to be fulfilled by the ongoing output from the subprocess. 
+ * on that condition to be fulfilled by the ongoing output from the subprocess.
+ * @remark #onCondition is the entry point for building a new matching condition;
+ *         when terminating the build with MatchBuilder::activate(), this condition
+ *         will be evaluated on each line and in case of a successful match
+ *         the future will be unblocked.
  */
 class MatchTask
     : util::NonCopyable
 {
-    std::atomic_flag active_ = ATOMIC_FLAG_INIT;
+    std::atomic<bool> active_ = false;
     std::promise<std::smatch> promise_;
-    PMatchCond condition_;
-    
+    std::unique_ptr<MatchCond> condition_;
+
     using Matcher = MatchCond::Matcher;
 
 public:
@@ -123,13 +129,14 @@ public:
         MatchTask& matchTask_;
         Matcher primary_;
         Matcher precond_;
+
     public:
-        MatchBuilder(MatchTask& managingTask, Matcher primCond)
+        MatchBuilder(MatchTask& managingTask, Matcher mainCondition)
             : matchTask_{managingTask}
-            , primary_{primCond}
+            , primary_{mainCondition}
             , precond_{}
         { }
-        
+
         MatchBuilder withPrecondition(Matcher preCond)
         {
             precond_ = move(preCond);
@@ -149,7 +156,7 @@ public:
     }
 
 
-    /* ==== perform match from Watcher thread ==== */
+    /** perform match (from Watcher thread) if this MatchTask is active */
     void evaluate(string const& outputLine);
 };
 

@@ -78,10 +78,10 @@ Result ExeLauncher::perform()
 int ExeLauncher::triggerTest()
 {
     auto condition = subprocess_->matchTask
-            .onCondition(MATCH_YOSHIMI_PROMPT)
+            .onCondition(MATCH_YOSHIMI_READY)
             .activate();
 
-    auto res = condition.wait_for(std::chrono::seconds(5));
+    auto res = condition.wait_for(std::chrono::seconds(60));
     if (res == std::future_status::timeout)
         throw error::State("Yoshimi-the-subject not ready"); ///TODO kill subject first
 

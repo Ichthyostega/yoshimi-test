@@ -21,7 +21,7 @@
 /** @file MatchTasks.cpp
  ** Implementation details of matching on the output lines (from the subprocess).
  ** 
- ** @todo WIP as of 7/21
+ ** @todo WIP as of 8/21
  ** @see ExeLauncher::triggerTest()
  ** 
  */
@@ -29,44 +29,129 @@
 
 
 #include "suite/step/MatchTask.hpp"
-#include "util/error.hpp" ////////TODO
-//#include "util/format.hpp"///////TODO
+#include "util/error.hpp"
 
 #include <regex>
+#include <memory>
+#include <cassert>
 
 using std::regex;
 using std::smatch;
+using std::make_unique;
+using std::future;
+using std::promise;
+using std::atomic;
 
 
 namespace suite{
 namespace step {
 
+using Matcher = MatchCond::Matcher;
+
 namespace { // text matching implementation details
-    
-    const regex YOSHIMI_PROMPT_SYNTAX{"yoshimi>"};
+
+    const regex YOSHIMI_SUCCESFULL_START{"Yay! We're up and running :\\-\\)"};
+    const regex YOSHIMI_PROMPT_PATTERN{"yoshimi>.*"};
+
+
+    Matcher buildMatcher_for(regex const& match2find)
+    {
+        return [&](string const& line)
+                {
+                    smatch mat;
+                    regex_match(line, mat, match2find);
+                    return mat;
+                };
+    }
 
 }//(End) implementation details
 
 
-const MatchCond::Matcher MATCH_YOSHIMI_PROMPT{
-      [&](string const& line)
-        {
-            smatch mat;
-            regex_match(line, mat, YOSHIMI_PROMPT_SYNTAX);
-            return mat;
-        }};
+const Matcher MATCH_YOSHIMI_READY  = buildMatcher_for(YOSHIMI_SUCCESFULL_START);
+const Matcher MATCH_YOSHIMI_PROMPT = buildMatcher_for(YOSHIMI_PROMPT_PATTERN);
 
 
 
-std::future<std::smatch> MatchTask::MatchBuilder::activate()
+
+namespace { // handling the atomic flag...
+
+    inline void enable(atomic<bool>& flag)
+    {
+        bool expectFalse;
+        if (not flag.compare_exchange_strong(expectFalse, true, std::memory_order_acq_rel))
+            throw error::LogicBroken{"Attempt to define a new MatchCond while "
+                                     "an existing condition is still evaluated."};
+    }
+
+    inline void disable(atomic<bool>& flag)
+    {
+        flag.store(false, std::memory_order_release);
+    }
+
+    inline bool isEnabled(atomic<bool> const& flag)
+    {
+        return flag.load(std::memory_order_acquire);
+    }
+}//(End) impl details atomic flag
+
+
+
+
+/**
+ * @remark To activate matching on the conditions defined thus far within this builder,
+ *         we construct a new MatchCond object to hold the state and a new promise to
+ *         communicate the result on successful match. As final step, the atomic flag
+ *         MatchTask::active_ is flipped; we use `std::memory_order_acq_rel`, which
+ *         ensures a reliable hand-over of the new MatchCond. Quoting from the spec:
+ *         "all memory writes (non-atomic and relaxed atomic) that _happened-before_
+ *         the atomic store from the point of view of thread A, become _visible
+ *         side-effects_ in thread B. That is, once the atomic load is completed,
+ *         thread B is guaranteed to see everything thread A wrote to memory".
+ * @return a future connected to the new promise; the Watcher thread will invoke
+ *         MatchTask::evaluate() on each line of output, and fed a successful
+ *         match into this promise to unblock the future.
+ */
+future<smatch> MatchTask::MatchBuilder::activate()
 {
-    UNIMPLEMENTED("activate matching on the conditions defined thus far");
+    matchTask_.condition_ = make_unique<MatchCond>(primary_,precond_);
+    promise<smatch> newPromise;
+    std::swap(matchTask_.promise_, newPromise);
+    enable(matchTask_.active_);
+    return matchTask_.promise_.get_future();
 }
+
 
 
 void MatchTask::evaluate(string const& outputLine)
 {
-    UNIMPLEMENTED("possibly fed the line to the MatchCond, if activated");
+    if (not isEnabled(active_)) return;
+    assert(condition_);
+    smatch matchFound = condition_->doCheck(outputLine);
+    if (not matchFound.empty())
+    {   // condition fulfilled => publish result
+        disable(active_);
+        promise_.set_value(move(matchFound));
+    }
+}
+
+
+/**
+ * @remark implements the actual matching logic; applied to each line of output:
+ *   - if a precondition was given, attempt to fulfil the precondition first
+ *   - then attempt to fulfil the main condition
+ * @return the RegEx match performed on the given line,
+ *     will be `empty()` when the match was not successful.
+ */
+smatch MatchCond::doCheck(string const& line)
+{
+    if (precond_ and not fulfilledPrecond_)
+    {
+        smatch precondMatch = precond_(line);
+        fulfilledPrecond_ = not precondMatch.empty();
+        if (not fulfilledPrecond_)
+            return precondMatch; // bail out
+    }
+    return primary_(line);
 }
 
 
