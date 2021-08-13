@@ -35,10 +35,14 @@
 
 
 #include "util/nocopy.hpp"
+#include "util/format.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/Scaffolding.hpp"
 
 //#include <string>
+#include <iostream>
+using std::cerr;
+using std::endl;
 
 namespace suite{
 namespace step {
@@ -56,10 +60,17 @@ class Invoker
 
     Result perform()  override
     {
-        int retCode = scaffolding_.triggerTest();
-        performed_ = (retCode==0);
-        return performed_? Result::OK()
-                         : Result{ResCode::MALFUNCTION, "Yoshimi exited with failure code."};
+        try {
+            int retCode = scaffolding_.triggerTest();
+            performed_ = (retCode==0);
+            return performed_? Result::OK()
+                             : Result{ResCode::MALFUNCTION, "Yoshimi exited with failure code: "+util::formatVal(retCode)};
+        }
+        catch(error::FailedLaunch& crash)
+        {
+            scaffolding_.markFailed();
+            return Result{ResCode::MALFUNCTION, crash.what()};
+        }
     }
 
 public:

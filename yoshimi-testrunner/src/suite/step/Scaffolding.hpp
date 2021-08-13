@@ -41,6 +41,7 @@
 #include "suite/Progress.hpp"
 
 #include <filesystem>
+#include <future>
 #include <vector>
 #include <memory>
 
@@ -50,6 +51,7 @@ namespace step {
 using std::unique_ptr;
 
 using ArgVect = std::vector<const char*>;
+using Duration = decltype(std::chrono::seconds(std::declval<int>()));
 
 
 class Watcher;
@@ -67,10 +69,15 @@ class Watcher;
 class Scaffolding
     : public TestStep
 {
+protected:
+    bool sane_ = true;
 public:
     virtual ~Scaffolding();  ///< this is an interface
 
     virtual int triggerTest()  =0;
+
+    virtual void markFailed()
+    { sane_ = false; }
 };
 
 
@@ -79,6 +86,7 @@ class ExeLauncher
 {
     fs::path subject_;
     fs::path topicPath_;
+    Duration timeoutSec_;
     Progress& progressLog_;
     ArgVect arguments_;
 
@@ -87,12 +95,17 @@ class ExeLauncher
 
     Result perform()   override;
     int triggerTest()  override;
+    void markFailed()  override;
 
 public:
    ~ExeLauncher();
     ExeLauncher(fs::path testSubject
                ,fs::path topicPath
+               ,string timeoutSpec
                ,Progress& progress);
+
+private:
+    void waitFor(std::future<void>&);
 };
 
 

@@ -38,6 +38,7 @@
 
 
 #include "util/nocopy.hpp"
+#include "util/format.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/Invoker.hpp"
 #include "suite/Result.hpp"
@@ -62,9 +63,8 @@ class Summary
 
     Result perform()  override
     {
-        if (not invoker_.isPerformed()
-and false)//////////TODO disabled for debugging
-            return Result{ResCode::MALFUNCTION, "Testcase did not run."};
+        if (not invoker_.isPerformed())
+            return Result{ResCode::MALFUNCTION, "Testcase did not run: "+util::formatVal(topic_)};
 
         ////////////TODO retrieve results here
         ///

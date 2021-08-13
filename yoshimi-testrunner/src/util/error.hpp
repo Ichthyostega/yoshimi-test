@@ -54,8 +54,8 @@ using std::logic_error;
 class LogicBroken : public logic_error
 {
 public:
-    LogicBroken(string msg) :
-        logic_error{"LogicBroken: " + msg}
+    LogicBroken(string msg)
+        : logic_error{"LogicBroken: " + msg}
     { }
 };
 
@@ -63,8 +63,8 @@ public:
 class Misconfig : public logic_error
 {
 public:
-    Misconfig(string msg) :
-        logic_error{"Misconfig: "+msg}
+    Misconfig(string msg)
+        : logic_error{"Misconfig: "+msg}
     { }
 };
 
@@ -72,8 +72,8 @@ public:
 class Invalid : public logic_error
 {
 public:
-    Invalid(string msg) :
-        logic_error{"Invalid Data: "+msg}
+    Invalid(string msg)
+        : logic_error{"Invalid Data: "+msg}
     { }
 };
 
@@ -81,8 +81,17 @@ public:
 class State : public logic_error
 {
 public:
-    State(string msg) :
-        logic_error{"Unforeseen state: "+msg}
+    State(string msg)
+        : logic_error{"Unforeseen state: "+msg}
+    { }
+};
+
+
+class FailedLaunch : public State
+{
+public:
+    FailedLaunch(string msg)
+        : State{"Launch of Test Case failed -- "+msg}
     { }
 };
 

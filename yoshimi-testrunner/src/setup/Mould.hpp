@@ -67,15 +67,14 @@ protected:
 public:
     virtual ~Mould();  ///< this is an interface
 
+    /** prepare this Mould for the next generation cycle */
+    virtual Mould& startCycle();
+
     Mould& withProgress(PProgress logger)
     {
         progressLog_ = logger;
         return *this;
     }
-
-
-    /** prepare this Mould for the next generation cycle */
-    virtual Mould& startCycle();
 
     /** terminal builder operation: trigger generation. */
     StepSeq generateStps(MapS const& spec)
@@ -93,7 +92,7 @@ protected: /* == interface for the concrete Moulds == */
      * passing arguments (for Dependency Injection).
      * @return _reference_ to the new step, with concrete type.
      * @remark typically you'd store that reference locally and
-     *         pass it as arguments to later steps (DI)
+     *         pass it as arguments to following steps (DI)
      */
     template<class STEP, typename...ARGS>
     STEP& addStep(ARGS&& ...args)

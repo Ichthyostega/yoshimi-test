@@ -18,7 +18,7 @@ Similar to Yoshimi itself, this Testsuite is GPL licensed free software.
 
 ## Building
 
-The '`yoshimi-testrunner`' subdirectory holds a C++ / CMake project to build a standalone testrunner application.
+The '`yoshimi-testrunner`' subdirectory holds a C++ / CMake project to build a stand-alone testrunner application.
 In addition you need a Yoshimi executable, to be invoked by this testrunner as a test subject. There are various
 ways to handle a CMake project, e.g. with `cmake-gui` or `ccmake` or with your IDE of choice. However, in its
 simplest form, the build can be started with...
@@ -75,3 +75,33 @@ As the tests cover various aspects of the SynthEngine, they are organised into s
 - **`scenes`** *(planned)* renders exemplary MIDI sequences by invoking Yoshimi as LV2 plugin, allowing
   to cover some aspects of MIDI handling and performance characteristics of the application.
 
+
+### Test Case specification
+
+A **Test Case** covers one specific aspect or topic, it is performed with one launch of the subject under test,
+which can *succeed* or *fail* (either because the expectations aren't met, or due to execution failure).
+All test cases are defined through files '`*.test`', placed into a suitable subdirectory of the Testsuite.
+The relative filesystem path from the Testsuite root to the actual test case is used as *"Topic-Path"* to
+structure and organise the testsuite and the result report.
+
+The syntax of Test Case specifications is based on the syntax for configuration ("INI file syntax"), with some
+extensions
+
+- there must be a *section* `[Test]` -- all setting keys after that section start are implicitly prefixed
+  by the section name, i.e. "`Test.<theKey>`"
+- within the Test section, optionally a `Test.type` can be defined...
+  + default is `Test.type=CLI` and causes Yoshimi to be launched as a subprocess, feeding the test through CLI
+  + *(planned)* alternatively `Test.type=LV2` will load Yoshimi as a LV2 plugin, allowing for tests with MIDI files
+- for CLI-tests, a *CLI script* should be defined, which is sent to the Yoshimi CLI to configure and launch the test
+  + this script is defined *inline* within the test specification
+  + it starts with a marker line comprised solely of the word `Script` and it ends with a similar marker line `End-Script`
+  + the text between those markers is *trimmed* and then sent line by line to the Yoshimi subprocess
+  + thus, at some point this script must descend into the `test` context of the CLI (e.g. by the command `set test`)
+  + and finally, this script shall issue the command `exec` within the test context.
+  + this `exec`-command will shut down regular Yoshimi operation, then launch the test as configured, and then terminate Yoshimi.
+- optionally further key=value definitions can be given in the `[Test]`-section to override the built-in defaults
+  - `verifySound = On|Off` toggles verification of the generated sound data against a baseline wave file
+  - `verifyTimes = On|Off` allows to compare the timing measurements against expected values (**TODO** define details)
+  - `cliTimeout = <integer number>` overrides the built-in timeout when waiting for response on CLI actions.
+    Typically the testrunner waits for some specific token or prefix to appear in the output stream from the Yoshimi subprocess;
+    if the timeout threshold is exceeded, the subprocess will be killed and the test case counted as failure.

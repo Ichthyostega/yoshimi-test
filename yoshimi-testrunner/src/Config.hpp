@@ -67,6 +67,7 @@ namespace def {
     const char* const KEY_YoshimiExe   = "Test.YoshimiExe";
     const char* const KEY_verifySound  = "Test.verifySound";
     const char* const KEY_verifyTimes  = "Test.verifyTimes";
+    const char* const KEY_cliTimeout   = "Test.cliTimeout";
 }
 
 namespace {
@@ -222,6 +223,12 @@ public:
 
     static void supplySettings(MapS& existingSettings,
                                MapS const& additionalSettings);
+
+    template<typename TAR>
+    static TAR parseAs(string spec)
+    {
+        return ConfigSource::Val(spec).as<TAR>();
+    }
 
 private:
     static Settings combine_with_decreasing_precedence(std::initializer_list<ConfigSource> sources)

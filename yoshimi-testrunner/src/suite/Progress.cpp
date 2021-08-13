@@ -91,13 +91,13 @@ public:
 
 
 
-PProgress Progress::showTestName()
+PProgress Progress::showTestNameOnly()
 {
     return std::make_shared<OutputCapturingSimpleProgress>();
 }
 
 
-PProgress Progress::diagnostic()
+PProgress Progress::diagnosticLog()
 {
     return std::make_shared<OutputCapturingSimpleProgress>(true);
 }

@@ -102,6 +102,12 @@ public:
 
     void generate(TestLog const& results)
     {
+        /////////////////TODO how to render the individual results??
+        for (auto& res : results)
+        {
+            if (res.code != ResCode::GREEN)
+                out_ << res.log <<endl;
+        }
         out_ << hr()
              << "Performed "+emph(str(results.cntTests()))+" test cases.\n"
              << hr() <<"\n\n";

@@ -120,6 +120,7 @@ StepSeq Builder::buildTree()
 const MapS DEFAULT_TEST_SPEC{{KEY_Test_type,  TYPE_CLI}
                             ,{KEY_verifySound, "Off"}
                             ,{KEY_verifyTimes, "Off"}
+                            ,{KEY_cliTimeout,  "60" }
                             };
 
 
@@ -146,8 +147,8 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
         cout << "." << endl;
     }
 
-    auto logger = config_.verbose? suite::Progress::diagnostic()
-                                 : suite::Progress::showTestName();
+    auto logger = config_.verbose? suite::Progress::diagnosticLog()
+                                 : suite::Progress::showTestNameOnly();
 
     return useMould_for(spec[KEY_Test_type])
                     .withProgress(logger)

@@ -44,6 +44,7 @@
 #include "util/filehandle.hpp"
 
 #include <unistd.h>
+#include <signal.h>
 #include <spawn.h>
 #include <cassert>
 #include <iostream>
@@ -171,6 +172,8 @@ void Watcher::observeOutput(Progress& log)
         log.out(line); ///////////TODO logging shall be done by the MatchCond, and only on demand...
         matchTask.evaluate(line);
     }
+    log.err("==dying==");
+    matchTask.deactivate();
 }
 
 /**
@@ -182,6 +185,16 @@ void Watcher::TODO_forceQuit()
 
     usleep(2*1000*1000);
     intputToChild << "exit force"<<endl;
+}
+
+
+/** forcibly terminate the Yoshimi subprocess */
+void Watcher::kill()
+{
+    int res = ::kill(child_.pid, SIGKILL);
+    if (0 != res and ESRCH != res)
+        throw error::State("Failed to kill the subject. PID="+formatVal(child_.pid)
+                          +" Error-Code="+formatVal(res));
 }
 
 

@@ -35,6 +35,7 @@
 #include "suite/step/Scaffolding.hpp"
 #include "suite/step/Watcher.hpp"
 #include "util/format.hpp"
+#include "Config.hpp"
 
 //#include <string>
 
@@ -43,6 +44,15 @@ using util::formatVal;
 
 namespace suite{
 namespace step {
+
+namespace {// Implementation helpers
+
+    inline auto parseDuration(string spec)
+    {
+        return std::chrono::seconds(
+                Config::parseAs<int>(spec));
+    }
+}//(End) helpers
 
 
 // Emit VTables and dtors here....
@@ -53,9 +63,11 @@ ExeLauncher::~ExeLauncher() { }
 
 ExeLauncher::ExeLauncher(fs::path testSubject
                         ,fs::path topicPath
+                        ,string timeoutSpec
                         ,Progress& progress)
     : subject_{testSubject}
     , topicPath_{topicPath}
+    , timeoutSec_{parseDuration(timeoutSpec)}
     , progressLog_{progress}
 { }
 
@@ -81,10 +93,7 @@ int ExeLauncher::triggerTest()
     auto condition = subprocess_->matchTask
             .onCondition(MATCH_YOSHIMI_READY)
             .activate();
-
-    if (future_status::timeout == condition.wait_for(std::chrono::seconds(60)))
-        throw error::State("Yoshimi-the-subject not ready"); ///TODO kill subject first
-    condition.get();
+    waitFor(condition);
 
     progressLog_.out("TODO: trigger test in Yoshimi...");
     /////////////////////////////////////////////////////////TODO have a test script in a string field within ExeLauncher
@@ -92,6 +101,30 @@ int ExeLauncher::triggerTest()
     subprocess_->TODO_forceQuit();
     return int(ResCode::DEBACLE);
 }
+
+
+void ExeLauncher::waitFor(std::future<void>& condition)
+{
+    if (future_status::timeout == condition.wait_for(timeoutSec_))
+    {
+        subprocess_->kill();
+        progressLog_.err("TIMEOUT after "+formatVal(timeoutSec_.count())+"s waiting for reaction on CLI");
+        throw error::State("Yoshimi-the-subject not ready");
+    }
+    condition.get();
+}
+
+
+void ExeLauncher::markFailed()
+{
+    Scaffolding::markFailed();
+    progressLog_.err("Aborting test invocation...");
+    if (subprocess_)
+        subprocess_->kill();
+    subprocess_.reset(); // block for the Watcher Thread to terminate
+}
+
+
 
 
 }}//(End)namespace suite::step

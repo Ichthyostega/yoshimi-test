@@ -70,10 +70,10 @@ public:
 
 
     /** build a Progress instance indicating just the current action */
-    static PProgress showTestName();
+    static PProgress showTestNameOnly();
 
     /** build a Progress instance to dump output of the subject */
-    static PProgress diagnostic();
+    static PProgress diagnosticLog();
 
 
     /** indicate name of the next test launched now */

@@ -34,10 +34,12 @@
 #include <regex>
 #include <memory>
 #include <cassert>
+#include <exception>
 
 using std::regex;
 using std::smatch;
 using std::make_unique;
+using std::make_exception_ptr;
 using std::future;
 using std::promise;
 using std::atomic;
@@ -81,9 +83,10 @@ namespace { // handling the atomic flag...
                                      "an existing condition is still evaluated."};
     }
 
-    inline void disable(atomic<bool>& flag)
+    inline bool disable(atomic<bool>& flag)
     {
-        flag.store(false, std::memory_order_release);
+        bool expectTrue{true};
+        return flag.compare_exchange_strong(expectTrue, false, std::memory_order_acq_rel);
     }
 
     inline bool isEnabled(atomic<bool> const& flag)
@@ -148,6 +151,21 @@ bool MatchCond::doCheck(string const& line)
             return false; // bail out
     }
     return primary_(line);
+}
+
+
+/**
+ * @warning very simplistic implementation; danger of races and exceptions from the
+ *          promise and future when invoked concurrently to MatchTask::evaluate().
+ * @remark  since only the Watcher task invokes MatchTask::evaluate() from within
+ *          the output retrieving loop, it is safe to invoke that function from
+ *          the same Thread _after the output has ended_ and prior to termination.
+ */
+void MatchTask::deactivate()
+{
+    if (disable(active_))
+        promise_.set_exception(
+            make_exception_ptr(error::FailedLaunch("Subject died while still expecting some output")));
 }
 
 

@@ -110,6 +110,7 @@ public:
     Watcher(SubProcHandle chld, Progress&);
    ~Watcher();
 
+    void kill();
     void TODO_forceQuit();
 private:
     void observeOutput(Progress&);

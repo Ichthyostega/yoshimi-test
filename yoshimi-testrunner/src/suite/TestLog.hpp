@@ -62,6 +62,10 @@ public:
 
     uint cntTests()       const;
 
+    using iterator = std::deque<Result>::const_iterator;
+    iterator begin() const { return results_.begin(); }
+    iterator end()   const { return results_.end();   }
+
     friend TestLog& operator<<(TestLog&, Result);
 };
 

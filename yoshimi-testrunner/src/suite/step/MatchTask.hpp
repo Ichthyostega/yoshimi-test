@@ -73,8 +73,6 @@ using std::move;
 
 /**
  * Combined conditions to be evaluated line by line on the output of the subprocess.
- * @warning the strings to be checked by this matcher must reside in stable storage,
- *          since the #Matcher functor returns a Regexp `std::smatch` object.
  */
 class MatchCond
     : util::NonCopyable
@@ -157,6 +155,9 @@ public:
 
     /** perform match (from Watcher thread) if this MatchTask is active */
     void evaluate(string const& outputLine);
+
+    /** disable matching; mark as failure if active. */
+    void deactivate();
 };
 
 
