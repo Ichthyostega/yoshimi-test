@@ -107,13 +107,13 @@ class Watcher
 public:
     MatchTask matchTask;
 
-    Watcher(SubProcHandle chld, Progress&);
+    Watcher(SubProcHandle chld);
    ~Watcher();
 
     void kill();
     void TODO_forceQuit();
 private:
-    void observeOutput(Progress&);
+    void observeOutput();
 };
 
 

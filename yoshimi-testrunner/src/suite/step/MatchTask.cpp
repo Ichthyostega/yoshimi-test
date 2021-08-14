@@ -114,7 +114,7 @@ namespace { // handling the atomic flag...
  */
 future<void> MatchTask::MatchBuilder::activate()
 {
-    matchTask_.condition_ = make_unique<MatchCond>(primary_,precond_);
+    matchTask_.condition_ = make_unique<MatchCond>(primary_,precond_,logger_);
     promise<void> newPromise;
     std::swap(matchTask_.promise_, newPromise);
     enable(matchTask_.active_);
@@ -144,6 +144,7 @@ void MatchTask::evaluate(string const& outputLine)
  */
 bool MatchCond::doCheck(string const& line)
 {
+    if (logger_) logger_->get().out(line);
     if (precond_ and not fulfilledPrecond_)
     {
         fulfilledPrecond_ = precond_(line);

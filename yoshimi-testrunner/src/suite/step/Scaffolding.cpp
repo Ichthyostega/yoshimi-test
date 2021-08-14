@@ -82,8 +82,7 @@ Result ExeLauncher::perform()
     arguments_.push_back("--no-gui"); //              ... and to run CLI only.
     progressLog_.out("ExeLaucher: start Yoshimi subprocess...");
     subprocess_.reset(
-        new Watcher(launchSubprocess(subject_, arguments_)
-                   ,progressLog_));
+        new Watcher{launchSubprocess(subject_, arguments_)});
     return Result::OK();
 }
 
@@ -92,6 +91,7 @@ int ExeLauncher::triggerTest()
 {
     auto condition = subprocess_->matchTask
             .onCondition(MATCH_YOSHIMI_READY)
+            .logOutputInto(progressLog_)
             .activate();
     waitFor(condition);
 

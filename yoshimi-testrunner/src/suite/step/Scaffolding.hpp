@@ -86,9 +86,9 @@ class ExeLauncher
 {
     fs::path subject_;
     fs::path topicPath_;
-    Duration timeoutSec_;
+    Duration  timeoutSec_;
     Progress& progressLog_;
-    ArgVect arguments_;
+    ArgVect   arguments_;
 
     unique_ptr<Watcher> subprocess_;
 

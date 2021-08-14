@@ -58,6 +58,7 @@
 #include "suite/Progress.hpp"
 
 #include <functional>
+#include <optional>
 #include <memory>
 #include <future>
 #include <atomic>
@@ -70,6 +71,8 @@ namespace step {
 using std::string;
 using std::move;
 
+using MaybeLogger = std::optional<std::reference_wrapper<Progress>>;
+
 
 /**
  * Combined conditions to be evaluated line by line on the output of the subprocess.
@@ -80,9 +83,10 @@ class MatchCond
 public:
     using Matcher = std::function<bool(string const&)>;
 
-    MatchCond(Matcher targetCond, Matcher precond)
+    MatchCond(Matcher targetCond, Matcher precond, MaybeLogger logger)
         : primary_{targetCond}
         , precond_{precond}
+        , logger_{logger}
     { }
 
     /** invoke the matching functor(s). */
@@ -92,6 +96,7 @@ private:
     Matcher primary_;
     Matcher precond_;
     bool fulfilledPrecond_ = false;
+    MaybeLogger logger_;
 };
 
 /* ========= predefined matchers ================= */
@@ -126,6 +131,7 @@ public:
         MatchTask& matchTask_;
         Matcher primary_;
         Matcher precond_;
+        MaybeLogger logger_;
 
     public:
         MatchBuilder(MatchTask& managingTask, Matcher mainCondition)
@@ -137,6 +143,12 @@ public:
         MatchBuilder withPrecondition(Matcher preCond)
         {
             precond_ = move(preCond);
+            return move(*this);
+        }
+
+        MatchBuilder logOutputInto(Progress& logger)
+        {
+            logger_ = logger;
             return move(*this);
         }
 

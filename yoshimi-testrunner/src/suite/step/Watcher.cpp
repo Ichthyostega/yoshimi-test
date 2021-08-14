@@ -141,9 +141,9 @@ SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments)
 
 
 
-Watcher::Watcher(SubProcHandle chld, Progress& log)
+Watcher::Watcher(SubProcHandle chld)
     : child_{chld}
-    , listener_{[this,&log]() { observeOutput(log); }}
+    , listener_{[this]() { observeOutput(); }}
 { }
 
 
@@ -162,17 +162,12 @@ catch(std::exception const& ex) {
 /**
  * Output listener thread: receive and watch output from child process
  */
-void Watcher::observeOutput(Progress& log)
+void Watcher::observeOutput()
 {
     util::IStreamFilehandle outputFromChild(child_.pipeChildOUT);
 
-    log.out("==Listener=Thread==");
     for (string line; std::getline(outputFromChild, line); )
-    {
-        log.out(line); ///////////TODO logging shall be done by the MatchCond, and only on demand...
         matchTask.evaluate(line);
-    }
-    log.err("==dying==");
     matchTask.deactivate();
 }
 
