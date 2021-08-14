@@ -74,6 +74,26 @@ inline string showRes(ResCode code)
 }
 
 
+enum YoshimiExit
+{   YOSHIMI_FINE     = 0
+,   YOSHIMI_SEGFAULT =-11
+,   YOSHIMI_COREDUMP =-22
+,   YOSHIMI_CONFUSED =-23
+};
+
+inline string showYoshimiExit(int retCodeFromYoshimi)
+{
+    switch (retCodeFromYoshimi)
+    {
+        case YOSHIMI_SEGFAULT: return "<SEGFAULT>";
+        case YOSHIMI_COREDUMP: return "<core dumped>";
+        case YOSHIMI_CONFUSED: return "(unidentified failure)";
+        default:               return util::formatVal(retCodeFromYoshimi);
+    }
+}
+
+
+
 /**
  * Statistics Data collected after completing a single test case.
  */

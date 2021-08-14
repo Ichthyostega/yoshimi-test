@@ -36,13 +36,15 @@
 
 #include "util/nocopy.hpp"
 #include "util/format.hpp"
+#include "suite/Result.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/Scaffolding.hpp"
 
-//#include <string>
-#include <iostream>
+#include <string>
+#include <iostream>////////TODO rly?
 using std::cerr;
 using std::endl;
+using std::string;
 
 namespace suite{
 namespace step {
@@ -64,7 +66,9 @@ class Invoker
             int retCode = scaffolding_.triggerTest();
             performed_ = (retCode==0);
             return performed_? Result::OK()
-                             : Result{ResCode::MALFUNCTION, "Yoshimi exited with failure code: "+util::formatVal(retCode)};
+                             : Result{ResCode::MALFUNCTION
+                                     ,"Yoshimi exited with failure code: "
+                                     + showYoshimiExit(retCode)};
         }
         catch(error::FailedLaunch& crash)
         {

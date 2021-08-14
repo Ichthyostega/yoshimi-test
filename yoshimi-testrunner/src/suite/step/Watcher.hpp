@@ -56,13 +56,9 @@
 #include "suite/step/MatchTask.hpp"
 
 #include <filesystem>
-#include <functional>
-#include <memory>
 #include <future>
-#include <atomic>
 #include <thread>
 #include <vector>
-#include <regex>
 
 namespace suite{
 namespace step {
@@ -102,6 +98,7 @@ class Watcher
     : util::NonCopyable
 {
     const SubProcHandle child_;
+    std::promise<int> exitus_;
     std::thread listener_;
 
 public:
@@ -111,9 +108,11 @@ public:
    ~Watcher();
 
     void kill();
+    std::future<int> retrieveExitCode();
     void TODO_forceQuit();
 private:
     void observeOutput();
+    void awaitTermination();
 };
 
 

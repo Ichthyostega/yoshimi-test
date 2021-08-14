@@ -28,31 +28,35 @@
  ** to define action commands for these setup steps, which are then performed within the
  ** child process prior to starting the target executable through the `execve()` call.
  ** Besides that, we _could_ (maybe future work?) also modify signal masks here.
- ** 
- ** @todo WIP as of 7/21
- ** @todo the LV2-plugin setup is future work as of 7/2021
+ **
+ ** @todo do we need to setup signal masking for the Child process?
  ** @see Scaffolding.hpp
+ ** @see MatchTask.hpp
  ** @see TestStep.hpp
- ** 
+ **
  */
 
 
 
+#include "suite/Result.hpp"
 #include "suite/step/Watcher.hpp"
-#include "util/error.hpp"
-#include "util/format.hpp"///////TODO
 #include "util/filehandle.hpp"
+#include "util/format.hpp"
+#include "util/error.hpp"
 
 #include <unistd.h>
 #include <signal.h>
 #include <spawn.h>
+#include <wait.h>
 #include <cassert>
 #include <iostream>
 #include <string>
 
 using std::cerr;
 using std::endl;
-using util::formatVal;//////////TODO
+using std::future;
+using std::promise;
+using util::formatVal;
 
 
 /**
@@ -169,8 +173,34 @@ void Watcher::observeOutput()
     for (string line; std::getline(outputFromChild, line); )
         matchTask.evaluate(line);
     matchTask.deactivate();
+    awaitTermination();
 }
 
+
+/**
+ * establish a way to retrieve the exit code of the child process.
+ * @warning can be invoked only once (and this is what we need)
+ */
+future<int> Watcher::retrieveExitCode()
+{
+    return exitus_.get_future();
+}
+
+
+/** @internal use POSIX to wait blocking for the Child's death */
+void Watcher::awaitTermination()
+{
+    int childStatus;
+    pid_t pid = waitpid(child_.pid, &childStatus, 0);
+    childStatus = WIFEXITED(childStatus)        ? WEXITSTATUS(childStatus)
+                : WCOREDUMP(childStatus)        ? YOSHIMI_COREDUMP
+                : WIFSIGNALED(childStatus) and
+                  SIGSEGV==WTERMSIG(childStatus)? YOSHIMI_SEGFAULT
+                :                                 YOSHIMI_CONFUSED;
+    exitus_.set_value(childStatus);
+    if (pid != child_.pid)
+        throw error::LogicBroken("My child wasn't my child!?!");
+}
 /**
  * @todo placeholder code to terminate Yoshimi instead of launching a test
  */

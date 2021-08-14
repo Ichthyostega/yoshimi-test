@@ -39,7 +39,6 @@
 
 //#include <string>
 
-using std::future_status;
 using util::formatVal;
 
 namespace suite{
@@ -99,19 +98,17 @@ int ExeLauncher::triggerTest()
     /////////////////////////////////////////////////////////TODO have a test script in a string field within ExeLauncher
     /////////////////////////////////////////////////////////TODO use the Watcher to feed this into the child process
     subprocess_->TODO_forceQuit();
-    return int(ResCode::DEBACLE);
+    progressLog_.out("Waiting for the Subject to die...");
+    auto theEnd = subprocess_->retrieveExitCode();
+    return waitFor(theEnd);
 }
 
 
-void ExeLauncher::waitFor(std::future<void>& condition)
+void ExeLauncher::killChildAndFail()
 {
-    if (future_status::timeout == condition.wait_for(timeoutSec_))
-    {
-        subprocess_->kill();
-        progressLog_.err("TIMEOUT after "+formatVal(timeoutSec_.count())+"s waiting for reaction on CLI");
-        throw error::State("Yoshimi-the-subject not ready");
-    }
-    condition.get();
+    subprocess_->kill();
+    progressLog_.err("TIMEOUT after "+formatVal(timeoutSec_.count())+"s waiting for reaction on CLI");
+    throw error::State("Yoshimi-the-subject is not compliant.");
 }
 
 

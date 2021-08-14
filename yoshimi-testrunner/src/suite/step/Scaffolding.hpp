@@ -105,8 +105,21 @@ public:
                ,Progress& progress);
 
 private:
-    void waitFor(std::future<void>&);
+    template<typename T>
+    T waitFor(std::future<T>& condition);
+    void killChildAndFail();
 };
+
+
+
+/** blocking wait with the timeout configured in test spec */
+template<typename T>
+T ExeLauncher::waitFor(std::future<T>& condition)
+{
+    if (std::future_status::timeout == condition.wait_for(timeoutSec_))
+        killChildAndFail();
+    return condition.get();
+}
 
 
 }}//(End)namespace suite::step
