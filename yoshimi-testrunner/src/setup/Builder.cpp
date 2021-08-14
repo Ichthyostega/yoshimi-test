@@ -20,30 +20,29 @@
 
 /** @file Builder.cpp
  ** Implementation details of test definition parsing and buildup.
- ** 
- ** @todo WIP as of 7/21
+ ** @note there is a hard wired set of defaults for Testcase specifications,
+ **       defined at the top of Config.hpp and [injected here](\ref Builder::buildTestcase)
+ **       into all actual Testcase definitions.
  ** @see TestStep.hpp
- ** 
+ ** @see Mould.hpp
+ **
  */
 
 
 
+#include "Config.hpp"
 #include "setup/Builder.hpp"
 #include "setup/Mould.hpp"
-#include "suite/Progress.hpp"
 #include "util/format.hpp"
 #include "util/parse.hpp"
 
 #include <iostream>
 #include <cassert>
-//#include <memory>
 #include <set>
-//#include <string>
 
 using std::set;
 using std::cout;
 using std::endl;
-//using std::make_shared;
 
 using util::formatVal;
 
@@ -113,15 +112,6 @@ StepSeq Builder::buildTree()
 
 
 
-/**
- * @note all defaults for test specifications defined here
- *       can be omitted within the actual *.test files.
- */
-const MapS DEFAULT_TEST_SPEC{{KEY_Test_type,  TYPE_CLI}
-                            ,{KEY_verifySound, "Off"}
-                            ,{KEY_verifyTimes, "Off"}
-                            ,{KEY_cliTimeout,  "60" }
-                            };
 
 
 /**
@@ -135,7 +125,7 @@ const MapS DEFAULT_TEST_SPEC{{KEY_Test_type,  TYPE_CLI}
 StepSeq Builder::buildTestcase(fs::path topicPath)
 {
     MapS spec = util::parseSpec(root_ / topicPath);
-    Config::supplySettings(spec, DEFAULT_TEST_SPEC);
+    Config::supplySettings(spec, def::DEFAULT_TEST_SPEC);
     spec.insert({KEY_YoshimiExe, config_.subject});
     spec.insert({KEY_Test_topic, topicPath});
 
@@ -147,11 +137,8 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
         cout << "." << endl;
     }
 
-    auto logger = config_.verbose? suite::Progress::diagnosticLog()
-                                 : suite::Progress::showTestNameOnly();
-
     return useMould_for(spec[KEY_Test_type])
-                    .withProgress(logger)
+                    .withProgress(*config_.progress)
                     .generateStps(spec);
 }
 

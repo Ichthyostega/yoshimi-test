@@ -35,6 +35,7 @@
 #include "util/utils.hpp"
 #include "util/format.hpp"
 #include "util/parse.hpp"
+#include "suite/Progress.hpp"
 
 #include <iostream>
 #include <argp.h>
@@ -206,6 +207,15 @@ ConfigSource Config::fromDefaultsIni()
                                parseSpec(defaultsIni));
             }
     };
+}
+
+
+
+/** @internal pick a suitable implementation for progress indicator / log */
+suite::PProgress Config::setupProgressLog(bool verbose)
+{
+    return verbose? suite::Progress::buildDiagnosticLog()
+                  : suite::Progress::buildMinimalIndicator();
 }
 
 

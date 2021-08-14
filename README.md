@@ -87,12 +87,13 @@ structure and organise the testsuite and the result report.
 The syntax of Test Case specifications is based on the syntax for configuration ("INI file syntax"), with some
 extensions
 
-- there must be a *section* `[Test]` -- all setting keys after that section start are implicitly prefixed
+- there must be a *section* `[Test]` — all setting keys following that section start are implicitly prefixed
   by the section name, i.e. "`Test.<theKey>`"
 - within the Test section, optionally a `Test.type` can be defined...
   + default is `Test.type=CLI` and causes Yoshimi to be launched as a subprocess, feeding the test through CLI
   + *(planned)* alternatively `Test.type=LV2` will load Yoshimi as a LV2 plugin, allowing for tests with MIDI files
-- for CLI-tests, a *CLI script* should be defined, which is sent to the Yoshimi CLI to configure and launch the test
+- for CLI-tests, a *CLI script* should be defined, which is sent through the Yoshimi CLI in order to configure
+  and launch the test
   + this script is defined *inline* within the test specification
   + it starts with a marker line comprised solely of the word `Script` and it ends with a similar marker line `End-Script`
   + the text between those markers is *trimmed* and then sent line by line to the Yoshimi subprocess
@@ -105,3 +106,4 @@ extensions
   - `cliTimeout = <integer number>` overrides the built-in timeout when waiting for response on CLI actions.
     Typically the testrunner waits for some specific token or prefix to appear in the output stream from the Yoshimi subprocess;
     if the timeout threshold is exceeded, the subprocess will be killed and the test case counted as failure.
+—

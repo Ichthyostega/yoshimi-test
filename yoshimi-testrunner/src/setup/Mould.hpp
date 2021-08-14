@@ -40,6 +40,7 @@
 #include "setup/Builder.hpp"
 #include "suite/Progress.hpp"
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -48,8 +49,10 @@ namespace setup {
 
 using std::string;
 using std::shared_ptr;
+using std::reference_wrapper;
 
-using suite::PProgress;
+using suite::Progress;
+using RProgress = std::reference_wrapper<Progress>;
 
 
 
@@ -62,19 +65,19 @@ class Mould
     StepSeq steps_;
 
 protected:
-    PProgress progressLog_;
+    RProgress progressLog_{Progress::null()};
 
 public:
     virtual ~Mould();  ///< this is an interface
 
-    /** prepare this Mould for the next generation cycle */
-    virtual Mould& startCycle();
-
-    Mould& withProgress(PProgress logger)
+    Mould& withProgress(Progress& logger)
     {
         progressLog_ = logger;
         return *this;
     }
+
+    /** prepare this Mould for the next generation cycle */
+    virtual Mould& startCycle();
 
     /** terminal builder operation: trigger generation. */
     StepSeq generateStps(MapS const& spec)

@@ -27,8 +27,13 @@
  ** - perform this testsuite, capturing results
  ** - generate a result report
  ** The [exit code](\ref Stage::getReturnCode) indicates success (0) or failure.
- ** 
- ** @todo WIP as of 7/21
+ **
+ ** # Guide for Programmers
+ ** To understand the basics of the Yoshimi-Testrunner, you might visit the following
+ ** - the \ref Config acts as umbrella, since it's directly or indirectly visible everywhere
+ ** - we use top-down wiring of dependencies by reference through ctor arguments
+ ** - each testcase is assembled and wired by a setup::Mould — be sure to look into Mould.cpp
+ ** - the suite::step::ExeLauncher manages the running Yoshimi instance, see Scaffolding.hpp
  **
  */
 

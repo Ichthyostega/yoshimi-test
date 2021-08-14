@@ -20,12 +20,13 @@
 
 /** @file Progress.hpp
  ** Implementation variations regarding test progress output.
- ** - Progress::showTestName() outfit the progress indicator just to show
+ ** - Progress::buildMinimalIndicator() outfit the progress indicator just to show
  **   the name of the current test, and to capture STDOUT of the subject silently
- ** - Progress::diagnostic() configure a progress indicator also to dump
+ ** - Progress::buildDiagnosticLog() configure a progress indicator also to dump
  **   all output directly to the Yoshimi-testrunner STDOUT while running the suite
  ** 
- ** @todo WIP as of 7/21
+ ** @todo WIP as of 8/21
+ ** @todo the purpose of Progress is still not totally clear
  ** @see Result.hpp
  ** @see TestLog.hpp
  ** 
@@ -44,6 +45,7 @@
 using std::string;
 using std::deque;
 using std::cout;
+using std::cerr;
 using std::endl;
 
 
@@ -51,7 +53,7 @@ namespace suite {
 
 
 
-// emit VTables here....
+// emit VTables and dtors here....
 Progress::~Progress() { }
 
 
@@ -79,8 +81,8 @@ class OutputCapturingSimpleProgress
     void err(string line)  override
     {
         output_.emplace_back(line);
-        if (echo_)
-            cout << output_.back() <<endl;
+        // Errors always sent to CERR
+        cerr << output_.back() <<endl;
     }
 
 public:
@@ -90,16 +92,34 @@ public:
 };
 
 
-
-PProgress Progress::showTestNameOnly()
+class BlackHoleProgress
+    : public Progress
 {
-    return std::make_shared<OutputCapturingSimpleProgress>();
+    void indicateTest(fs::path)  override {/* NOP */}
+    void out(string)             override {/* NOP */}
+    void err(string)             override {/* NOP */}
+};
+
+
+
+
+PProgress Progress::buildMinimalIndicator()
+{
+    return std::make_unique<OutputCapturingSimpleProgress>();
 }
 
 
-PProgress Progress::diagnosticLog()
+PProgress Progress::buildDiagnosticLog()
 {
-    return std::make_shared<OutputCapturingSimpleProgress>(true);
+    return std::make_unique<OutputCapturingSimpleProgress>(true);
+}
+
+
+/** @remark »Meyer's Singleton« */
+Progress& Progress::null()
+{
+    static BlackHoleProgress theVoid;
+    return theVoid;
 }
 
 

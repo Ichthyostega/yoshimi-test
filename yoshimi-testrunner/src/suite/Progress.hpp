@@ -54,7 +54,7 @@ using std::string;
 
 
 class Progress;
-using PProgress = std::shared_ptr<Progress>;
+using PProgress = std::unique_ptr<Progress>;
 
 
 
@@ -70,10 +70,13 @@ public:
 
 
     /** build a Progress instance indicating just the current action */
-    static PProgress showTestNameOnly();
+    static PProgress buildMinimalIndicator();
 
     /** build a Progress instance to dump output of the subject */
-    static PProgress diagnosticLog();
+    static PProgress buildDiagnosticLog();
+
+    /** a "black hole" Progress log */
+    static Progress& null();
 
 
     /** indicate name of the next test launched now */

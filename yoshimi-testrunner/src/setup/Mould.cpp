@@ -87,7 +87,7 @@ class ExeCliMould
         auto& launcher = addStep<ExeLauncher>(spec.at(KEY_YoshimiExe)
                                              ,spec.at(KEY_Test_topic)
                                              ,spec.at(KEY_cliTimeout)
-                                             ,*progressLog_);
+                                             ,progressLog_);
         auto& invoker  = addStep<Invoker>(launcher);
 
         /*mark done*/    addStep<Summary>(spec.at(KEY_Test_topic), invoker);

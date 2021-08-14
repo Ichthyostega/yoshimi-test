@@ -39,6 +39,7 @@
 #include "util/utils.hpp"
 #include "util/format.hpp"
 #include "util/nocopy.hpp"
+#include "suite/Progress.hpp"
 
 #include <filesystem>
 #include <functional>
@@ -52,6 +53,10 @@ namespace fs = std::filesystem;
 using util::contains;
 using std::string;
 using std::move;
+
+namespace {
+    using MapS = std::map<string,string>;
+}
 
 /** global hard wired default definitions */
 namespace def {
@@ -68,11 +73,17 @@ namespace def {
     const char* const KEY_verifySound  = "Test.verifySound";
     const char* const KEY_verifyTimes  = "Test.verifyTimes";
     const char* const KEY_cliTimeout   = "Test.cliTimeout";
+
+    /** @note all defaults for test specifications defined here
+     *        can be omitted within the actual *.test files. */
+    const MapS DEFAULT_TEST_SPEC{{KEY_Test_type,  TYPE_CLI}
+                                ,{KEY_verifySound, "Off"}
+                                ,{KEY_verifyTimes, "Off"}
+                                ,{KEY_cliTimeout,  "60" }
+                                };
 }
 
-namespace {
-    using MapS = std::map<string,string>;
-}
+
 
 class Config;
 
@@ -176,6 +187,9 @@ public:
     CFG_PARAM(bool,     verbose);
     CFG_PARAM(fs::path, report);
 
+    //--global-Facilities----
+    suite::PProgress progress;
+
 
 private: /* ===== Initialisation from raw settings ===== */
 
@@ -189,6 +203,7 @@ private: /* ===== Initialisation from raw settings ===== */
         , baseline {rawSettings[KEY_baseline].as<bool>()}
         , verbose  {rawSettings[KEY_verbose].as<bool>()}
         , report   {rawSettings[KEY_report]}
+        , progress {setupProgressLog(verbose)}
     {
         if (verbose)
         {
@@ -238,6 +253,8 @@ private:
             src.injectSettingsInto(rawSettings);
         return rawSettings;
     }
+
+    static suite::PProgress setupProgressLog(bool verbose);
 
     static void dump(Settings);
     static void dump(string);
