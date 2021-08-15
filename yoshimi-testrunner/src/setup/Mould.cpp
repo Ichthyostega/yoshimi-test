@@ -84,9 +84,10 @@ class ExeCliMould
 {
     void materialise(MapS const& spec)  override
     {
-        auto& launcher = addStep<ExeLauncher>(spec.at(KEY_YoshimiExe)
+        auto& launcher = addStep<ExeLauncher>(spec.at(KEY_Test_subj)
                                              ,spec.at(KEY_Test_topic)
                                              ,spec.at(KEY_cliTimeout)
+                                             ,spec.at(KEY_Test_args)
                                              ,progressLog_);
         auto& invoker  = addStep<Invoker>(launcher);
 

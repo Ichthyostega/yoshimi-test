@@ -92,6 +92,10 @@ extensions
 - within the Test section, optionally a `Test.type` can be defined...
   + default is `Test.type=CLI` and causes Yoshimi to be launched as a subprocess, feeding the test through CLI
   + *(planned)* alternatively `Test.type=LV2` will load Yoshimi as a LV2 plugin, allowing for tests with MIDI files
+- by default, Yoshimi is launched with the commandline options `--null --no-gui` (as defined in 'setup.ini').
+  This argument line can be replaced completely by the setting `arguments`; you may also add further arguments
+  at the end of the existing commandline with `addArguments`. The string given here will be split into words;
+  use qouting (with `"` or `'`) to retain whitespace within a specific argument.
 - for CLI-tests, a *CLI script* should be defined, which is sent through the Yoshimi CLI in order to configure
   and launch the test
   + this script is defined *inline* within the test specification

@@ -35,10 +35,18 @@
 #include "suite/step/Scaffolding.hpp"
 #include "suite/step/Watcher.hpp"
 #include "util/format.hpp"
+#include "util/utils.hpp"
+#include "util/regex.hpp"
 #include "Config.hpp"
 
-//#include <string>
+#include <utility>
+#include <string>
 
+using std::move;
+using std::regex;
+using std::smatch;
+using std::string;
+using util::replace;
 using util::formatVal;
 
 namespace suite{
@@ -51,7 +59,37 @@ namespace {// Implementation helpers
         return std::chrono::seconds(
                 Config::parseAs<int>(spec));
     }
+
+    // == Split Commandline Arguments...
+    const string MATCH_SINGLE_TOKEN {R"~(([^\s"']+))~"};
+    const string MATCH_QUOTED_TOKEN {R"~('((?:[^'\\]|\'|\\)+)')~"};
+    const string MATCH_QQUOTED_TOKEN{R"~("((?:[^"\\]|\"|\\)+)")~"};
+
+    const regex CMDLINE_TOKENISE{ MATCH_SINGLE_TOKEN +"|"+ MATCH_QQUOTED_TOKEN +"|"+ MATCH_QUOTED_TOKEN
+                                , regex::optimize};
+
+    inline string getToken(smatch mat)
+    {
+        if (mat[1].matched)
+            return mat[1];
+        if (mat[2].matched)
+            return replace(mat[2],"\\\"","\"");
+        if (mat[3].matched)
+            return replace(mat[3],"\\'","'");
+        throw error::LogicBroken("One of the three Branches should have matched.");
+    }
+
+
+    VectorS tokenise(string argline)
+    {
+        VectorS args;
+        for (auto mat : util::MatchSeq(argline, CMDLINE_TOKENISE))
+            args.push_back(getToken(mat));
+        return args;
+    }
+
 }//(End) helpers
+
 
 
 // Emit VTables and dtors here....
@@ -63,11 +101,13 @@ ExeLauncher::~ExeLauncher() { }
 ExeLauncher::ExeLauncher(fs::path testSubject
                         ,fs::path topicPath
                         ,string timeoutSpec
+                        ,string exeArguments
                         ,Progress& progress)
     : subject_{testSubject}
     , topicPath_{topicPath}
     , timeoutSec_{parseDuration(timeoutSpec)}
     , progressLog_{progress}
+    , arguments_{move(tokenise(exeArguments))}
 { }
 
 
@@ -77,8 +117,6 @@ Result ExeLauncher::perform()
     if (not fs::exists(subject_))
         return Result{ResCode::MALFUNCTION, "Executable not found: "+formatVal(subject_)};
 
-    arguments_.push_back("--null");   // instruct Yoshimi not to connect to any Audio/MIDI.
-    arguments_.push_back("--no-gui"); //              ... and to run CLI only.
     progressLog_.out("ExeLaucher: start Yoshimi subprocess...");
     subprocess_.reset(
         new Watcher{launchSubprocess(subject_, arguments_)});

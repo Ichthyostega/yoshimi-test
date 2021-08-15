@@ -69,7 +69,9 @@ namespace def {
 
     const char* const KEY_Test_type    = "Test.type";
     const char* const KEY_Test_topic   = "Test.topic";
-    const char* const KEY_YoshimiExe   = "Test.YoshimiExe";
+    const char* const KEY_Test_subj    = "Test.subject";
+    const char* const KEY_Test_args    = "Test.arguments";
+    const char* const KEY_Test_addArgs = "Test.addArguments";
     const char* const KEY_verifySound  = "Test.verifySound";
     const char* const KEY_verifyTimes  = "Test.verifyTimes";
     const char* const KEY_cliTimeout   = "Test.cliTimeout";
@@ -182,6 +184,7 @@ class Config
 
 public:
     CFG_PARAM(fs::path, subject);
+    CFG_PARAM(string,   arguments);
     CFG_PARAM(fs::path, suitePath);
     CFG_PARAM(bool,     baseline);
     CFG_PARAM(bool,     verbose);
@@ -199,6 +202,7 @@ private: /* ===== Initialisation from raw settings ===== */
      *            and initialise the member fields in this Config instance. */
     Config(Settings rawSettings)
         : subject  {rawSettings[KEY_subject]}
+        , arguments{rawSettings[KEY_arguments]}
         , suitePath{rawSettings[KEY_suitePath]}
         , baseline {rawSettings[KEY_baseline].as<bool>()}
         , verbose  {rawSettings[KEY_verbose].as<bool>()}
@@ -209,6 +213,7 @@ private: /* ===== Initialisation from raw settings ===== */
         {
             dump(rawSettings);
             CFG_DUMP(subject);
+            CFG_DUMP(arguments);
             CFG_DUMP(suitePath);
             CFG_DUMP(baseline);
             CFG_DUMP(verbose);

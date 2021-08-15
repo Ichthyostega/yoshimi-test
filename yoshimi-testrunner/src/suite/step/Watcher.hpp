@@ -59,6 +59,7 @@
 #include <future>
 #include <thread>
 #include <vector>
+#include <string>
 
 namespace suite{
 namespace step {
@@ -75,7 +76,7 @@ struct SubProcHandle
     int pipeChildOUT;
 };
 
-using ArgVect = std::vector<const char*>;
+using VectorS = std::vector<std::string>;
 
 /**
  * Launch a subprocess and connect it's input/output pipes.
@@ -86,7 +87,7 @@ using ArgVect = std::vector<const char*>;
  *
  * [posix_spawn()]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/posix_spawn.html
  */
-SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments);
+SubProcHandle launchSubprocess(fs::path executable, VectorS const& arguments);
 
 
 

@@ -115,6 +115,16 @@ inline void removeSuffix(string &str, string const &suffix)
     str.resize(str.length() - suffix.length());
 }
 
+inline string replace(string src, string toFind, string replacement)
+{
+    for (size_t pos = src.find(toFind, 0);
+         pos != string::npos && toFind.size();
+         pos = src.find(toFind, pos+replacement.size())
+        )
+        src.replace(pos, toFind.size(), replacement);
+    return src;
+}
+
 
 /** shortcut for containment test on a map */
 template<typename MAP>

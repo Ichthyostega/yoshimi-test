@@ -50,7 +50,7 @@ namespace step {
 
 using std::unique_ptr;
 
-using ArgVect = std::vector<const char*>;
+using VectorS = std::vector<string>;
 using Duration = decltype(std::chrono::seconds(std::declval<int>()));
 
 
@@ -88,7 +88,7 @@ class ExeLauncher
     fs::path topicPath_;
     Duration  timeoutSec_;
     Progress& progressLog_;
-    ArgVect   arguments_;
+    VectorS   arguments_;
 
     unique_ptr<Watcher> subprocess_;
 
@@ -102,6 +102,7 @@ public:
     ExeLauncher(fs::path testSubject
                ,fs::path topicPath
                ,string timeoutSpec
+               ,string exeArguments
                ,Progress& progress);
 
 private:

@@ -105,6 +105,7 @@ public:
 
 private:
     StepSeq buildTestcase(fs::path);
+    string selectSubject(string testTypeID);
 };
 
 

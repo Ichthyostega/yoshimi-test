@@ -54,6 +54,7 @@
 
 using std::cerr;
 using std::endl;
+using std::vector;
 using std::future;
 using std::promise;
 using util::formatVal;
@@ -71,7 +72,7 @@ namespace suite{
 namespace step {
 
 
-SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments)
+SubProcHandle launchSubprocess(fs::path executable, VectorS const& argSeq)
 {
     enum PipeEnd{ READ=0, WRITE };
 
@@ -116,8 +117,10 @@ SubProcHandle launchSubprocess(fs::path executable, ArgVect arguments)
     // prepare program name and argument array...
     const char* const exePath = executable.c_str();
     const char* const exeName = executable.filename().c_str();
-    arguments.insert(arguments.begin(), exeName);  // setup 0th argument (the exec name)
-    arguments.push_back(nullptr);                  // execve() requires a NULL terminated array
+    vector<const char*> arguments{exeName}; // setup 0th argument (the exec name)
+    for (auto& arg : argSeq)
+        arguments.emplace_back(arg.c_str());
+    arguments.push_back(nullptr);                 // execve() requires a NULL terminated array
     auto args = const_cast<char* const*>(arguments.data());
 
     // pass Environment of the test-runner unaltered into child process

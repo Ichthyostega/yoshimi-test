@@ -35,6 +35,7 @@
 #include "setup/Mould.hpp"
 #include "util/format.hpp"
 #include "util/parse.hpp"
+#include "util/utils.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -44,6 +45,8 @@ using std::set;
 using std::cout;
 using std::endl;
 
+using util::isnil;
+using util::contains;
 using util::formatVal;
 
 using namespace def;
@@ -126,8 +129,12 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
 {
     MapS spec = util::parseSpec(root_ / topicPath);
     Config::supplySettings(spec, def::DEFAULT_TEST_SPEC);
-    spec.insert({KEY_YoshimiExe, config_.subject});
+    spec.insert({KEY_Test_subj, selectSubject(spec[KEY_Test_type])});
+    spec.insert({KEY_Test_args, config_.arguments});
     spec.insert({KEY_Test_topic, topicPath});
+
+    if (contains(spec, KEY_Test_addArgs))
+        spec[KEY_Test_args] += " "+spec[KEY_Test_addArgs];
 
     if (config_.verbose)
     {
@@ -140,6 +147,19 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
     return useMould_for(spec[KEY_Test_type])
                     .withProgress(*config_.progress)
                     .generateStps(spec);
+}
+
+
+string Builder::selectSubject(string testTypeID)
+{
+    if (def::TYPE_LV2 == testTypeID)
+        throw error::ToDo("Testing via LV2 plugin not yet implemented");
+
+    fs::path spec = config_.subject;
+    fs::path exe = fs::absolute(fs::canonical(spec));
+    if (not fs::exists(exe))
+        throw error::Misconfig("Unable to locate Subject "+formatVal(exe));
+    return exe.string();
 }
 
 
