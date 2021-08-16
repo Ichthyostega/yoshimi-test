@@ -33,30 +33,16 @@
  */
 
 
-
 #include "Config.hpp"
 #include "util/error.hpp"
+#include "util/utils.hpp"
 #include "setup/Mould.hpp"
 #include "suite/step/Scaffolding.hpp"
 #include "suite/step/PrepareScript.hpp"
 #include "suite/step/Invoker.hpp"
 #include "suite/step/Summary.hpp"
-//#include "util/format.hpp"
 
-//#include <iostream>
-//#include <cassert>
-//#include <memory>
-//#include <set>
-//#include <string>
-
-//using std::set;
-//using std::cout;
-//using std::endl;
-//using std::make_shared;
-
-//using util::formatVal;
-
-//using namespace def;
+using util::contains;
 
 
 namespace setup {
@@ -75,6 +61,7 @@ Mould& Mould::startCycle()
     return *this;
 }
 
+
 /**
  * Specialised concrete Mould to build a test case
  * by directly launching a Yoshimi executable and then
@@ -90,14 +77,18 @@ class ExeCliMould
                                              ,spec.at(KEY_cliTimeout)
                                              ,spec.at(KEY_Test_args)
                                              ,progressLog_);
-        launcher.testScript
-                       = addStep<PrepareTestScript>();
+        if (contains(spec, KEY_Test_script))
+            launcher.testScript
+                       = addStep<PrepareTestScript>(spec.at(KEY_Test_script)
+                                                   ,spec.at(KEY_verifySound));
         auto& invoker  = addStep<Invoker>(launcher);
-
+        ///////////////////////////////////////////////////////////////////////////////TODO add steps for verification here
         /*mark done*/    addStep<Summary>(spec.at(KEY_Test_topic), invoker);
     }
 public:
 };
+
+
 
 /**
  * Specialised concrete Mould to build a test case

@@ -52,6 +52,7 @@
 
 
 #include "util/nocopy.hpp"
+#include "util/filehandle.hpp"
 #include "suite/Progress.hpp"
 #include "suite/step/MatchTask.hpp"
 
@@ -101,6 +102,8 @@ class Watcher
     const SubProcHandle child_;
     std::promise<int> exitus_;
     std::thread listener_;
+
+    util::OStreamFilehandle outputToChild_;
 
 public:
     MatchTask matchTask;

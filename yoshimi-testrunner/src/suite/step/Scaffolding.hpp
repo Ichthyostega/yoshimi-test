@@ -24,11 +24,10 @@
  ** employing a suitable setup for loading presets, configuring the voices and defining
  ** the parameters for the actual test case. The Scaffolding ensures the test can be
  ** launched, and resulting behaviour can be observed.
- ** 
- ** @todo WIP as of 7/21
+ **
  ** @see Invoker.hpp
  ** @see TestStep.hpp
- ** 
+ **
  */
 
 
@@ -88,6 +87,11 @@ public:
 };
 
 
+
+/**
+ * Specialised Scaffolding to launch Yoshimi as a subprocess
+ * and to send the test command via CLI
+ */
 class ExeLauncher
     : public Scaffolding
 {
@@ -140,7 +144,7 @@ T ExeLauncher::waitFor(std::future<T>& condition)
  * Optional/Monad-style invocation within the Scaffolding.
  * Captures a crash in the subprocess or launch mechanism
  * and marks the Scaffolding as failed then; further
- * _"maybe steps"_ are skipped and marked as failure then.
+ * _"maybe steps"_ will be skipped and marked as failure.
  */
 template<class FUN>
 Result Scaffolding::maybe(string operationID, FUN&& fun)

@@ -45,6 +45,7 @@
 #define TESTRUNNER_SUITE_STEP_PREPARE_SCRIPT_HPP_
 
 
+#include "util/utils.hpp"
 #include "util/nocopy.hpp"
 //#include "util/format.hpp"
 #include "suite/Result.hpp"
@@ -53,9 +54,10 @@
 #include "suite/step/Scaffolding.hpp"
 
 #include <string>
-//#include <iostream>////////TODO rly?
 //using std::cerr;
 //using std::endl;
+
+//using std::move;
 using std::string;
 
 namespace suite{
@@ -70,15 +72,23 @@ class PrepareScript
     : public TestStep
     , public Script
 {
+    deque<string> scriptCode_;
 
-protected:
     Result perform()  override
     {
+        __checkNonempty();
+        preprocess();
         return Result::OK();
     }
+protected:
+    virtual void preprocess()      =0;
+
+    virtual string markWhenSriptIsFinished()  const override;
+    virtual string markWhenScriptIsComplete() const override;
 
 public:
-    PrepareScript()
+    PrepareScript(string const& rawCode)
+        : Script{rawCode}
     { }
 };
 
@@ -92,10 +102,15 @@ public:
 class PrepareTestScript
     : public PrepareScript
 {
+    bool verifySound_;
 
+    void preprocess() override;
+    string markWhenSriptIsFinished() const override;
 
 public:
-    PrepareTestScript()
+    PrepareTestScript(string const& rawCode, string const& shallVerifySound)
+        : PrepareScript{rawCode}
+        , verifySound_{util::isYes(shallVerifySound)}
     { }
 };
 

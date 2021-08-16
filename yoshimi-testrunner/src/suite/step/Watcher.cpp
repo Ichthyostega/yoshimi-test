@@ -151,6 +151,7 @@ SubProcHandle launchSubprocess(fs::path executable, VectorS const& argSeq)
 Watcher::Watcher(SubProcHandle chld)
     : child_{chld}
     , listener_{[this]() { observeOutput(); }}
+    , outputToChild_{child_.pipeChildIN}
 { }
 
 
@@ -164,6 +165,21 @@ catch(std::exception const& ex) {
 } catch(...) {
     cerr << "WARNING: unidentified problems in Watcher destructor."<< endl;
 }
+
+
+/**
+ * @param cliCode to be sent through STDIN to the child process
+ * @note newline after the code automatically supplied
+ */
+void Watcher::send2child(string cliCode)
+{
+    if (not outputToChild_.good())
+        throw error::State("Pipe to STDIN of child process (Yoshimi) broken.");
+
+    outputToChild_ << cliCode
+                   << endl;
+}
+
 
 
 /**
@@ -203,16 +219,6 @@ void Watcher::awaitTermination()
     exitus_.set_value(childStatus);
     if (pid != child_.pid)
         throw error::LogicBroken("My child wasn't my child!?!");
-}
-/**
- * @todo placeholder code to terminate Yoshimi instead of launching a test
- */
-void Watcher::TODO_forceQuit()
-{
-    util::OStreamFilehandle intputToChild(child_.pipeChildIN);
-
-    usleep(2*1000*1000);
-    intputToChild << "exit force"<<endl;
 }
 
 

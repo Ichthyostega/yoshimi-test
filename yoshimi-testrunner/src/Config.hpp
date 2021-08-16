@@ -60,21 +60,22 @@ namespace {
 
 /** global hard wired default definitions */
 namespace def {
-    const char* const TESTSPEC_FILE_EXTENSION = ".test";
-    const char* const DEFAULTS_INI = "defaults.ini";
-    const char* const SETUP_INI = "setup.ini";
+    const string TESTSPEC_FILE_EXTENSION = ".test";
+    const string DEFAULTS_INI = "defaults.ini";
+    const string SETUP_INI    = "setup.ini";
 
-    const char* const TYPE_CLI = "CLI";
-    const char* const TYPE_LV2 = "LV2";
+    const string TYPE_CLI = "CLI";
+    const string TYPE_LV2 = "LV2";
 
-    const char* const KEY_Test_type    = "Test.type";
-    const char* const KEY_Test_topic   = "Test.topic";
-    const char* const KEY_Test_subj    = "Test.subject";
-    const char* const KEY_Test_args    = "Test.arguments";
-    const char* const KEY_Test_addArgs = "Test.addArguments";
-    const char* const KEY_verifySound  = "Test.verifySound";
-    const char* const KEY_verifyTimes  = "Test.verifyTimes";
-    const char* const KEY_cliTimeout   = "Test.cliTimeout";
+    const string KEY_Test_type    = "Test.type";
+    const string KEY_Test_topic   = "Test.topic";
+    const string KEY_Test_script  = "Test.Script";
+    const string KEY_Test_subj    = "Test.subject";
+    const string KEY_Test_args    = "Test.arguments";
+    const string KEY_Test_addArgs = "Test.addArguments";
+    const string KEY_verifySound  = "Test.verifySound";
+    const string KEY_verifyTimes  = "Test.verifyTimes";
+    const string KEY_cliTimeout   = "Test.cliTimeout";
 
     /** @note all defaults for test specifications defined here
      *        can be omitted within the actual *.test files. */
@@ -83,6 +84,11 @@ namespace def {
                                 ,{KEY_verifyTimes, "Off"}
                                 ,{KEY_cliTimeout,  "60" }
                                 };
+
+
+    /* ========= response patterns at the Yoshimi CLI ========= */
+    const string YOSHIMI_SUCCESFULL_START_PATTERN{"Yay! We're up and running :\\-\\)"};
+    const string YOSHIMI_PROMPT_PATTERN{"yoshimi>.*"};
 }
 
 

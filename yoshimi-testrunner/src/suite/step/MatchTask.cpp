@@ -28,6 +28,7 @@
 
 
 
+#include "Config.hpp"
 #include "suite/step/MatchTask.hpp"
 #include "util/error.hpp"
 
@@ -52,8 +53,8 @@ using Matcher = MatchCond::Matcher;
 
 namespace { // text matching implementation details
 
-    const regex YOSHIMI_SUCCESFULL_START{"Yay! We're up and running :\\-\\)"};
-    const regex YOSHIMI_PROMPT_PATTERN{"yoshimi>.*"};
+    const regex YOSHIMI_SUCCESFULL_START{def::YOSHIMI_SUCCESFULL_START_PATTERN};
+    const regex YOSHIMI_PROMPT_PATTERN  {def::YOSHIMI_PROMPT_PATTERN};
 
 
     Matcher buildMatcher_for(regex const& match2find)

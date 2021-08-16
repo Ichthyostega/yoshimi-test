@@ -22,12 +22,11 @@
  ** Implementation details of invoking Yoshimi and gathering result data.
  ** - launching as a subprocess requires to fork and connect STDIN / STDOUT
  ** - for the LV2 plugin setup we need to implement a minimalist LV2 host
- ** 
- ** @todo WIP as of 7/21
+ **
  ** @todo the LV2-plugin setup is future work as of 7/2021
  ** @see Scaffolding.hpp
  ** @see TestStep.hpp
- ** 
+ **
  */
 
 
@@ -40,6 +39,7 @@
 #include "util/regex.hpp"
 #include "Config.hpp"
 
+#include <cassert>
 #include <utility>
 #include <string>
 
@@ -90,7 +90,34 @@ namespace {// Implementation helpers
     }
 
 
-    PrepareTestScript DEFAULT_TEST_SCRIPT;
+    PrepareTestScript DEFAULT_TEST_SCRIPT{
+        "set test execute",
+        "Off" //  do not verify sound
+    };
+
+
+    MatchCond::Matcher buildMatcherFor(string regExpSpec)
+    {
+        return [match2find =regex{regExpSpec}](string const& line)
+                {
+                    return std::regex_match(line, match2find);
+                };
+    }
+
+    /** how to detect that a script has finished */
+    MatchCond::Matcher expectFinishedMarker(Script const& script)
+    {
+        return buildMatcherFor(script.markWhenSriptIsFinished());
+    }
+
+    /** how to detect that a script was successfully sent
+     *  or successfully performed.
+     * @remark this is a precondition to #expectFinishedMarker
+     */
+    MatchCond::Matcher expectEndMarker(Script const& script)
+    {
+        return buildMatcherFor(script.markWhenScriptIsComplete());
+    }
 
 }//(End) helpers
 
@@ -144,16 +171,28 @@ int ExeLauncher::triggerTest()
     Result res = testScript? run(*testScript)
                            : run(DEFAULT_TEST_SCRIPT);
 
-    subprocess_->TODO_forceQuit();/////////////////TODO
     progressLog_.out("ExeLauncher: wait for Yoshimi to shut down...");
     auto theEnd = subprocess_->retrieveExitCode();
     return waitFor(theEnd);
 }
 
 
-Result ExeLauncher::run(Script const&)
+Result ExeLauncher::run(Script const& script)
 {
-    UNIMPLEMENTED("get and run a script, wait for Yoshimi");
+    return maybe("runScript",
+    [&] {
+            assert(subprocess_);
+            for (auto& line : script)
+                subprocess_->send2child(line);
+
+            auto condition = subprocess_->matchTask
+                    .onCondition(expectFinishedMarker(script))
+                    .withPrecondition(expectEndMarker(script))
+                    .logOutputInto(progressLog_)
+                    .activate();
+            waitFor(condition);
+            return Result::OK();
+        });
 }
 
 
@@ -173,8 +212,6 @@ void ExeLauncher::markFailed()
         subprocess_->kill();
     subprocess_.reset(); // block for the Watcher Thread to terminate
 }
-
-
 
 
 }}//(End)namespace suite::step

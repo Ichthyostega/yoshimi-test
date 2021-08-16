@@ -41,20 +41,44 @@
 #define TESTRUNNER_SUITE_STEP_SCRIPT_HPP_
 
 
-#include "util/nocopy.hpp"
+#include "util/error.hpp"
+#include "util/utils.hpp"
 //#include "util/format.hpp"
 //#include "suite/Result.hpp"
 //#include "suite/TestStep.hpp"
 //#include "suite/step/Scaffolding.hpp"
 
+#include <iostream>
+#include <utility>
 #include <string>
+#include <deque>
 //#include <iostream>////////TODO rly?
 //using std::cerr;
 //using std::endl;
+
+using std::move;
 using std::string;
+using util::isnil;
+
 
 namespace suite{
 namespace step {
+
+using dequeS = std::deque<string>;
+
+namespace {//Implementation helper
+
+    inline dequeS splitLines(string code)
+    {
+        dequeS lines;
+        auto ss = std::stringstream{code};
+        for (string line; std::getline(ss, line); )
+            lines.push_back(line);
+        return lines;
+    }
+}//(End)Implementation
+
+
 
 
 /**
@@ -63,11 +87,36 @@ namespace step {
  * - get a marker to expect in Yoshimi output after execution
  */
 class Script
+    : protected dequeS
 {
 protected:
-    virtual ~Script() { }  ///< this is an interface
+    virtual ~Script();   ///< this is an interface
+
+    Script(string const& rawCode)
+        : dequeS{move(splitLines(rawCode))}
+    { }
+
+
+    void __checkNonempty()  const
+    {
+        if (this->empty())
+            throw error::State{"Empty CLI script."};
+    }
+
+    string const& lastLine()  const
+    {
+        __checkNonempty();
+        return back();
+    }
+
 public:
-    
+    // Script can be iterated...
+    using iterator = dequeS::const_iterator;
+    iterator begin() const { return dequeS::begin(); }
+    iterator end()   const { return dequeS::end();   }
+
+    virtual string markWhenSriptIsFinished()  const =0;
+    virtual string markWhenScriptIsComplete() const =0;
 };
 
 
