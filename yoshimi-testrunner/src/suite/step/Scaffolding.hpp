@@ -39,8 +39,10 @@
 #include "util/nocopy.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/Progress.hpp"
+#include "suite/step/Script.hpp"
 
 #include <filesystem>
+#include <optional>
 #include <future>
 #include <vector>
 #include <memory>
@@ -52,6 +54,7 @@ using std::unique_ptr;
 
 using VectorS = std::vector<string>;
 using Duration = decltype(std::chrono::seconds(std::declval<int>()));
+using MaybeScript = std::optional<std::reference_wrapper<Script>>;
 
 
 class Watcher;
@@ -78,6 +81,9 @@ public:
 
     virtual void markFailed()
     { sane_ = false; }
+
+    template<class FUN>
+    Result maybe(string, FUN&& fun);
 };
 
 
@@ -94,8 +100,8 @@ class ExeLauncher
 
 
     Result perform()   override;
-    int triggerTest()  override;
     void markFailed()  override;
+    int triggerTest()  override;
 
 public:
    ~ExeLauncher();
@@ -104,6 +110,10 @@ public:
                ,string timeoutSpec
                ,string exeArguments
                ,Progress& progress);
+
+
+    /** (optional) a dedicated test script */
+    MaybeScript testScript;
 
 private:
     template<typename T>
@@ -121,6 +131,32 @@ T ExeLauncher::waitFor(std::future<T>& condition)
         killChildAndFail();
     return condition.get();
 }
+
+
+/**
+ * Optional/Monad-style invocation within the Scaffolding.
+ * Captures a crash in the subprocess or launch mechanism
+ * and marks the Scaffolding as failed then; further
+ * _"maybe steps"_ are skipped and marked as failure then.
+ */
+template<class FUN>
+Result Scaffolding::maybe(string operationID, FUN&& fun)
+try {
+    if (this->sane_)
+        return fun();
+    else
+        return Result{ResCode::MALFUNCTION
+                     ,"Unable to "+operationID
+                     +". Consequence of failed launch."};
+}
+catch(error::FailedLaunch& crash)
+{
+    this->markFailed();
+    return Result{ResCode::MALFUNCTION
+                 ,"Crash while "+operationID
+                 +": " + crash.what()};
+}
+
 
 
 }}//(End)namespace suite::step

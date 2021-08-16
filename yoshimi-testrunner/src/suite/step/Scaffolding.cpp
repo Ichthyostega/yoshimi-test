@@ -120,18 +120,22 @@ Result ExeLauncher::perform()
     progressLog_.out("ExeLaucher: start Yoshimi subprocess...");
     subprocess_.reset(
         new Watcher{launchSubprocess(subject_, arguments_)});
-    return Result::OK();
+
+    progressLog_.out("ExeLaucher: wait for Yoshimi to become ready...");
+    return maybe("startupYoshimi",
+    [&] {
+            auto condition = subprocess_->matchTask
+                    .onCondition(MATCH_YOSHIMI_READY)
+                    .logOutputInto(progressLog_)
+                    .activate();
+            waitFor(condition);
+            return Result::OK();
+        });
 }
 
 
 int ExeLauncher::triggerTest()
 {
-    auto condition = subprocess_->matchTask
-            .onCondition(MATCH_YOSHIMI_READY)
-            .logOutputInto(progressLog_)
-            .activate();
-    waitFor(condition);
-
     progressLog_.out("TODO: trigger test in Yoshimi...");
     /////////////////////////////////////////////////////////TODO have a test script in a string field within ExeLauncher
     /////////////////////////////////////////////////////////TODO use the Watcher to feed this into the child process

@@ -38,6 +38,7 @@
 #include "util/error.hpp"
 #include "setup/Mould.hpp"
 #include "suite/step/Scaffolding.hpp"
+#include "suite/step/PrepareScript.hpp"
 #include "suite/step/Invoker.hpp"
 #include "suite/step/Summary.hpp"
 //#include "util/format.hpp"
@@ -89,6 +90,7 @@ class ExeCliMould
                                              ,spec.at(KEY_cliTimeout)
                                              ,spec.at(KEY_Test_args)
                                              ,progressLog_);
+                         addStep<PrepareTestScript>(launcher);
         auto& invoker  = addStep<Invoker>(launcher);
 
         /*mark done*/    addStep<Summary>(spec.at(KEY_Test_topic), invoker);

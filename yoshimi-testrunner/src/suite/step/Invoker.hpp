@@ -62,19 +62,15 @@ class Invoker
 
     Result perform()  override
     {
-        try {
+        return scaffolding_.maybe("launchTest",
+        [&] {
             int retCode = scaffolding_.triggerTest();
             performed_ = (retCode==0);
             return performed_? Result::OK()
                              : Result{ResCode::MALFUNCTION
                                      ,"Yoshimi exited with failure code: "
                                      + showYoshimiExit(retCode)};
-        }
-        catch(error::FailedLaunch& crash)
-        {
-            scaffolding_.markFailed();
-            return Result{ResCode::MALFUNCTION, crash.what()};
-        }
+            });
     }
 
 public:
