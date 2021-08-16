@@ -90,7 +90,8 @@ class ExeCliMould
                                              ,spec.at(KEY_cliTimeout)
                                              ,spec.at(KEY_Test_args)
                                              ,progressLog_);
-                         addStep<PrepareTestScript>(launcher);
+        launcher.testScript
+                       = addStep<PrepareTestScript>();
         auto& invoker  = addStep<Invoker>(launcher);
 
         /*mark done*/    addStep<Summary>(spec.at(KEY_Test_topic), invoker);

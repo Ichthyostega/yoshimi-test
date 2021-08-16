@@ -33,6 +33,7 @@
 
 
 #include "suite/step/Scaffolding.hpp"
+#include "suite/step/PrepareScript.hpp"
 #include "suite/step/Watcher.hpp"
 #include "util/format.hpp"
 #include "util/utils.hpp"
@@ -88,6 +89,9 @@ namespace {// Implementation helpers
         return args;
     }
 
+
+    PrepareTestScript DEFAULT_TEST_SCRIPT;
+
 }//(End) helpers
 
 
@@ -136,13 +140,20 @@ Result ExeLauncher::perform()
 
 int ExeLauncher::triggerTest()
 {
-    progressLog_.out("TODO: trigger test in Yoshimi...");
-    /////////////////////////////////////////////////////////TODO have a test script in a string field within ExeLauncher
-    /////////////////////////////////////////////////////////TODO use the Watcher to feed this into the child process
-    subprocess_->TODO_forceQuit();
-    progressLog_.out("Waiting for the Subject to die...");
+    progressLog_.out("Trigger test in Yoshimi...");
+    Result res = testScript? run(*testScript)
+                           : run(DEFAULT_TEST_SCRIPT);
+
+    subprocess_->TODO_forceQuit();/////////////////TODO
+    progressLog_.out("ExeLauncher: wait for Yoshimi to shut down...");
     auto theEnd = subprocess_->retrieveExitCode();
     return waitFor(theEnd);
+}
+
+
+Result ExeLauncher::run(Script const&)
+{
+    UNIMPLEMENTED("get and run a script, wait for Yoshimi");
 }
 
 

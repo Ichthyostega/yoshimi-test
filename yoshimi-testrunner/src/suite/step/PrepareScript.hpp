@@ -92,19 +92,10 @@ public:
 class PrepareTestScript
     : public PrepareScript
 {
-    ExeLauncher& launcher_;
 
-
-    Result perform()  override
-    {
-        auto resultCode = PrepareScript::perform();
-        launcher_.testScript = *this;  // use this Script later for test launch
-        return resultCode;
-    }
 
 public:
-    PrepareTestScript(ExeLauncher& launcher)
-        : launcher_{launcher}
+    PrepareTestScript()
     { }
 };
 

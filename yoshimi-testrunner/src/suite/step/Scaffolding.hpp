@@ -36,6 +36,7 @@
 #define TESTRUNNER_SUITE_STEP_SCAFFOLDING_HPP_
 
 
+#include "util/error.hpp"
 #include "util/nocopy.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/Progress.hpp"
@@ -115,6 +116,8 @@ public:
     /** (optional) a dedicated test script */
     MaybeScript testScript;
 
+    Result run(Script const&);
+
 private:
     template<typename T>
     T waitFor(std::future<T>& condition);
@@ -156,7 +159,11 @@ catch(error::FailedLaunch& crash)
                  ,"Crash while "+operationID
                  +": " + crash.what()};
 }
-
+catch(...)
+{
+    this->markFailed();
+    throw;
+}
 
 
 }}//(End)namespace suite::step

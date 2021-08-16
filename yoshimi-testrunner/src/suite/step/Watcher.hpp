@@ -110,6 +110,7 @@ public:
 
     void kill();
     std::future<int> retrieveExitCode();
+    void send2child(string);
     void TODO_forceQuit();
 private:
     void observeOutput();
