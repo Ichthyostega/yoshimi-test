@@ -33,11 +33,10 @@
  ** want to capture generated sound and compare it to a stored baseline;
  ** so Yoshimi must be instructed to write the generated sound into a file
  ** known by the Testrunner.
- ** 
- ** @todo WIP as of 8/21
+ **
  ** @see Scaffolding.hpp
  ** @see TestStep.hpp
- ** 
+ **
  */
 
 
@@ -45,19 +44,16 @@
 #define TESTRUNNER_SUITE_STEP_PREPARE_SCRIPT_HPP_
 
 
+#include "Config.hpp"
 #include "util/utils.hpp"
 #include "util/nocopy.hpp"
-//#include "util/format.hpp"
 #include "suite/Result.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/Script.hpp"
 #include "suite/step/Scaffolding.hpp"
 
 #include <string>
-//using std::cerr;
-//using std::endl;
 
-//using std::move;
 using std::string;
 
 namespace suite{
@@ -67,21 +63,19 @@ namespace step {
 
 /**
  * TestStep to provide a (possibly preprocessed) CLI script.
+ * Provides standard implementation of the \ref Script interface
  */
 class PrepareScript
     : public TestStep
     , public Script
 {
-    deque<string> scriptCode_;
-
     Result perform()  override
     {
         __checkNonempty();
-        preprocess();
-        return Result::OK();
+        return preprocess();
     }
 protected:
-    virtual void preprocess()      =0;
+    virtual Result preprocess()                           =0;
 
     virtual string markWhenSriptIsFinished()  const override;
     virtual string markWhenScriptIsComplete() const override;
@@ -96,21 +90,22 @@ public:
 
 /**
  * Prepare and provide the CLI script for actually launching the test.
- * @see step::Invoker
  * @see step::ExeLauncher::triggerTest()
  */
 class PrepareTestScript
     : public PrepareScript
 {
     bool verifySound_;
+    string outFileSpec_;
 
-    void preprocess() override;
+    Result preprocess() override;
     string markWhenSriptIsFinished() const override;
 
 public:
     PrepareTestScript(string const& rawCode, string const& shallVerifySound)
         : PrepareScript{rawCode}
         , verifySound_{util::isYes(shallVerifySound)}
+        , outFileSpec_{def::DEFAULT_SOUND_OUTPUT}
     { }
 };
 

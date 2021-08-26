@@ -158,6 +158,39 @@ inline bool contains(SEQ const &cont, typename SEQ::const_reference val)
     return end != std::find(begin, end, val);
 }
 
+
+/** @internal helper type for #backwards */
+template <typename ITA>
+struct ReverseIterationAdapter { ITA& iterable; };
+
+template <typename ITA>
+auto begin (ReverseIterationAdapter<ITA> adapt)
+{
+    return std::rbegin(adapt.iterable);
+}
+
+template <typename ITA>
+auto end (ReverseIterationAdapter<ITA> adapt)
+{
+    return std::rend(adapt.iterable);
+}
+
+/**
+ * Adapter to iterate backwards in a "foreach" loop.
+ * @tparam ITA a STL compatible container with back iteration capability.
+ * @remark solution based on the [Stackoverflow] from 2015 by [Prikso NAI].
+ *
+ * [Stackoverflow]: https://stackoverflow.com/a/28139075
+ * [Prikso NAI]: https://stackoverflow.com/users/3970469/prikso-nai
+ */
+template <typename ITA>
+inline ReverseIterationAdapter<ITA>
+backwards (ITA&& iterable)
+{
+    return { iterable };
+}
+
+
 /** @return content without leading or trailing whitespace */
 string trimmed(string);
 

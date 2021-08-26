@@ -20,36 +20,34 @@
 
 /** @file PrepareScript.cpp
  ** Implementation details of preprocessing Yoshimi CLI scripts.
- ** 
- ** @todo WIP as of 8/21
+ **
  ** @see step::ExeLauncher::triggerTest
  ** @see ExeCliMould::materialise
- ** 
+ **
  */
 
 
 
 #include "Config.hpp"
 #include "suite/step/PrepareScript.hpp"
-//#include "util/format.hpp"
-//#include "util/utils.hpp"
-//#include "util/regex.hpp"
+#include "util/utils.hpp"
 
-//#include <utility>
 #include <string>
+#include <regex>
 
-//using std::move;
-//using std::regex;
-//using std::smatch;
+using std::regex;
+using std::smatch;
 using std::string;
-//using util::replace;
-//using util::formatVal;
+using std::regex_match;
+using util::backwards;
 
 namespace suite{
 namespace step {
 
-namespace {// Implementation helpers
-///////////////TODO
+namespace {  // Regular Expressions for detecting relevant CLI commands...
+    const regex PARSE_TEST_OUTPUT_SPEC{def::CLI_TEST_OUTPUT_PATTERN, regex::icase |regex::optimize};
+    const regex PARSE_TEST_EXEC_TRIGGER{def::CLI_TEST_EXEC_PATTERN,  regex::icase |regex::optimize};
+
 }//(End) helpers
 
 
@@ -99,10 +97,43 @@ string PrepareTestScript::markWhenSriptIsFinished() const
 }
 
 
-
-void PrepareTestScript::preprocess()
+/**
+ * Investigate / preprocess the script used to launch the test.
+ * @remarks
+ *  - for verifying the generated sound against a baseline,
+ *    we need to know the name of the RAW file written by Yoshimi...
+ *  - if the given test script explicitly gave a "`target <filename>`",
+ *    we can pick out the required information by match.
+ *  - otherwise, when output generation was not activated, while the
+ *    test spec asks for `verifySound_`, a suitable CLI command has
+ *    to be injected, right before the line triggering the test.
+ *  - we need to handle the special cases where the script is packaged
+ *    into a single line, e.g. `set test target <name> execute`
+ */
+Result PrepareTestScript::preprocess()
 {
-    //////TODO actually preprocess Test Script: look for output
+    if (not verifySound_) return Result::OK();
+
+    smatch mat;
+    DequeS& script = *this;
+    for (string const& line : backwards(script))
+        if (regex_match(line, mat, PARSE_TEST_OUTPUT_SPEC))
+        {
+            outFileSpec_ = mat[2];
+            return Result::OK();
+        }
+    // Script defines no output file, but we need output to verify the sound...
+   for (auto pos = begin(); pos != end(); ++pos)
+       if (regex_match(*pos, mat, PARSE_TEST_EXEC_TRIGGER))
+       {
+           string outputSpec = mat[1].matched? def::CLI_ENTER_TEST_CONTEXT+" "+def::CLI_TEST_OUTPUT
+                                             : def::CLI_DEFINITION        +" "+def::CLI_TEST_OUTPUT;
+           outputSpec += " "+outFileSpec_;
+           script.insert(pos, outputSpec); // insert missing output filename into the script
+           return Result::OK();
+       }
+
+   return Result::Fail("Unable to find 'execute' trigger in test script.");
 }
 
 

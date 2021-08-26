@@ -88,6 +88,17 @@ namespace def {
     /* ========= response patterns at the Yoshimi CLI ========= */
     const string YOSHIMI_SUCCESFULL_START_PATTERN{"Yay! We're up and running :\\-\\)"};
     const string YOSHIMI_PROMPT_PATTERN{"yoshimi>.*"};
+
+    /* ========= command tokens at the Yoshimi CLI ========= */
+    const string CLI_TEST_OUTPUT_PATTERN{"\\s*set\\s+(test\\s+)?ta[rget]*\\s+(\\S+)\\s*(exe[cute]*\\s*)?"};
+    const string CLI_TEST_EXEC_PATTERN  {"\\s*set\\s+(test\\s+)?.*exe[cute]*\\s*|\\s*exec[ute]*\\s*"};
+    const string CLI_DEFINITION{"set"};
+    const string CLI_TEST_OUTPUT{"target"};
+    const string CLI_ENTER_TEST_CONTEXT{"set test"};
+
+    const string DEFAULT_SOUND_OUTPUT{"sound"};
+    const string EXT_SOUND_RAW{".raw"};
+    const string EXT_SOUND_WAV{".wav"};
 }
 
 

@@ -28,12 +28,11 @@
  ** a long time. The tokens to expect in the output obviously depend on the
  ** actual script -- usually we can wait for the last line of the script
  ** to be echoed in Yoshimi's output channel.
- ** 
- ** @todo WIP as of 8/21
+ **
  ** @see Scaffolding.hpp
  ** @see PrepareScript.hpp
  ** @see step::PrepareTestScript::perform
- ** 
+ **
  */
 
 
@@ -43,18 +42,11 @@
 
 #include "util/error.hpp"
 #include "util/utils.hpp"
-//#include "util/format.hpp"
-//#include "suite/Result.hpp"
-//#include "suite/TestStep.hpp"
-//#include "suite/step/Scaffolding.hpp"
 
 #include <iostream>
 #include <utility>
 #include <string>
 #include <deque>
-//#include <iostream>////////TODO rly?
-//using std::cerr;
-//using std::endl;
 
 using std::move;
 using std::string;
@@ -64,13 +56,13 @@ using util::isnil;
 namespace suite{
 namespace step {
 
-using dequeS = std::deque<string>;
+using DequeS = std::deque<string>;
 
 namespace {//Implementation helper
 
-    inline dequeS splitLines(string code)
+    inline DequeS splitLines(string code)
     {
-        dequeS lines;
+        DequeS lines;
         auto ss = std::stringstream{code};
         for (string line; std::getline(ss, line); )
             lines.push_back(line);
@@ -87,13 +79,13 @@ namespace {//Implementation helper
  * - get a marker to expect in Yoshimi output after execution
  */
 class Script
-    : protected dequeS
+    : protected DequeS
 {
 protected:
     virtual ~Script();   ///< this is an interface
 
     Script(string const& rawCode)
-        : dequeS{move(splitLines(rawCode))}
+        : DequeS{move(splitLines(rawCode))}
     { }
 
 
@@ -111,9 +103,9 @@ protected:
 
 public:
     // Script can be iterated...
-    using iterator = dequeS::const_iterator;
-    iterator begin() const { return dequeS::begin(); }
-    iterator end()   const { return dequeS::end();   }
+    using iterator = DequeS::const_iterator;
+    iterator begin() const { return DequeS::begin(); }
+    iterator end()   const { return DequeS::end();   }
 
     virtual string markWhenSriptIsFinished()  const =0;
     virtual string markWhenScriptIsComplete() const =0;

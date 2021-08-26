@@ -159,9 +159,9 @@ bool MatchCond::doCheck(string const& line)
 /**
  * @warning very simplistic implementation; danger of races and exceptions from the
  *          promise and future when invoked concurrently to MatchTask::evaluate().
- * @remark  since only the Watcher task invokes MatchTask::evaluate() from within
+ * @remark  since only the Watcher thread invokes MatchTask::evaluate() from within
  *          the output retrieving loop, it is safe to invoke that function from
- *          the same Thread _after the output has ended_ and prior to termination.
+ *          the same thread _after the output has ended_ and prior to termination.
  */
 void MatchTask::deactivate()
 {

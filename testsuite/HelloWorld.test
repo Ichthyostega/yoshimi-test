@@ -5,7 +5,7 @@ description = This is how the world ends...
 
 [Test]
 Script
-    set test target sound
+    set test note 42
     execute
 End-Script
 
