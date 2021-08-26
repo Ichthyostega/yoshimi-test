@@ -88,7 +88,7 @@ using VectorS = std::vector<std::string>;
  *
  * [posix_spawn()]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/posix_spawn.html
  */
-SubProcHandle launchSubprocess(fs::path executable, VectorS const& arguments);
+SubProcHandle launchSubprocess(fs::path executable, VectorS arguments);
 
 
 

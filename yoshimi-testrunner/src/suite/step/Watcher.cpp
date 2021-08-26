@@ -47,6 +47,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <spawn.h>
+#include <errno.h>
 #include <wait.h>
 #include <cassert>
 #include <iostream>
@@ -72,7 +73,7 @@ namespace suite{
 namespace step {
 
 
-SubProcHandle launchSubprocess(fs::path executable, VectorS const& argSeq)
+SubProcHandle launchSubprocess(fs::path executable, VectorS argSeq)
 {
     enum PipeEnd{ READ=0, WRITE };
 
@@ -115,19 +116,18 @@ SubProcHandle launchSubprocess(fs::path executable, VectorS const& argSeq)
     //////////////TODO we could define some signal masks here
 
     // prepare program name and argument array...
-    const char* const exePath = executable.c_str();
-    const char* const exeName = executable.filename().c_str();
-    vector<const char*> arguments{exeName}; // setup 0th argument (the exec name)
+    const string exeName = executable.filename();
+    vector<const char*> arguments{exeName.c_str()};     // setup 0th argument (the exec name)
     for (auto& arg : argSeq)
-        arguments.emplace_back(arg.c_str());
-    arguments.push_back(nullptr);                 // execve() requires a NULL terminated array
+        arguments.emplace_back(arg.c_str());            // Note: argSeq is stable storage (due to fork)
+    arguments.push_back(nullptr);                       // execve() requires a NULL terminated array
     auto args = const_cast<char* const*>(arguments.data());
 
     // pass Environment of the test-runner unaltered into child process
     char* const * environment = environ;
 
     // Spawn the child process...
-    res = posix_spawnp (&childHandle.pid, exePath, &actions_after_fork, &childAttribs, args, environment);
+    res = posix_spawnp (&childHandle.pid, executable.c_str(), &actions_after_fork, &childAttribs, args, environment);
     ___MAYBE_FAIL("fork and spawn child process" + string{executable});
 
 
@@ -226,9 +226,9 @@ void Watcher::awaitTermination()
 void Watcher::kill()
 {
     int res = ::kill(child_.pid, SIGKILL);
-    if (0 != res and ESRCH != res)
+    if (0 != res and ESRCH != errno)
         throw error::State("Failed to kill the subject. PID="+formatVal(child_.pid)
-                          +" Error-Code="+formatVal(res));
+                          +" Error-Code="+formatVal(errno));
 }
 
 
