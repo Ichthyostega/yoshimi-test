@@ -62,7 +62,7 @@ namespace setup {
  */
 StepSeq build(Config const& config)
 {
-    fs::path suiteRoot = fs::absolute(fs::canonical(config.suitePath));
+    fs::path suiteRoot = fs::consolidated(config.suitePath);
     if (not fs::is_directory(suiteRoot))
         throw error::LogicBroken{"Entry point to Testsuite definition must be a Directory: "+formatVal(suiteRoot)};
 
@@ -155,8 +155,7 @@ string Builder::selectSubject(string testTypeID)
     if (def::TYPE_LV2 == testTypeID)
         throw error::ToDo("Testing via LV2 plugin not yet implemented");
 
-    fs::path spec = config_.subject;
-    fs::path exe = fs::absolute(fs::canonical(spec));
+    fs::path exe = fs::consolidated(config_.subject);
     if (not fs::exists(exe))
         throw error::Misconfig("Unable to locate Subject "+formatVal(exe));
     return exe.string();

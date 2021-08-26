@@ -36,19 +36,18 @@
 
 
 #include "util/error.hpp"
+#include "util/file.hpp"
 #include "util/utils.hpp"
 #include "util/format.hpp"
 #include "util/nocopy.hpp"
 #include "suite/Progress.hpp"
 
-#include <filesystem>
 #include <functional>
 #include <utility>
 #include <sstream>
 #include <string>
 #include <map>
 
-namespace fs = std::filesystem;
 
 using util::contains;
 using std::string;

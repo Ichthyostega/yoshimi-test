@@ -51,12 +51,12 @@
 #define TESTRUNNER_SUITE_STEP_WATCHER_HPP_
 
 
+#include "util/file.hpp"
 #include "util/nocopy.hpp"
 #include "util/filehandle.hpp"
 #include "suite/Progress.hpp"
 #include "suite/step/MatchTask.hpp"
 
-#include <filesystem>
 #include <future>
 #include <thread>
 #include <vector>
@@ -64,8 +64,6 @@
 
 namespace suite{
 namespace step {
-
-namespace fs = std::filesystem;
 
 using std::move;
 

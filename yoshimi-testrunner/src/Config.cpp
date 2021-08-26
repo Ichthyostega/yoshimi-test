@@ -57,8 +57,7 @@ using MapS = std::map<string,string>;
 string showAbsolute(fs::path path)
 {
     return util::formatVal(
-                fs::absolute(
-                    fs::canonical(path)));
+             fs::consolidated(path));
 }
 
 

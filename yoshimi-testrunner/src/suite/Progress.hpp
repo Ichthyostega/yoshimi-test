@@ -40,12 +40,10 @@
 
 
 #include "util/nocopy.hpp"
+#include "util/file.hpp"
 
-#include <filesystem>
 #include <memory>
 #include <string>
-
-namespace fs = std::filesystem;
 
 
 namespace suite {

@@ -34,16 +34,14 @@
 #define TESTRUNNER_SUITE_RESULT_HPP_
 
 
+#include "util/file.hpp"
 #include "util/error.hpp"
 #include "util/utils.hpp"
 #include "util/format.hpp"
 #include "util/nocopy.hpp"
 
-#include <filesystem>
 #include <optional>
 
-
-namespace fs = std::filesystem;
 
 namespace suite {
 
