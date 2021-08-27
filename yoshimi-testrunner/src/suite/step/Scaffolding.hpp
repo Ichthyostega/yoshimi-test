@@ -77,7 +77,7 @@ protected:
 public:
     virtual ~Scaffolding();  ///< this is an interface
 
-    virtual int triggerTest()  =0;
+    virtual Result triggerTest() =0;
 
     virtual void markFailed()
     { sane_ = false; }
@@ -104,9 +104,9 @@ class ExeLauncher
     unique_ptr<Watcher> subprocess_;
 
 
-    Result perform()   override;
-    void markFailed()  override;
-    int triggerTest()  override;
+    Result perform()     override;
+    Result triggerTest() override;
+    void   markFailed()  override;
 
 public:
    ~ExeLauncher();

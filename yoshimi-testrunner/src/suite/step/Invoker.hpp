@@ -64,12 +64,9 @@ class Invoker
     {
         return scaffolding_.maybe("launchTest",
         [&] {
-            int retCode = scaffolding_.triggerTest();
-            performed_ = (retCode==0);
-            return performed_? Result::OK()
-                             : Result{ResCode::MALFUNCTION
-                                     ,"Yoshimi exited with failure code: "
-                                     + showYoshimiExit(retCode)};
+            Result res = scaffolding_.triggerTest();
+            performed_ = (res.code != ResCode::MALFUNCTION);
+            return res;
             });
     }
 
@@ -78,7 +75,7 @@ public:
         : scaffolding_{scaf}
     { }
 
-    bool isPerformed() { return performed_; }
+    bool isPerformed() { return performed_; }  ///< @todo what is the purpose of this flag? Scaffolding::sane_ seems to do the same 
 };
 
 

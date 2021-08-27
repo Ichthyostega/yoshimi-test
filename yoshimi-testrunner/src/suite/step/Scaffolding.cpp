@@ -165,15 +165,22 @@ Result ExeLauncher::perform()
 }
 
 
-int ExeLauncher::triggerTest()
+Result ExeLauncher::triggerTest()
 {
     progressLog_.out("Trigger test in Yoshimi...");
-    Result res = testScript? run(*testScript)
-                           : run(DEFAULT_TEST_SCRIPT);
+    Result result = testScript? run(*testScript)
+                              : run(DEFAULT_TEST_SCRIPT);
 
     progressLog_.out("ExeLauncher: wait for Yoshimi to shut down...");
     auto theEnd = subprocess_->retrieveExitCode();
-    return waitFor(theEnd);
+    int exitCode = waitFor(theEnd);
+    subprocess_.reset();  // join Watcher Thread
+    if (0 == exitCode)
+        return result;
+    else
+        return Result{ResCode::MALFUNCTION
+                     ,"Yoshimi exited with failure code: "
+                     + showYoshimiExit(exitCode)};
 }
 
 
@@ -198,8 +205,10 @@ Result ExeLauncher::run(Script const& script)
 
 void ExeLauncher::killChildAndFail()
 {
-    subprocess_->kill();
+    Scaffolding::markFailed();
     progressLog_.err("TIMEOUT after "+formatVal(timeoutSec_.count())+"s waiting for reaction on CLI");
+    if (subprocess_)
+        subprocess_->kill();
     throw error::State("Yoshimi-the-subject is not compliant.");
 }
 
@@ -210,7 +219,6 @@ void ExeLauncher::markFailed()
     progressLog_.err("Aborting test invocation...");
     if (subprocess_)
         subprocess_->kill();
-    subprocess_.reset(); // block for the Watcher Thread to terminate
 }
 
 
