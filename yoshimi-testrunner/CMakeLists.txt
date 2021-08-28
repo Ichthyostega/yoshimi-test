@@ -17,7 +17,7 @@ project(
 
 # dependencies via pkg-config
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBSOX REQUIRED IMPORTED_TARGET sox>=14)
+pkg_check_modules(SNDFILE REQUIRED IMPORTED_TARGET sndfile>=1.0.28)
 
 
 # build complete source tree (detect changes on rebuild)
@@ -27,6 +27,6 @@ file(GLOB_RECURSE testrunner_headers CONFIGURE_DEPENDS "src/*.hpp")
 add_executable(testrunner ${testrunner_sources} ${testrunner_headers})
 target_compile_features(testrunner PUBLIC cxx_std_17)
 target_include_directories(testrunner PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/src)
-target_link_libraries(testrunner PRIVATE PkgConfig::LIBSOX)
+target_link_libraries(testrunner PRIVATE PkgConfig::SNDFILE)
 target_link_libraries(testrunner PRIVATE stdc++fs)
 target_link_libraries(testrunner PRIVATE pthread)

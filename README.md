@@ -31,7 +31,10 @@ simplest form, the build can be started with...
 
 - a C++17 compliant compiler
 - CMake 3.12 or better
-- libSOX (e.g. `libsox-dev` on Debian/Ubuntu)
+- libSndfile (e.g. `libsndfile1-dev` on Debian/Ubuntu)
+
+Note: we use libSndfile only for reading/writing WAV files. If further dependencies are problematic,
+you might `configure --disable-alsa --disable-external-lib` to omit ALSA, FLAC and Vorbis.
 
 
 ## Launching the tests
