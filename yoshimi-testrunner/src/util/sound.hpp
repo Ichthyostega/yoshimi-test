@@ -75,7 +75,7 @@ class SoundProbe
 
 public:
    ~SoundProbe();
-    SoundProbe(fs::path rawSound);
+    SoundProbe(fs::path rawSound, int sampleRate);
 
     void discardStorage();
 
