@@ -48,16 +48,16 @@
 #include "util/file.hpp"
 #include "util/nocopy.hpp"
 
-//#include <filesystem>
+#include <optional>
 #include <string>
 #include <memory>
-//#include <map>
 
 namespace util {
 
 using std::string;
+using OptString = std::optional<string>;
 
-class SoundData;
+struct SoundData;
 using PSoundData = std::unique_ptr<SoundData>;
 
 
@@ -84,11 +84,23 @@ public:
 
     void saveProbe(fs::path name);
     void saveResidual(fs::path name);
+    OptString checkDiffSane() const;
     double getDiffRMSPeak()   const;
 //  string describeProbe()    const;  /////////////TODO
 //  string describeResidual() const;  /////////////TODO
 };
 
+
+bool hasExtRAW(fs::path const& file)
+{
+    return ".raw" == file.extension()
+        or ".RAW" == file.extension();
+}
+
+bool hasExtWAV(fs::path const& file)
+{
+    return ".wav" == file.extension();
+}
 
 
 }//(End)namespace util

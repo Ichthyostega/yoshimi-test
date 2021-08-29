@@ -49,14 +49,9 @@
 
 
 #include "util/sound.hpp"
-//#include "util/error.hpp"
-//#include "util/utils.hpp"
+#include "util/error.hpp"
 #include "util/format.hpp"
 
-//#include <regex>
-//#include <fstream>
-//#include <iostream>
-//#include <filesystem>
 #include <sndfile.hh>
 #include <algorithm>
 #include <cassert>
@@ -67,24 +62,20 @@
 
 namespace util {
 
-//using std::string;
-//using std::ifstream;
-//using std::regex;
-//using std::smatch;
-//using std::regex_match;
-//using std::regex_search;
-//using std::filesystem::path;
-//using std::filesystem::exists;
 using util::formatVal;
+using std::string;
 using std::move;
+using std::log10;
 using std::fabs;
 using std::max;
 using std::min;
 
 using SampleVec = std::vector<float>;
 
+
 struct SoundStat
 {
+    int    rate;
     size_t frames;
     float  peak;
     double rmsAll;
@@ -94,16 +85,69 @@ struct SoundStat
 namespace { // Implementation details
 
     const double RMS_WINDOW_sec = double{30}/1000;
-    const uint CHANNELS = 2;
+    const uint CHANNELS = 2; // Yoshimi TestInvoker always generates Stereo sound
 
 
+    /** construct a libSndfile Handle for reading a RAW file */
     SndfileHandle openSndfileRead(fs::path rawSound, int sampleRate)
     {
-        UNIMPLEMENTED("construct a libSndfile Handle properly for reading a RAW file");
+        if (not hasExtRAW(rawSound))
+            throw error::LogicBroken("Expecting a RAW soundfile written by Yoshimi.");
+        if (not fs::exists(rawSound))
+            throw error::LogicBroken("Could not find expected RAW soundfile \""+rawSound.string()+"\"");
+
+        auto sndFormat = SF_FORMAT_RAW | SF_FORMAT_FLOAT;
+        SndfileHandle sndFile{rawSound, SFM_READ, sndFormat, CHANNELS, sampleRate};
+        if (not sndFile)
+            throw error::State("Buffer allocation error while opening \""+rawSound.filename().string()+"\"");
+        if (sndFile.error())
+            throw error::State("Failed to open \""+rawSound.filename().string()+"\" for reading: '"
+                              +sndFile.strError()+"'.");
+        if (0 == sndFile.frames())
+            throw error::State("Empty soundfile \""+rawSound.filename().string()+"\"");
+        return sndFile;
     }
 
 
-    SampleVec readSoundData(SndfileHandle src)
+    /** construct a libSndfile Handle for reading a WAV file */
+    SndfileHandle openSndfileRead(fs::path wavFile)
+    {
+        if (not hasExtWAV(wavFile))
+            throw error::LogicBroken("Expecting a WAV soundfile.");
+        if (not fs::exists(wavFile))
+            throw error::LogicBroken("Could not find expected WAV soundfile \""+wavFile.string()+"\"");
+
+        auto sndFormat = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
+        SndfileHandle sndFile{wavFile, SFM_READ, sndFormat};
+        if (not sndFile)
+            throw error::State("Buffer allocation error while opening \""+wavFile.filename().string()+"\"");
+        if (sndFile.error())
+            throw error::State("Failed to open \""+wavFile.filename().string()+"\" for reading: '"
+                              +sndFile.strError()+"'.");
+        if (0 == sndFile.frames())
+            throw error::State("Empty soundfile \""+wavFile.filename().string()+"\"");
+        return sndFile;
+    }
+
+
+    /** construct a libSndfile Handle for writing a WAV file */
+    SndfileHandle openSndfileWrite(fs::path target, int sampleRate)
+    {
+        if (not hasExtWAV(target))
+            throw error::LogicBroken("Expecting WAV file extension for writing \""+string{target}+"\".");
+
+        auto sndFormat = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
+        SndfileHandle sndFile{target, SFM_WRITE, sndFormat, CHANNELS, sampleRate};
+        if (not sndFile)
+            throw error::State("Buffer allocation error while creating \""+target.filename().string()+"\"");
+        if (sndFile.error())
+            throw error::State("Failed to open \""+target.filename().string()+"\" for writing: '"
+                              +sndFile.strError()+"'.");
+        return sndFile;
+    }
+
+
+    SampleVec readSoundData(SndfileHandle& src)
     {
         assert(src.channels() == CHANNELS);
         size_t sampleCnt = src.frames() * CHANNELS;
@@ -112,6 +156,28 @@ namespace { // Implementation details
         if (actuallyRead != sampleCnt)
             throw error::State("Could not read the expected "+formatVal(sampleCnt)
                               +" samples from the soundfile; got only "+formatVal(actuallyRead));
+        return buffer;
+    }
+
+
+    void writeSoundData(SampleVec const& samples, SndfileHandle dest)
+    {
+        assert(dest.channels() == CHANNELS);
+        size_t actuallyWritten = dest.write(samples.data(), samples.size());
+        if (actuallyWritten != samples.size())
+            throw error::State("Could not write all "+formatVal(samples.size())
+                              +" samples, only "+formatVal(actuallyWritten));
+    }
+
+
+    SampleVec buildDiff(SampleVec const& probe, SndfileHandle& baseline)
+    {
+        SampleVec buffer(move(readSoundData(baseline)));
+        size_t diffSiz = min(probe.size(), buffer.size());
+        for (size_t i=0; i < diffSiz; ++i)
+            buffer[i] = probe[i] - buffer[i];
+        for (size_t i=diffSiz; i < buffer.size(); ++i)
+            buffer[i] = 0.0f;
         return buffer;
     }
 
@@ -125,14 +191,15 @@ namespace { // Implementation details
         auto drop = [&](size_t i) { return i < window? 0.0 : samples[i-window]; };
 
         double movingAvg{0.0};
-        SoundStat res{0, 0.0, 0.0, 0.0};
-        for (size_t i=0; i<samples.size(); ++i)
+        SoundStat res{0, 0, 0.0, 0.0, 0.0};
+        for (size_t i=0; i < samples.size(); ++i)
         {
             res.rmsAll += sqr(curr(i));
             movingAvg  += sqr(curr(i)) - sqr(drop(i));
             res.rmsMax  = max(res.rmsMax, movingAvg);
             res.peak    = max(res.peak, fabs(curr(i)));
         }
+        res.rate    = smpPerSec;
         res.frames  = samples.size() / CHANNELS;
         res.rmsAll /= samples.size();
         res.rmsMax /= min(window, samples.size());
@@ -142,19 +209,29 @@ namespace { // Implementation details
 
 
 
-/** @internal PImpl to hold the sound data buffer */
-class SoundData
+
+/**
+ * @internal PImpl to hold sound data buffer and statistics
+ */
+struct SoundData
     : util::NonCopyable
 {
-    SampleVec buffer_;
-    SoundStat stat_;
+    SampleVec buffer;
+    SoundStat stat;
 
-public:
+    /** sound data from file */
     SoundData(SndfileHandle src)
-        : buffer_{move(readSoundData(src))}
-        , stat_{calculateStats(buffer_, src.samplerate())}
+        : buffer{move(readSoundData(src))}
+        , stat{calculateStats(buffer, src.samplerate())}
+    { }
+
+    /** build sound data as diff between #probe and #baseline */
+    SoundData(SoundData const& probe, SndfileHandle baseline)
+        : buffer{move(buildDiff(probe.buffer, baseline))}
+        , stat{calculateStats(buffer, baseline.samplerate())}
     { }
 };
+using PSoundData = std::unique_ptr<SoundData>;
 
 
 
@@ -180,27 +257,79 @@ bool SoundProbe::hasDiff()  const
 }
 
 
+/** load the baseline file and then calculate the residual sound. */
 void SoundProbe::buildDiff(fs::path baseline)
 {
-    UNIMPLEMENTED("load the baseline file and then calculate the residual sound");
+    assert(probe_);
+    SndfileHandle baselineFile = openSndfileRead(baseline);
+    residual_.reset(new SoundData{*probe_, baselineFile});
 }
 
 
-void SoundProbe::saveProbe(fs::path name)
+/**
+ * Basic sanity check after building a soundfile diff.
+ * @return error message indicating a sanity check violation,
+ *         or `std::nullopt` if everything looks valid.
+ * @remark does not _judge_ the diff to assess test failure.
+ */
+OptString SoundProbe::checkDiffSane()  const
 {
-    UNIMPLEMENTED("use libSndfile to write out the Probe sound data into a WAV file");
+    if (not residual_)
+        return OptString{"No Diff constructed"};
+    if (0 == probe_->stat.frames)
+        return OptString{"Empty sound probe"};
+    if (0.0 == probe_->stat.peak)
+        return OptString{"Mute sound probe"};
+    if (probe_->stat.rate != residual_->stat.rate)
+        return OptString{"Samplerate mismatch."
+                         " Probe: "   +formatVal(probe_->stat.rate)
+                        +" Baseline: "+formatVal(residual_->stat.rate)};
+    if (probe_->stat.frames > residual_->stat.frames)
+        return OptString{"Probe exceeds baseline by "
+                        +formatVal(probe_->stat.frames - residual_->stat.frames)
+                        +" samples ("
+                        +formatVal(1000.0*(probe_->stat.frames - residual_->stat.frames) / probe_->stat.rate)
+                        +"msec)"};
+    if (probe_->stat.frames < residual_->stat.frames)
+        return OptString{"Baseline exceeds probe by "
+                        +formatVal(residual_->stat.frames - probe_->stat.frames)
+                        +" samples ("
+                        +formatVal(1000.0*(residual_->stat.frames - probe_->stat.frames)*1000 / probe_->stat.rate)
+                        +"msec)"};
+    return std::nullopt;
 }
 
 
-void SoundProbe::saveResidual(fs::path name)
-{
-    UNIMPLEMENTED("use libSndfile to write out the calculated residual sound into a WAV file");
-}
-
-
+/**
+ * Use the precomputed raw statistics values
+ * to yield a RMS measurement characterising the diff.
+ * The probe's RMS is used for reference, since a Synth
+ * can not be expected to produce levelled output.
+ * @return peak RMS values observed on the diff over a 30ms window,
+ *         given in decibel relative to overall RMS of the probe.
+ */
 double SoundProbe::getDiffRMSPeak()  const
 {
-    UNIMPLEMENTED("use the precomputed raw statistics values to yield a meaningful RMS measurement");
+    if (not hasDiff())
+        throw error::LogicBroken("Need to compute a diff first.");
+    return 10*log10(residual_->stat.rmsMax / probe_->stat.rmsAll);
+}
+
+
+/** write the probe sound data into a WAV file */
+void SoundProbe::saveProbe(fs::path name)
+{
+    assert(probe_);
+    writeSoundData(probe_->buffer, openSndfileWrite(name, probe_->stat.rate));
+}
+
+
+/** write the calculated residual sound data into a WAV file */
+void SoundProbe::saveResidual(fs::path name)
+{
+    if (not hasDiff())
+        throw error::LogicBroken("Need to compute a diff first.");
+    writeSoundData(residual_->buffer, openSndfileWrite(name, residual_->stat.rate));
 }
 
 
