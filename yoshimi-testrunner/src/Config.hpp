@@ -23,7 +23,7 @@
  ** The testsuite is launched with a Config instance, which is a data record with
  ** typed parameters to represent the settings. These settings are populated from
  ** several ConfigSource elements, allowing to overlay and combine the basic
- ** setup, a local setup for the use and the commandline arguments.
+ ** setup, a local setup for the user and the commandline arguments.
  **
  ** @see Main.cpp usage
  ** @see Config.cpp for details of commandline and INI file parsing

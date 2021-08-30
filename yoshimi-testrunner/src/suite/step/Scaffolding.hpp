@@ -82,6 +82,9 @@ public:
     virtual void markFailed()
     { sane_ = false; }
 
+    bool isBroken()  const
+    { return not sane_; }
+
     template<class FUN>
     Result maybe(string, FUN&& fun);
 };

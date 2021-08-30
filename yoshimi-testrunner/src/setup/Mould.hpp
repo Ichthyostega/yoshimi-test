@@ -62,9 +62,8 @@ using RProgress = std::reference_wrapper<Progress>;
 class Mould
     : util::NonCopyable
 {
-    StepSeq steps_;
-
 protected:
+    StepSeq   steps_;
     RProgress progressLog_{Progress::null()};
 
 public:
@@ -86,24 +85,6 @@ public:
         StepSeq generatedSteps;
         swap(generatedSteps, this->steps_);
         return generatedSteps;
-    }
-
-
-protected: /* == interface for the concrete Moulds == */
-    /**
-     * Build and add a concrete suite::TestStep subclass,
-     * passing arguments (for Dependency Injection).
-     * @return _reference_ to the new step, with concrete type.
-     * @remark typically you'd store that reference locally and
-     *         pass it as arguments to following steps (DI)
-     */
-    template<class STEP, typename...ARGS>
-    STEP& addStep(ARGS&& ...args)
-    {
-        auto step = std::make_unique<STEP>(std::forward<ARGS>(args)...);
-        STEP& ref = *step;
-        steps_.emplace_back(std::move(step));
-        return ref;
     }
 
 

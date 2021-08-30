@@ -1,5 +1,5 @@
 /*
- *  Observation - extract relevant findings from the captured execution data
+ *  OutputObservation - extract relevant findings from the captured execution logs
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,12 +18,13 @@
  ***************************************************************/
 
 
-/** @file Observation.hpp
- ** Establish the actual observations from performing the test within Yoshimi.
+/** @file OutputObservation.hpp
+ ** Extract observations from the logs captured during the test within Yoshimi.
  ** After the Invoker step has launched Yoshimi and awaited termination of the test,
- ** the Observation steps have to identify relevant traits within the captured data.
+ ** this _Observation Step_ will search through the log records, and expose the matched
+ ** data as optional properties.
  ** 
- ** @todo WIP as of 7/21
+ ** @todo WIP as of 8/21
  ** @see Invoker.hpp
  ** @see Scaffolding.hpp
  ** @see Judgement.hpp
@@ -32,8 +33,8 @@
  */
 
 
-#ifndef TESTRUNNER_SUITE_STEP_OBSERVATION_HPP_
-#define TESTRUNNER_SUITE_STEP_OBSERVATION_HPP_
+#ifndef TESTRUNNER_SUITE_STEP_OUTPUT_OBSERVATION_HPP_
+#define TESTRUNNER_SUITE_STEP_OUTPUT_OBSERVATION_HPP_
 
 
 #include "util/nocopy.hpp"
@@ -46,15 +47,15 @@ namespace step {
 
 
 /**
- * Extract focused observations from captured behaviour.
+ * Extract focused information from captured execution logs.
  */
-class Observation
+class OutputObservation
     : public TestStep
 {
 public:
-    Observation();
+    OutputObservation();
 };
 
 
 }}//(End)namespace suite::step
-#endif /*TESTRUNNER_SUITE_STEP_OBSERVATION_HPP_*/
+#endif /*TESTRUNNER_SUITE_STEP_OUTPUT_OBSERVATION_HPP_*/

@@ -36,13 +36,14 @@
 #include "Config.hpp"
 #include "util/error.hpp"
 #include "util/utils.hpp"
+#include "util/nocopy.hpp"
 #include "setup/Mould.hpp"
 #include "suite/step/Scaffolding.hpp"
 #include "suite/step/PrepareScript.hpp"
 #include "suite/step/Invoker.hpp"
+#include "suite/step/SoundObservation.hpp"
 #include "suite/step/Summary.hpp"
 
-using util::contains;
 
 
 namespace setup {
@@ -62,13 +63,81 @@ Mould& Mould::startCycle()
 }
 
 
+class StepWiringMould
+    : public Mould
+{
+
+    struct ConditionalWiring;
+
+protected: /* == builder interface for the concrete Moulds == */
+    template<class STEP, typename...ARGS>
+    STEP& addStep(ARGS&& ...args);
+
+    ConditionalWiring optionally(bool condition);
+};
+
+
+template<class STEP>
+using MaybeRef = std::optional<std::reference_wrapper<STEP>>;
+
+
+struct StepWiringMould::ConditionalWiring
+{
+    bool enabled;
+    StepWiringMould& stepWiringMould;
+
+    template<class STEP, typename...ARGS>
+    MaybeRef<STEP> addStep(ARGS&& ...args);
+};
+
+
+/**
+ * Build and add a concrete suite::TestStep subclass,
+ * passing arguments (for Dependency Injection).
+ * @return _reference_ to the new step, with concrete type.
+ * @remark typically you'd store that reference locally and
+ *         pass it as arguments to following steps (DI)
+ */
+template<class STEP, typename...ARGS>
+inline STEP& StepWiringMould::addStep(ARGS&& ...args)
+{
+    auto step = std::make_unique<STEP>(std::forward<ARGS>(args)...);
+    STEP& ref = *step;
+    steps_.emplace_back(std::move(step));
+    return ref;
+}
+
+inline StepWiringMould::ConditionalWiring StepWiringMould::optionally(bool condition)
+{
+    return { condition, *this };
+}
+
+template<class STEP, typename...ARGS>
+inline MaybeRef<STEP> StepWiringMould::ConditionalWiring::addStep(ARGS&& ...args)
+{
+    return enabled? MaybeRef<STEP>{stepWiringMould.addStep<STEP>(std::forward<ARGS>(args)...)}
+                  : std::nullopt;
+}
+
+
+inline bool definesTestScript(MapS const& spec)
+{
+    return util::contains(spec, KEY_Test_script);
+}
+
+inline bool shallVerifySound(MapS const& spec)
+{
+    return util::boolVal(spec.at(KEY_verifySound));
+}
+
+
 /**
  * Specialised concrete Mould to build a test case
  * by directly launching a Yoshimi executable and then
  * feeding further test instructions into Yoshimi's CLI.
  */
 class ExeCliMould
-    : public Mould
+    : public StepWiringMould
 {
     void materialise(MapS const& spec)  override
     {
@@ -77,11 +146,15 @@ class ExeCliMould
                                              ,spec.at(KEY_cliTimeout)
                                              ,spec.at(KEY_Test_args)
                                              ,progressLog_);
-        if (contains(spec, KEY_Test_script))
+        if (definesTestScript(spec))
             launcher.testScript
                        = addStep<PrepareTestScript>(spec.at(KEY_Test_script)
                                                    ,spec.at(KEY_verifySound));
         auto& invoker  = addStep<Invoker>(launcher);
+
+        auto sound     = optionally(shallVerifySound(spec))
+                            .addStep<SoundObservation>(invoker);
+
         ///////////////////////////////////////////////////////////////////////////////TODO add steps for verification here
         /*mark done*/    addStep<Summary>(spec.at(KEY_Test_topic), invoker);
     }
@@ -98,7 +171,7 @@ public:
  * @todo planned, not yet implemented as of 7/2021
  */
 class LV2PluginMould
-    : public Mould
+    : public StepWiringMould
 {
     void materialise(MapS const& spec)  override
     {

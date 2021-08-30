@@ -75,7 +75,11 @@ public:
         : scaffolding_{scaf}
     { }
 
-    bool isPerformed() { return performed_; }  ///< @todo what is the purpose of this flag? Scaffolding::sane_ seems to do the same 
+    bool isPerformed()  const
+    {
+        return performed_
+           and not scaffolding_.isBroken();
+    }
 };
 
 

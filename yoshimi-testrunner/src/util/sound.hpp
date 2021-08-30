@@ -91,13 +91,13 @@ public:
 };
 
 
-bool hasExtRAW(fs::path const& file)
+inline bool hasExtRAW(fs::path const& file)
 {
     return ".raw" == file.extension()
         or ".RAW" == file.extension();
 }
 
-bool hasExtWAV(fs::path const& file)
+inline bool hasExtWAV(fs::path const& file)
 {
     return ".wav" == file.extension();
 }
