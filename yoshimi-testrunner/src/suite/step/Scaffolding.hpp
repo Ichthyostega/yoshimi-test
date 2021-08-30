@@ -54,7 +54,7 @@ using std::unique_ptr;
 
 using VectorS = std::vector<string>;
 using Duration = decltype(std::chrono::seconds(std::declval<int>()));
-using MaybeScript = std::optional<std::reference_wrapper<Script>>;
+using MaybeScript = suite::MaybeRef<suite::step::Script>;
 
 
 class Watcher;
@@ -104,6 +104,9 @@ class ExeLauncher
     Progress& progressLog_;
     VectorS   arguments_;
 
+    /** (optional) a dedicated test script */
+    MaybeScript testScript_;
+
     unique_ptr<Watcher> subprocess_;
 
 
@@ -117,11 +120,8 @@ public:
                ,fs::path topicPath
                ,string timeoutSpec
                ,string exeArguments
+               ,MaybeScript script
                ,Progress& progress);
-
-
-    /** (optional) a dedicated test script */
-    MaybeScript testScript;
 
     Result run(Script const&);
 

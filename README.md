@@ -34,7 +34,7 @@ simplest form, the build can be started with...
 - libSndfile (e.g. `libsndfile1-dev` on Debian/Ubuntu)
 
 Note: we use libSndfile only for reading/writing WAV files. If further dependencies are problematic,
-you might `configure --disable-alsa --disable-external-lib` to omit ALSA, FLAC and Vorbis.
+you might `configure --disable-alsa --disable-external-libs` to omit ALSA, FLAC and Vorbis.
 
 
 ## Launching the tests

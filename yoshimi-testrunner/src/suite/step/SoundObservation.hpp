@@ -59,7 +59,7 @@ class SoundObservation
 
     Result perform()  override
     {
-        UNIMPLEMENTED("load generated sound");
+        //////////////////////////////TODO load generated sound here
     }
 
 public:

@@ -22,12 +22,12 @@
  ** Interface of the fundamental Testsuite building block.
  ** The testsuite is a sequence of test steps, assembled and wired by a TestBuilder.
  ** Performing the testsuite equates to triggering each test step, capturing results.
- ** 
- ** @todo WIP as of 7/21
+ **
  ** @see Builder.hpp
  ** @see suite::step
  ** @see Stage::perform(Suite)
- ** 
+ ** @see ExeCliMould::materialise()
+ **
  */
 
 
@@ -39,6 +39,9 @@
 #include "suite/Result.hpp"
 
 //#include <string>
+#include <functional>
+#include <optional>
+
 
 namespace suite {
 
@@ -54,6 +57,37 @@ public:
 
     virtual Result perform()  =0;
 };
+
+
+
+/**
+ * Reference to an _Optional Test Step._
+ * @remarks allows to depend on another test step, which may or may not be defined.
+ * @note    since C++ does not support covariance, a wildcard conversion operator to
+ *          other optional test step types is provided, assuming the payload types are
+ *          compatible; this allows to hold a `MaybeRef` of an interface and assign a
+ *          MaybeRef of an concrete subtype.
+ * @warning as always when dealing with _references,_ the referred-to object must be
+ *          allocated and managed _elsewhere._ In the case of test steps, this is
+ *          typically the step sequence defining the test suite itself.
+ */
+template<class STEP>
+struct MaybeRef
+    : std::optional<std::reference_wrapper<STEP>>
+{
+    using Wrapper = std::optional<std::reference_wrapper<STEP>>;
+    using Wrapper::Wrapper;
+
+    template<class X>
+    operator MaybeRef<X>()
+    {
+        if (this->has_value())
+            return MaybeRef<X>(this->value());
+        else
+            return std::nullopt;
+    }
+};
+
 
 
 }//(End)namespace suite

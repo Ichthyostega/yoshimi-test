@@ -133,11 +133,13 @@ ExeLauncher::ExeLauncher(fs::path testSubject
                         ,fs::path topicPath
                         ,string timeoutSpec
                         ,string exeArguments
+                        ,MaybeScript script
                         ,Progress& progress)
     : subject_{testSubject}
     , topicPath_{topicPath}
     , timeoutSec_{parseDuration(timeoutSpec)}
     , progressLog_{progress}
+    , testScript_{script}
     , arguments_{move(tokenise(exeArguments))}
 { }
 
@@ -168,8 +170,8 @@ Result ExeLauncher::perform()
 Result ExeLauncher::triggerTest()
 {
     progressLog_.out("Trigger test in Yoshimi...");
-    Result result = testScript? run(*testScript)
-                              : run(DEFAULT_TEST_SCRIPT);
+    Result result = testScript_? run(*testScript_)
+                               : run(DEFAULT_TEST_SCRIPT);
 
     progressLog_.out("ExeLauncher: wait for Yoshimi to shut down...");
     auto theEnd = subprocess_->retrieveExitCode();
