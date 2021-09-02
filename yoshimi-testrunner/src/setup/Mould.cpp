@@ -38,6 +38,7 @@
 #include "util/utils.hpp"
 #include "setup/Mould.hpp"
 #include "setup/WiringMould.hpp"
+#include "suite/step/PathSetup.hpp"
 #include "suite/step/Scaffolding.hpp"
 #include "suite/step/PrepareScript.hpp"
 #include "suite/step/Invoker.hpp"
@@ -86,6 +87,9 @@ class ExeCliMould
 {
     void materialise(MapS const& spec)  override
     {
+        auto& pathSetup = addStep<PathSetup>(spec.at(KEY_workDir)
+                                            ,spec.at(KEY_Test_topic));
+
         auto testScript = optionally(definesTestScript(spec))
                              .addStep<PrepareTestScript>(spec.at(KEY_Test_script)
                                                         ,spec.at(KEY_verifySound));
@@ -94,8 +98,8 @@ class ExeCliMould
                                               ,spec.at(KEY_Test_topic)
                                               ,spec.at(KEY_cliTimeout)
                                               ,spec.at(KEY_Test_args)
-                                              ,testScript
-                                              ,progressLog_);
+                                              ,progressLog_
+                                              ,testScript);
         auto& invoker   = addStep<Invoker>(launcher);
 
         auto sound      = optionally(shallVerifySound(spec))

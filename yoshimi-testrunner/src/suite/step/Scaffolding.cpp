@@ -133,8 +133,8 @@ ExeLauncher::ExeLauncher(fs::path testSubject
                         ,fs::path topicPath
                         ,string timeoutSpec
                         ,string exeArguments
-                        ,MaybeScript script
-                        ,Progress& progress)
+                        ,Progress& progress
+                        ,MaybeScript script)
     : subject_{testSubject}
     , topicPath_{topicPath}
     , timeoutSec_{parseDuration(timeoutSpec)}

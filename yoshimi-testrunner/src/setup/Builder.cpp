@@ -133,6 +133,7 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
     spec.insert({KEY_Test_args, config_.arguments});
     spec.insert({KEY_Test_topic, topicPath});
 
+    spec[KEY_workDir] = (root_ / topicPath).parent_path();
     if (contains(spec, KEY_Test_addArgs))
         spec[KEY_Test_args] += " "+spec[KEY_Test_addArgs];
 

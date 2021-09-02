@@ -74,13 +74,13 @@ class Scaffolding
 {
 protected:
     bool sane_ = true;
+    virtual void markFailed()
+    { sane_ = false; }
+
 public:
     virtual ~Scaffolding();  ///< this is an interface
 
     virtual Result triggerTest() =0;
-
-    virtual void markFailed()
-    { sane_ = false; }
 
     bool isBroken()  const
     { return not sane_; }
@@ -120,8 +120,8 @@ public:
                ,fs::path topicPath
                ,string timeoutSpec
                ,string exeArguments
-               ,MaybeScript script
-               ,Progress& progress);
+               ,Progress& progress
+               ,MaybeScript script);
 
     Result run(Script const&);
 

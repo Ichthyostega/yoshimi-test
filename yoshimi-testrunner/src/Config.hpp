@@ -76,6 +76,11 @@ namespace def {
     const string KEY_verifyTimes  = "Test.verifyTimes";
     const string KEY_cliTimeout   = "Test.cliTimeout";
 
+    const string KEY_workDir      = "workDir";
+    const string KEY_fileProbe    = "fileProbe";
+    const string KEY_fileBaseline = "fileBaseline";
+    const string KEY_fileResidual = "fileResidual";
+
     /** @note all defaults for test specifications defined here
      *        can be omitted within the actual *.test files. */
     const MapS DEFAULT_TEST_SPEC{{KEY_Test_type,  TYPE_CLI}
