@@ -178,6 +178,13 @@ public:
         : workdir_{move(workdir)}
         , topicPath_{move(topic)}
     { }
+
+    FileNameSpec& operator[](string const& key)  const
+    {
+        if (not contains(*this, key))
+            throw error::LogicBroken("No »"+key+"« configured for testcase "+topicPath_.string());
+        return const_cast<FileNameSpec&>(this->at(key));
+    }
 };
 
 

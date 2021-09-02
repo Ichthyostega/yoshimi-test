@@ -75,17 +75,20 @@ class SoundProbe
 
 public:
    ~SoundProbe();
-    SoundProbe(fs::path rawSound, int sampleRate);
-
+    SoundProbe();
     void discardStorage();
 
+    operator bool() const { return bool{probe_};   }
+    bool hasDiff()  const { return bool{residual_};}
+
+    void loadProbe(fs::path rawSound, int sampleRate);
     void buildDiff(fs::path baseline);
-    bool hasDiff()  const;
 
     void saveProbe(fs::path name);
     void saveResidual(fs::path name);
     OptString checkDiffSane() const;
     double getDiffRMSPeak()   const;
+    double getProbePeak()     const;
 //  string describeProbe()    const;  /////////////TODO
 //  string describeResidual() const;  /////////////TODO
 };

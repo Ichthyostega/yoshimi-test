@@ -104,6 +104,8 @@ namespace def {
     const string DEFAULT_SOUND_OUTPUT{"sound"};
     const string EXT_SOUND_RAW{".raw"};
     const string EXT_SOUND_WAV{".wav"};
+
+    const double WARN_FAINT_PROBE = -60; // dBFS
 }
 
 

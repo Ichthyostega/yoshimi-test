@@ -73,12 +73,13 @@ using std::min;
 using SampleVec = std::vector<float>;
 
 
-struct SoundStat
+
+struct SoundStat       ///< @internal raw aggregation results
 {
     int    rate;
     size_t frames;
     float  peak;
-    double rmsAll;
+    double rmsAll;     ///< @note: actually squares (σ²)
     double rmsMax;
 };
 
@@ -237,12 +238,7 @@ using PSoundData = std::unique_ptr<SoundData>;
 
 
 SoundProbe::~SoundProbe() { } // emit dtors here...
-
-
-SoundProbe::SoundProbe(fs::path rawSound, int sampleRate)
-    : probe_{new SoundData{openSndfileRead(rawSound, sampleRate)}}
-    , residual_{}
-{ }
+SoundProbe::SoundProbe() { }
 
 
 void SoundProbe::discardStorage()
@@ -251,16 +247,19 @@ void SoundProbe::discardStorage()
     probe_.reset();
 }
 
-bool SoundProbe::hasDiff()  const
+
+void SoundProbe::loadProbe(fs::path rawSound, int sampleRate)
 {
-    return bool{residual_};
+    probe_.reset(new SoundData{openSndfileRead(rawSound, sampleRate)});
+    if (residual_) residual_.reset();
 }
 
 
 /** load the baseline file and then calculate the residual sound. */
 void SoundProbe::buildDiff(fs::path baseline)
 {
-    assert(probe_);
+    if (not probe_)
+        throw error::LogicBroken("Need to load a sound probe first.");
     SndfileHandle baselineFile = openSndfileRead(baseline);
     residual_.reset(new SoundData{*probe_, baselineFile});
 }
@@ -313,13 +312,21 @@ double SoundProbe::getDiffRMSPeak()  const
     if (not hasDiff())
         throw error::LogicBroken("Need to compute a diff first.");
     return 10*log10(residual_->stat.rmsMax / probe_->stat.rmsAll);
-}
+}   // note: raw values in stat.rmsXXX are squares (σ²)
+
+double SoundProbe::getProbePeak()  const
+{
+    if (not probe_)
+        throw error::LogicBroken("No sound probe loaded yet.");
+    return 20*log10(probe_->stat.peak);
+}       // 20 because dB relates powers (squared)
 
 
 /** write the probe sound data into a WAV file */
 void SoundProbe::saveProbe(fs::path name)
 {
-    assert(probe_);
+    if (not probe_)
+        throw error::LogicBroken("Nothing to write, no sound data loaded yet.");
     writeSoundData(probe_->buffer, openSndfileWrite(name, probe_->stat.rate));
 }
 

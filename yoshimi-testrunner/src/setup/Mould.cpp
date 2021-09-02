@@ -103,7 +103,7 @@ class ExeCliMould
         auto& invoker   = addStep<Invoker>(launcher);
 
         auto sound      = optionally(shallVerifySound(spec))
-                             .addStep<SoundObservation>(invoker);
+                             .addStep<SoundObservation>(invoker, pathSetup);
 
         ///////////////////////////////////////////////////////////////////////////////TODO add steps for verification here
         /*mark done*/     addStep<Summary>(spec.at(KEY_Test_topic), invoker);

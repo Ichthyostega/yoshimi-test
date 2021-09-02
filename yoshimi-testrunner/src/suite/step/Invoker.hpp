@@ -80,6 +80,11 @@ public:
         return performed_
            and not scaffolding_.isBroken();
     }
+
+    int getSampleRate()  const
+    {
+        return 48000; /////////////////////TODO get that from a setup step
+    }
 };
 
 
