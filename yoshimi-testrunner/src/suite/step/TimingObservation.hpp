@@ -20,11 +20,11 @@
 
 /** @file TimingObservation.hpp
  ** Establish the actual timing observations from performing the test within Yoshimi.
- ** After the Invoker step has launched Yoshimi and awaited termination of the test,
+ ** After the Invocation has launched Yoshimi and awaited termination of the test,
  ** the timing measurements need to be retrieved and made available for judgement.
  ** 
  ** @todo WIP as of 8/21
- ** @see Invoker.hpp
+ ** @see Invocation.hpp
  ** @see Scaffolding.hpp
  ** @see Judgement.hpp
  ** @see TestStep.hpp

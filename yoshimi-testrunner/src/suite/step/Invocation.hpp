@@ -1,5 +1,5 @@
 /*
- *  Invoker - actually launch the test operations
+ *  Invocation  - actually launch the test operations
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,20 +18,21 @@
  ***************************************************************/
 
 
-/** @file Invoker.hpp
+/** @file Invocation .hpp
  ** Launch the test subject (Yoshimi) and perform the test operations.
  ** This central TestStep uses the specific Scaffolding established for the test case
- ** to activate the actual sound calculation within Yoshimi.
- ** 
- ** @todo WIP as of 7/21
+ ** to activate the actual sound calculation within Yoshimi. After completion of the
+ ** actual test run, the Invocation step instance serves as information hub for the
+ ** following evaluation, judgement and reporting steps.
  ** @see Scaffolding.hpp
+ ** @see Conclusion.hpp
  ** @see TestStep.hpp
- ** 
+ **
  */
 
 
-#ifndef TESTRUNNER_SUITE_STEP_INVOKER_HPP_
-#define TESTRUNNER_SUITE_STEP_INVOKER_HPP_
+#ifndef TESTRUNNER_SUITE_STEP_INVOCATION_HPP_
+#define TESTRUNNER_SUITE_STEP_INVOCATION_HPP_
 
 
 #include "util/nocopy.hpp"
@@ -40,12 +41,6 @@
 #include "suite/TestStep.hpp"
 #include "suite/step/Scaffolding.hpp"
 
-#include <string>
-#include <iostream>////////TODO rly?
-using std::cerr;
-using std::endl;
-using std::string;
-
 namespace suite{
 namespace step {
 
@@ -53,7 +48,7 @@ namespace step {
 /**
  * Launch Yoshimi and execute the test sound calculation.
  */
-class Invoker
+class Invocation
     : public TestStep
 {
     Scaffolding& scaffolding_;
@@ -71,7 +66,7 @@ class Invoker
     }
 
 public:
-    Invoker(Scaffolding& scaf)
+    Invocation(Scaffolding& scaf)
         : scaffolding_{scaf}
     { }
 
@@ -89,4 +84,4 @@ public:
 
 
 }}//(End)namespace suite::step
-#endif /*TESTRUNNER_SUITE_STEP_INVOKER_HPP_*/
+#endif /*TESTRUNNER_SUITE_STEP_INVOCATION_HPP_*/

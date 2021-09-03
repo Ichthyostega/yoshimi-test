@@ -1,5 +1,5 @@
 /*
- *  Judgement - test steps to assess and judge the captured behaviour
+ *  TimingJudgement - test step to assess and judge the captured timing behaviour
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,22 +18,25 @@
  ***************************************************************/
 
 
-/** @file Judgement.hpp
+/** @file TimingJudgement.hpp
  ** Investigate captured behaviour of the subject and judge about success or failure.
- ** After the Invoker step has launched the actual test and the Observation steps have
- ** extracted and documented the behaviour, this step performs the assessment against
- ** the predefined baseline to decide if the subject's behaviour was within limits.
+ ** After the actual test has been launched by the Invocation and the Observation steps
+ ** have extracted and documented the behaviour, this step performs the assessment against
+ ** timing expectations established in the past and recorded as »baseline«. This assessment
+ ** is somewhat problematic, since timings depend very much on the actual system and platform.
+ ** @todo work out a concept to establish a common _system speed factor_ -- allowing to judge
+ **       within certain tolerance limits if the test case was successful
  ** 
- ** @todo WIP as of 7/21
- ** @see Invoker.hpp
+ ** @todo WIP as of 9/21
+ ** @see Invocation.hpp
  ** @see Observation.hpp
  ** @see TestStep.hpp
  ** 
  */
 
 
-#ifndef TESTRUNNER_SUITE_STEP_JUDGEMENT_HPP_
-#define TESTRUNNER_SUITE_STEP_JUDGEMENT_HPP_
+#ifndef TESTRUNNER_SUITE_STEP_TIMING_JUDGEMENT_HPP_
+#define TESTRUNNER_SUITE_STEP_TIMING_JUDGEMENT_HPP_
 
 
 #include "util/nocopy.hpp"
@@ -48,13 +51,13 @@ namespace step {
 /**
  * Step to assess the behaviour and decide about success or failure.
  */
-class Judgement
+class TimingJudgement
     : public TestStep
 {
 public:
-    Judgement();
+    TimingJudgement();
 };
 
 
 }}//(End)namespace suite::step
-#endif /*TESTRUNNER_SUITE_STEP_JUDGEMENT_HPP_*/
+#endif /*TESTRUNNER_SUITE_STEP_TIMING_JUDGEMENT_HPP_*/

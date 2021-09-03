@@ -1,5 +1,5 @@
 /*
- *  Conclusion - test steps to summarise a test case's outcome
+ *  SoundJudgement - test step to assess and judge the captured behaviour
  *
  *  Copyright 2021, Hermann Vosseler <Ichthyostega@web.de>
  *
@@ -18,21 +18,22 @@
  ***************************************************************/
 
 
-/** @file Conclusion.hpp
- ** Recording the results and outcome of a single test case.
- ** The testsuite is structured as a sequence of suite::TestStep components, established
- ** and wired by TestBuilder. Several specialised steps together form a single test case.
- ** The role of the last step for each test case is to derive and document an overall result.
+/** @file SoundJudgement.hpp
+ ** Investigate captured sound produced by the subject and judge about success or failure.
+ ** After the actual test has been launched by the Invocation and the Observation steps
+ ** have extracted and documented the behaviour, this step performs the assessment against
+ ** the predefined baseline to decide if the subject's behaviour was within limits.
  ** 
- ** @todo WIP as of 7/21
- ** @see TestCase.hpp
+ ** @todo WIP as of 9/21
  ** @see Invocation.hpp
+ ** @see Observation.hpp
+ ** @see TestStep.hpp
  ** 
  */
 
 
-#ifndef TESTRUNNER_SUITE_STEP_CONCLUSION_HPP_
-#define TESTRUNNER_SUITE_STEP_CONCLUSION_HPP_
+#ifndef TESTRUNNER_SUITE_STEP_SOUND_JUDGEMENT_HPP_
+#define TESTRUNNER_SUITE_STEP_SOUND_JUDGEMENT_HPP_
 
 
 #include "util/nocopy.hpp"
@@ -45,15 +46,15 @@ namespace step {
 
 
 /**
- * Terminal step for each test case: produce overall result.
+ * Step to assess the behaviour and decide about success or failure.
  */
-class Conclusion
+class SoundJudgement
     : public TestStep
 {
 public:
-    Conclusion();
+    SoundJudgement();
 };
 
 
 }}//(End)namespace suite::step
-#endif /*TESTRUNNER_SUITE_STEP_CONCLUSION_HPP_*/
+#endif /*TESTRUNNER_SUITE_STEP_SOUND_JUDGEMENT_HPP_*/

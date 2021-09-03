@@ -25,7 +25,7 @@
  ** the parameters for the actual test case. The Scaffolding ensures the test can be
  ** launched, and resulting behaviour can be observed.
  **
- ** @see Invoker.hpp
+ ** @see Invocation.hpp
  ** @see TestStep.hpp
  **
  */
@@ -66,7 +66,7 @@ class Watcher;
  * - performing this step will load the Exe or LV2 plugin,
  *   possibly feeding startup configuration
  * - the following steps might then add a CLI script or MIDI data
- * - an Invoker step will at some point call #triggerTest
+ * - an Invocation step will at some point call #triggerTest
  * - further steps will investigate the generated output
  */
 class Scaffolding

@@ -40,7 +40,7 @@
 #include "util/nocopy.hpp"
 #include "util/format.hpp"
 #include "suite/TestStep.hpp"
-#include "suite/step/Invoker.hpp"
+#include "suite/step/Invocation.hpp"
 #include "suite/Result.hpp"
 
 //#include <string>
@@ -58,12 +58,12 @@ class Summary
     : public TestStep
 {
     fs::path topic_;
-    Invoker& invoker_;
+    Invocation& theTest_;
 
 
     Result perform()  override
     {
-        if (not invoker_.isPerformed())
+        if (not theTest_.isPerformed())
             return Result{ResCode::MALFUNCTION, "Testcase did not run: "+util::formatVal(topic_)};
 
         ////////////TODO retrieve results here
@@ -73,9 +73,9 @@ class Summary
     }
 
 public:
-    Summary(fs::path topic, Invoker& ivo)
+    Summary(fs::path topic, Invocation& ivo)
         : topic_{topic}
-        , invoker_{ivo}
+        , theTest_{ivo}
     { }
 };
 

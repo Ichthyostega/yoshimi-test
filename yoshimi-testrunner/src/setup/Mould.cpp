@@ -41,7 +41,7 @@
 #include "suite/step/PathSetup.hpp"
 #include "suite/step/Scaffolding.hpp"
 #include "suite/step/PrepareScript.hpp"
-#include "suite/step/Invoker.hpp"
+#include "suite/step/Invocation.hpp"
 #include "suite/step/SoundObservation.hpp"
 #include "suite/step/Summary.hpp"
 
@@ -87,26 +87,26 @@ class ExeCliMould
 {
     void materialise(MapS const& spec)  override
     {
-        auto& pathSetup = addStep<PathSetup>(spec.at(KEY_workDir)
-                                            ,spec.at(KEY_Test_topic));
+        auto& pathSetup  = addStep<PathSetup>(spec.at(KEY_workDir)
+                                             ,spec.at(KEY_Test_topic));
 
-        auto testScript = optionally(definesTestScript(spec))
-                             .addStep<PrepareTestScript>(spec.at(KEY_Test_script)
-                                                        ,spec.at(KEY_verifySound));
+        auto testScript  = optionally(definesTestScript(spec))
+                              .addStep<PrepareTestScript>(spec.at(KEY_Test_script)
+                                                         ,spec.at(KEY_verifySound));
 
-        auto& launcher  = addStep<ExeLauncher>(spec.at(KEY_Test_subj)
-                                              ,spec.at(KEY_Test_topic)
-                                              ,spec.at(KEY_cliTimeout)
-                                              ,spec.at(KEY_Test_args)
-                                              ,progressLog_
-                                              ,testScript);
-        auto& invoker   = addStep<Invoker>(launcher);
+        auto& launcher   = addStep<ExeLauncher>(spec.at(KEY_Test_subj)
+                                               ,spec.at(KEY_Test_topic)
+                                               ,spec.at(KEY_cliTimeout)
+                                               ,spec.at(KEY_Test_args)
+                                               ,progressLog_
+                                               ,testScript);
+        auto& invocation = addStep<Invocation>(launcher);
 
-        auto sound      = optionally(shallVerifySound(spec))
-                             .addStep<SoundObservation>(invoker, pathSetup);
+        auto sound       = optionally(shallVerifySound(spec))
+                             .addStep<SoundObservation>(invocation, pathSetup);
 
         ///////////////////////////////////////////////////////////////////////////////TODO add steps for verification here
-        /*mark done*/     addStep<Summary>(spec.at(KEY_Test_topic), invoker);
+        /*mark done*/      addStep<Summary>(spec.at(KEY_Test_topic), invocation);
     }
 public:
 };

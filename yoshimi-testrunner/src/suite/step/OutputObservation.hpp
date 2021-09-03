@@ -20,12 +20,12 @@
 
 /** @file OutputObservation.hpp
  ** Extract observations from the logs captured during the test within Yoshimi.
- ** After the Invoker step has launched Yoshimi and awaited termination of the test,
+ ** After the Invocation step has launched Yoshimi and awaited termination of the test,
  ** this _Observation Step_ will search through the log records, and expose the matched
  ** data as optional properties.
  ** 
  ** @todo WIP as of 8/21
- ** @see Invoker.hpp
+ ** @see Invocation.hpp
  ** @see Scaffolding.hpp
  ** @see Judgement.hpp
  ** @see TestStep.hpp
