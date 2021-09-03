@@ -26,7 +26,8 @@
  ** 
  ** @todo WIP as of 9/21
  ** @see Invocation.hpp
- ** @see Observation.hpp
+ ** @see SoundObservation.hpp
+ ** @see Conclusion.hpp
  ** @see TestStep.hpp
  ** 
  */
@@ -38,6 +39,9 @@
 
 #include "util/nocopy.hpp"
 #include "suite/TestStep.hpp"
+#include "suite/step/PathSetup.hpp"
+#include "suite/step/SoundObservation.hpp"
+#include "Config.hpp"
 
 //#include <string>
 
@@ -46,13 +50,52 @@ namespace step {
 
 
 /**
- * Step to assess the behaviour and decide about success or failure.
+ * Compare the captured sound probe against a known sound baseline waveform.
+ * Use the peak RMS in relation to the average RMS of the probe in order to
+ * judge the severity of any differences. Very minute differences could be
+ * due to rounding errors and can be ignored -- yet even tiny differences
+ * will produce a warning and require further manual inspection. The
+ * Test-Invoker in Yoshimi operates in a way to ensure any sound
+ * calculations are 100% reproducible.
  */
 class SoundJudgement
     : public TestStep
 {
+    SoundObservation& soundProbe_;
+    PathSetup&        pathSpec_;
+
+
+    Result perform()  override
+    {
+        if (not soundProbe_)
+            return Result::Warn("Skip SoundJudgement");
+
+        FileNameSpec& baselineWav = pathSpec_[def::KEY_fileBaseline];
+        if (not fs::exists(baselineWav))
+            return Result::Fail("Unable to judge the generated sound: "
+                               +baselineWav.filename()+" not present.");
+
+        // open baseline waveform and calculate a diff
+        soundProbe_.buildDiff(baselineWav);
+        if (auto mismatch = soundProbe_.checkDiffSane())
+            return Result::Fail("Assessment rejected: " + *mismatch);
+
+        double peakRMS = soundProbe_.getDiffRMSPeak();
+        if (peakRMS < def::DIFF_WARN_LEVEL)
+            return Result::OK();
+        else
+        if (peakRMS < def::DIFF_ERROR_LEVEL)
+            return Result::Warn("Minor differences against baseline; peak Δ "+formatVal(peakRMS)+"dB(RMS)");
+        else
+            return Result::Fail("Test failed: generated sound differs. Δ is "+formatVal(peakRMS)+"dB(RMS)");
+    }
+
 public:
-    SoundJudgement();
+    SoundJudgement(SoundObservation& sound
+                  ,PathSetup& pathSetup)
+        : soundProbe_{sound}
+        , pathSpec_{pathSetup}
+    { }
 };
 
 

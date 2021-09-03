@@ -74,10 +74,11 @@ using util::formatVal;
 class FileNameSpec
     : util::MoveOnly
 {
-    fs::path spec_;
+    mutable fs::path spec_;
 
     bool mandatory_ = false;
     optional<string> enforcedExt_;
+    optional<string> disambiguation_;
 
 
 public:
@@ -102,12 +103,7 @@ public:
 
     FileNameSpec&& disambiguate(string casePrefix)
     {
-        if (not spec_.is_absolute()
-            and not fs::exists(spec_)
-            and not contains(spec_.filename().string(), casePrefix))
-        {
-            spec_.replace_filename(casePrefix+"-"+string{spec_.filename()});
-        }
+        disambiguation_ = "-"+casePrefix;
         return move(*this);
     }
 
@@ -130,15 +126,28 @@ public:
 
     operator fs::path const&()  const
     {
+        if (disambiguation_
+            and not spec_.is_absolute()
+            and not contains(spec_.filename().string(), *disambiguation_)
+            and not fs::exists(spec_))
+        {
+            spec_.replace_filename(*disambiguation_+string{spec_.filename()});
+        }
         if (mandatory_ and not fs::exists(spec_))
             throw error::LogicBroken("Required file missing: "+formatVal(spec_)
-                                    +(spec_.is_absolute()? "":" in dir "+formatVal(fs::current_path())));
+                                    +(spec_.is_absolute()? ""
+                                     :" in dir "+formatVal(fs::current_path())));
         return spec_;
     }
 
     operator string()  const
     {
         return operator fs::path const&().string();
+    }
+
+    string filename()  const
+    {
+        return operator fs::path const&().filename().string();
     }
 };
 
@@ -165,13 +174,24 @@ class PathSetup
     Result perform()  override
     {
         if (not fs::exists(workdir_))
-            throw error::Misconfig("Working directory "+formatVal(workdir_)+" not found.");
+            throw error::Misconfig("Working directory "
+                                  +formatVal(workdir_)+" not found.");
         fs::current_path(workdir_);
 
         using namespace def;
-        insert({KEY_fileProbe, FileNameSpec(DEFAULT_SOUND_OUTPUT).enforceExt(EXT_SOUND_RAW)});
+        auto testcaseID = string{topicPath_.stem()};
+
+        insert({KEY_fileProbe,    FileNameSpec(SOUND_DEFAULT_PROBE)
+                                      .enforceExt(EXT_SOUND_RAW)});
+        insert({KEY_fileBaseline, FileNameSpec(SOUND_BASELINE_MARK)
+                                      .disambiguate(testcaseID)
+                                      .enforceExt(EXT_SOUND_WAV)});
+        insert({KEY_fileResidual, FileNameSpec(SOUND_RESIDUAL_MARK)
+                                      .disambiguate(testcaseID)
+                                      .enforceExt(EXT_SOUND_WAV)});
         return Result::OK();
     }
+
 
 public:
     PathSetup(fs::path workdir, fs::path topic)
@@ -182,7 +202,8 @@ public:
     FileNameSpec& operator[](string const& key)  const
     {
         if (not contains(*this, key))
-            throw error::LogicBroken("No »"+key+"« configured for testcase "+topicPath_.string());
+            throw error::LogicBroken("No »"+key+"« configured "
+                                    +"for testcase "+topicPath_.string());
         return const_cast<FileNameSpec&>(this->at(key));
     }
 };

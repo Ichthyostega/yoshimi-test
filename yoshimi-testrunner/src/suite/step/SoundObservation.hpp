@@ -43,6 +43,7 @@
 #include "suite/TestStep.hpp"
 #include "suite/step/Invocation.hpp"
 #include "suite/step/PathSetup.hpp"
+#include "Config.hpp"
 
 //#include <string>
 
@@ -61,6 +62,7 @@ class SoundObservation
 {
     Invocation& theTest_;
     PathSetup& pathSpec_;
+
 
     Result perform()  override
     {

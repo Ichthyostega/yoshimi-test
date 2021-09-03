@@ -43,6 +43,7 @@
 #include "suite/step/PrepareScript.hpp"
 #include "suite/step/Invocation.hpp"
 #include "suite/step/SoundObservation.hpp"
+#include "suite/step/SoundJudgement.hpp"
 #include "suite/step/Summary.hpp"
 
 
@@ -102,8 +103,11 @@ class ExeCliMould
                                                ,testScript);
         auto& invocation = addStep<Invocation>(launcher);
 
-        auto sound       = optionally(shallVerifySound(spec))
+        auto soundProbe  = optionally(shallVerifySound(spec))
                              .addStep<SoundObservation>(invocation, pathSetup);
+
+        auto baseline    = optionally(shallVerifySound(spec))
+                             .addStep<SoundJudgement>(*soundProbe, pathSetup);
 
         ///////////////////////////////////////////////////////////////////////////////TODO add steps for verification here
         /*mark done*/      addStep<Summary>(spec.at(KEY_Test_topic), invocation);

@@ -105,7 +105,7 @@ public:
     PrepareTestScript(string const& rawCode, string const& shallVerifySound)
         : PrepareScript{rawCode}
         , verifySound_{util::isYes(shallVerifySound)}
-        , outFileSpec_{def::DEFAULT_SOUND_OUTPUT}
+        , outFileSpec_{def::SOUND_DEFAULT_PROBE}
     { }
 };
 

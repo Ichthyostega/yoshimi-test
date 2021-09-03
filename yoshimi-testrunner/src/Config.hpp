@@ -101,11 +101,15 @@ namespace def {
     const string CLI_TEST_OUTPUT{"target"};
     const string CLI_ENTER_TEST_CONTEXT{"set test"};
 
-    const string DEFAULT_SOUND_OUTPUT{"sound"};
+    const string SOUND_DEFAULT_PROBE{"sound"};
+    const string SOUND_BASELINE_MARK{"baseline"};
+    const string SOUND_RESIDUAL_MARK{"residual"};
     const string EXT_SOUND_RAW{".raw"};
     const string EXT_SOUND_WAV{".wav"};
 
-    const double WARN_FAINT_PROBE = -60; // dBFS
+    const double WARN_FAINT_PROBE = -60;  // dBFS
+    const double DIFF_WARN_LEVEL  = -200; // dB peakRMS against probe average RMS
+    const double DIFF_ERROR_LEVEL = -100; // dB peakRMS against probe average RMS
 }
 
 
