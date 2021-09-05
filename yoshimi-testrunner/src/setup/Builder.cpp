@@ -147,6 +147,7 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
 
     return useMould_for(spec[KEY_Test_type])
                     .withProgress(*config_.progress)
+                    .recordBaseline(config_.baseline)
                     .generateStps(spec);
 }
 

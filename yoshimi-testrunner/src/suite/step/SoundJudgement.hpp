@@ -70,6 +70,13 @@ class SoundJudgement
         if (not soundProbe_)
             return Result::Warn("Skip SoundJudgement");
 
+        Result judgement = determineTestResult();
+        succeeded = (ResCode::GREEN == judgement.code);
+        return judgement;
+    }
+
+    Result determineTestResult()
+    {
         FileNameSpec& baselineWav = pathSpec_[def::KEY_fileBaseline];
         if (not fs::exists(baselineWav))
             return Result::Fail("Unable to judge the generated sound: "
@@ -96,6 +103,8 @@ public:
         : soundProbe_{sound}
         , pathSpec_{pathSetup}
     { }
+
+    bool succeeded = false;
 };
 
 

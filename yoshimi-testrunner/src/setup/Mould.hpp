@@ -65,6 +65,7 @@ class Mould
 protected:
     StepSeq   steps_;
     RProgress progressLog_{Progress::null()};
+    bool shallRecordBaseline_{false};
 
 public:
     virtual ~Mould();  ///< this is an interface
@@ -72,6 +73,11 @@ public:
     Mould& withProgress(Progress& logger)
     {
         progressLog_ = logger;
+        return *this;
+    }
+    Mould& recordBaseline(bool indeed)
+    {
+        shallRecordBaseline_ = indeed;
         return *this;
     }
 

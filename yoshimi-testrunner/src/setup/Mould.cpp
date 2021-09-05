@@ -44,6 +44,7 @@
 #include "suite/step/Invocation.hpp"
 #include "suite/step/SoundObservation.hpp"
 #include "suite/step/SoundJudgement.hpp"
+#include "suite/step/SoundRecord.hpp"
 #include "suite/step/Summary.hpp"
 
 
@@ -108,6 +109,10 @@ class ExeCliMould
 
         auto baseline    = optionally(shallVerifySound(spec))
                              .addStep<SoundJudgement>(*soundProbe, pathSetup);
+
+                           optionally(shallVerifySound(spec))
+                             .addStep<SoundRecord>(shallRecordBaseline_
+                                                  ,*soundProbe, *baseline, pathSetup);
 
         ///////////////////////////////////////////////////////////////////////////////TODO add steps for verification here
         /*mark done*/      addStep<Summary>(spec.at(KEY_Test_topic), invocation);

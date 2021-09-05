@@ -74,11 +74,10 @@ using util::formatVal;
 class FileNameSpec
     : util::MoveOnly
 {
-    mutable fs::path spec_;
+    fs::path spec_;
 
     bool mandatory_ = false;
     optional<string> enforcedExt_;
-    optional<string> disambiguation_;
 
 
 public:
@@ -103,7 +102,12 @@ public:
 
     FileNameSpec&& disambiguate(string casePrefix)
     {
-        disambiguation_ = "-"+casePrefix;
+        if (not spec_.is_absolute()
+            and not fs::exists(spec_)
+            and not contains(spec_.filename().string(), casePrefix))
+        {
+            spec_.replace_filename(casePrefix+"-"+string{spec_.filename()});
+        }
         return move(*this);
     }
 
@@ -126,13 +130,6 @@ public:
 
     operator fs::path const&()  const
     {
-        if (disambiguation_
-            and not spec_.is_absolute()
-            and not contains(spec_.filename().string(), *disambiguation_)
-            and not fs::exists(spec_))
-        {
-            spec_.replace_filename(*disambiguation_+string{spec_.filename()});
-        }
         if (mandatory_ and not fs::exists(spec_))
             throw error::LogicBroken("Required file missing: "+formatVal(spec_)
                                     +(spec_.is_absolute()? ""
@@ -184,11 +181,11 @@ class PathSetup
         insert({KEY_fileProbe,    FileNameSpec(SOUND_DEFAULT_PROBE)
                                       .enforceExt(EXT_SOUND_RAW)});
         insert({KEY_fileBaseline, FileNameSpec(SOUND_BASELINE_MARK)
-                                      .disambiguate(testcaseID)
-                                      .enforceExt(EXT_SOUND_WAV)});
+                                      .enforceExt(EXT_SOUND_WAV)
+                                      .disambiguate(testcaseID)});
         insert({KEY_fileResidual, FileNameSpec(SOUND_RESIDUAL_MARK)
-                                      .disambiguate(testcaseID)
-                                      .enforceExt(EXT_SOUND_WAV)});
+                                      .enforceExt(EXT_SOUND_WAV)
+                                      .disambiguate(testcaseID)});
         return Result::OK();
     }
 
