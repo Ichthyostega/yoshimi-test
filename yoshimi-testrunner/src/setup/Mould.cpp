@@ -26,10 +26,12 @@
  ** - def::TYPE_LV2 (*Planned as of 7/2021*): load Yoshimi as LV2 plugin;
  **   this allows to feed simulated MIDI events and thus perform an
  **   integration test, which also covers event processing.
- ** 
- ** @todo WIP as of 7/21
+ **
  ** @see TestStep.hpp
- ** 
+ ** @see WiringMould.hpp
+ ** @see Scaffolding.hpp
+ ** @see Report.hpp
+ **
  */
 
 
@@ -68,7 +70,6 @@ Mould& Mould::startCycle()
 
 
 
-
 inline bool definesTestScript(MapS const& spec)
 {
     return util::contains(spec, KEY_Test_script);
@@ -78,6 +79,7 @@ inline bool shallVerifySound(MapS const& spec)
 {
     return util::boolVal(spec.at(KEY_verifySound));
 }
+
 
 
 /**
@@ -95,7 +97,7 @@ class ExeCliMould
 
         auto testScript  = optionally(definesTestScript(spec))
                               .addStep<PrepareTestScript>(spec.at(KEY_Test_script)
-                                                         ,spec.at(KEY_verifySound));
+                                                         ,shallVerifySound(spec));
 
         auto& launcher   = addStep<ExeLauncher>(spec.at(KEY_Test_subj)
                                                ,spec.at(KEY_Test_topic)
@@ -140,7 +142,6 @@ class LV2PluginMould
     {
         UNIMPLEMENTED("Launching Tests via LV2 plugin");
     }
-public:
 };
 
 

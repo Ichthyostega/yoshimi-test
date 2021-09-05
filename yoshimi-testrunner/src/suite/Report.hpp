@@ -98,6 +98,9 @@ public:
 
         out_ << hr()
              << h1("Yoshimi-Testsuite") <<endl;
+
+        if (config.baseline)
+            out_ << "+++ "+emph("Baseline capturing mode")+" +++\n\n" <<endl;
     }
 
 
@@ -124,16 +127,23 @@ public:
         {
             out_ << hr();
             if (results.hasWarnings())
-                out_ << emph("Warnings")+": "+str(results.cntWarnings()) +"\n";
-            out_     << emph("Failures")+": "+str(results.cntFailures()) +"\n";
+                out_ << strong("Warnings")+": "+str(results.cntWarnings()) +"\n";
+            out_     << strong("Failures")+": "+str(results.cntFailures()) +"\n";
             results.forEachFailedCase([&](Result const& res){
                 out_ << bullet(formatVal(res.stats->topic)+": "+res.log);
             });
+            out_ << hr()
+                 << strong("RED") +"\n"
+                 << endl;
         }
-        out_ << hr() <<"\n\n";
+        else
+        {
+            out_ << hr()
+                 << emph(results.hasWarnings()? "YELLOW":"GREEN") <<"\n\n"
+                 << endl;
+        }
     }
 };
-
 
 
 }//(End)namespace suite

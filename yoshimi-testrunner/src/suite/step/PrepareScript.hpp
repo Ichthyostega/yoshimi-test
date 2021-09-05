@@ -102,9 +102,9 @@ class PrepareTestScript
     string markWhenSriptIsFinished() const override;
 
 public:
-    PrepareTestScript(string const& rawCode, string const& shallVerifySound)
+    PrepareTestScript(string const& rawCode, bool shallVerifySound)
         : PrepareScript{rawCode}
-        , verifySound_{util::isYes(shallVerifySound)}
+        , verifySound_{shallVerifySound}
         , outFileSpec_{def::SOUND_DEFAULT_PROBE}
     { }
 };

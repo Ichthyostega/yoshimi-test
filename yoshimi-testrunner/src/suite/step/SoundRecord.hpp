@@ -82,7 +82,10 @@ class SoundRecord
             and (not fs::exists(baseline)
                  or not judgement_.succeeded)
            )
+        {
             soundProbe_.saveProbe(baseline);
+            return Result::Warn("Store "+string{baseline});
+        }
 
         return Result::OK();
     }

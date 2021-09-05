@@ -27,7 +27,7 @@
  ** 
  ** @todo WIP as of 7/21
  ** @see Scaffolding.hpp
- ** @see Observation.hpp
+ ** @see SoundJudgement.hpp
  ** @see suite::TestLog::cntTests()
  ** 
  */
@@ -37,19 +37,19 @@
 #define TESTRUNNER_SUITE_STEP_SUMMARY_HPP_
 
 
-#include "util/nocopy.hpp"
 #include "util/format.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/Invocation.hpp"
 #include "suite/step/SoundJudgement.hpp"
 #include "suite/Result.hpp"
 
-//#include <string>
-#include <filesystem>
+#include <string>
 #include <utility>
 
 namespace suite{
 namespace step {
+
+using std::string;
 
 
 /**
