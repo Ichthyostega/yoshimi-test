@@ -38,6 +38,7 @@
 
 
 #include "util/nocopy.hpp"
+#include "util/format.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/PathSetup.hpp"
 #include "suite/step/SoundObservation.hpp"
@@ -47,6 +48,8 @@
 
 namespace suite{
 namespace step {
+
+using util::formatVal;
 
 
 /**
@@ -105,6 +108,14 @@ public:
     { }
 
     bool succeeded = false;
+
+    string describe()
+    {
+        auto mismatch = soundProbe_.checkDiffSane();
+        return succeeded? formatVal(soundProbe_.getDuration())+"sec Sound."
+                        : mismatch? *mismatch
+                                  : "detect Δ "+formatVal(soundProbe_.getDiffRMSPeak())+"dB(RMS)";
+    }
 };
 
 

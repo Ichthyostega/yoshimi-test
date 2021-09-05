@@ -86,6 +86,9 @@ struct MaybeRef
         else
             return std::nullopt;
     }
+
+    STEP& operator*()  { return Wrapper::operator*().get(); }
+    STEP* operator->() { return & Wrapper::operator*().get(); }
 };
 
 

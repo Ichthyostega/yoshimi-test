@@ -115,7 +115,9 @@ class ExeCliMould
                                                   ,*soundProbe, *baseline, pathSetup);
 
         ///////////////////////////////////////////////////////////////////////////////TODO add steps for verification here
-        /*mark done*/      addStep<Summary>(spec.at(KEY_Test_topic), invocation);
+        /*mark done*/      addStep<Summary>(spec.at(KEY_Test_topic)
+                                           ,invocation
+                                           ,baseline);
     }
 public:
 };

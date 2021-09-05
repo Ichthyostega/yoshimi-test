@@ -39,11 +39,13 @@
 #include "suite/Result.hpp"
 
 //#include <string>
+#include <functional>
 #include <utility>
 #include <deque>
 
 namespace suite {
 
+using ResultHandler = std::function<void(Result const&)>;
 
 /**
  * Aggregation of individual test case results.
@@ -57,10 +59,16 @@ public:
     TestLog() { };
 
     bool hasMalfunction() const;
+    bool hasFailedCases() const;
     bool hasViolations()  const;
     bool hasWarnings()    const;
 
     uint cntTests()       const;
+    uint cntFailures()    const;
+    uint cntWarnings()    const;
+
+    void forEachMalfunction(ResultHandler) const;
+    void forEachFailedCase(ResultHandler)  const;
 
     using iterator = std::deque<Result>::const_iterator;
     iterator begin() const { return results_.begin(); }
@@ -96,12 +104,54 @@ inline bool TestLog::hasWarnings()  const
 }
 
 
+namespace {
+    inline bool isCaseSummary(Result const& result) { return result.stats.has_value(); }
+    inline bool isFailedCase(Result const& result)  { return isCaseSummary(result)
+                                                         and ResCode::GREEN != result.stats->outcome;  }
+}
+
 /** @remark by convention there one suite::Statistics entry is emitted for each test case */
 inline uint TestLog::cntTests()  const
 {
-    return std::count_if(results_.begin(), results_.end(),
-                       [](Result const& result){ return result.stats.has_value(); } );
+    return std::count_if(results_.begin(), results_.end(), isCaseSummary);
 }
+
+
+inline uint TestLog::cntFailures()  const
+{
+    return std::count_if(results_.begin(), results_.end(),
+                         [](Result const& result){ return result.code == ResCode::VIOLATION; });
+}
+
+
+inline uint TestLog::cntWarnings()  const
+{
+    return std::count_if(results_.begin(), results_.end(),
+                         [](Result const& result){ return result.code == ResCode::WARNING; });
+}
+
+
+inline bool TestLog::hasFailedCases()  const
+{
+    return std::any_of(results_.begin(), results_.end(), isFailedCase);
+}
+
+
+inline void TestLog::forEachMalfunction(ResultHandler handleIt)  const
+{
+    for (Result const& res : results_)
+        if (ResCode::MALFUNCTION == res.code or ResCode::DEBACLE == res.code)
+            handleIt(res);
+}
+
+
+inline void TestLog::forEachFailedCase(ResultHandler handleIt)  const
+{
+    for (Result const& res : results_)
+        if (isFailedCase(res))
+            handleIt(res);
+}
+
 
 
 }//(End)namespace suite

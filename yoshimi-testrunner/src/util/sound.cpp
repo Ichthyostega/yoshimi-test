@@ -321,6 +321,13 @@ double SoundProbe::getProbePeak()  const
     return 20*log10(probe_->stat.peak);
 }       // 20 because dB relates powers (squared)
 
+double SoundProbe::getDuration()  const  ///< @return seconds
+{
+    if (not probe_)
+        throw error::LogicBroken("No sound probe loaded yet.");
+    return double{probe_->stat.frames} / probe_->stat.rate;
+}
+
 
 /** write the probe sound data into a WAV file */
 void SoundProbe::saveProbe(fs::path name)

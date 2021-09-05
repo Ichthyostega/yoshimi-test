@@ -60,7 +60,7 @@ using util::isnil;
 using util::formatVal;
 
 
-namespace {// Implementation details
+namespace {// Implementation details: Markdown formatting
 
 inline string h1(string txt) { return "# "+txt+"\n"; }
 
@@ -68,6 +68,7 @@ inline string hr()           { return string(40, '-') + "\n"; }
 
 inline string emph(string txt)   { return "*"+txt+"*"; }
 inline string strong(string txt) { return "**"+txt+"**"; }
+inline string bullet(string txt) { return "- "+txt +"\n"; }
 
 }//(End)Implementation details
 
@@ -108,12 +109,30 @@ public:
             if (res.code != ResCode::GREEN)
                 out_ << res.log <<endl;
         }
-        out_ << hr()
-             << "Performed "+emph(str(results.cntTests()))+" test cases.\n"
-             << hr() <<"\n\n";
+
+        //---Generate-Summary-------------------------
+        out_ << hr() << "Performed "+emph(str(results.cntTests()))+" test cases.\n";
+
+        if (results.hasMalfunction())
+        {
+            out_ << hr();
+            results.forEachMalfunction([&](Result const& res){
+                out_ << bullet(res.log);
+            });
+        }
+        if (results.hasFailedCases())
+        {
+            out_ << hr();
+            if (results.hasWarnings())
+                out_ << emph("Warnings")+": "+str(results.cntWarnings()) +"\n";
+            out_     << emph("Failures")+": "+str(results.cntFailures()) +"\n";
+            results.forEachFailedCase([&](Result const& res){
+                out_ << bullet(formatVal(res.stats->topic)+": "+res.log);
+            });
+        }
+        out_ << hr() <<"\n\n";
     }
 };
-
 
 
 

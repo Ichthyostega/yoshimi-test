@@ -41,6 +41,7 @@
 #include "util/format.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/Invocation.hpp"
+#include "suite/step/SoundJudgement.hpp"
 #include "suite/Result.hpp"
 
 //#include <string>
@@ -60,22 +61,35 @@ class Summary
     fs::path topic_;
     Invocation& theTest_;
 
+    MaybeRef<SoundJudgement> judgeSound_;
+
 
     Result perform()  override
     {
         if (not theTest_.isPerformed())
             return Result{ResCode::MALFUNCTION, "Testcase did not run: "+util::formatVal(topic_)};
 
-        ////////////TODO retrieve results here
+        string report{"Performed;"};
+        ResCode testOutcome{ResCode::GREEN};
+        if (judgeSound_)
+        {
+            report += " "+judgeSound_->describe();
+            if (not judgeSound_->succeeded)
+                testOutcome = ResCode::VIOLATION;
+        }
+        ////////////TODO retrieve further results here
         ///
-        Statistics data{topic_};
-        return Result(std::move(data));
+        Statistics data{topic_, testOutcome};
+        return Result(std::move(data), report);
     }
 
 public:
-    Summary(fs::path topic, Invocation& ivo)
+    Summary(fs::path topic
+           ,Invocation& ivo
+           ,MaybeRef<SoundJudgement> soundJudgement)
         : topic_{topic}
         , theTest_{ivo}
+        , judgeSound_{soundJudgement}
     { }
 };
 

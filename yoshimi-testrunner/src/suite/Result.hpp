@@ -98,6 +98,7 @@ inline string showYoshimiExit(int retCodeFromYoshimi)
 struct Statistics
 {
     const fs::path topic;
+    const ResCode outcome;
 };
 
 

@@ -89,7 +89,7 @@ class SoundRecord
     catch(error::State& writeFailure)
     {
         return Result{ResCode::MALFUNCTION,
-                      string{"Unable to write captured sound - "}
+                      string{"Unable to write captured sound -- "}
                             + writeFailure.what()};
     }
     catch(fs::filesystem_error& fsErr)

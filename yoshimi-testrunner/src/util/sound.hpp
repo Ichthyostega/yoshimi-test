@@ -89,6 +89,7 @@ public:
     OptString checkDiffSane() const;
     double getDiffRMSPeak()   const;
     double getProbePeak()     const;
+    double getDuration()      const;
 //  string describeProbe()    const;  /////////////TODO
 //  string describeResidual() const;  /////////////TODO
 };
