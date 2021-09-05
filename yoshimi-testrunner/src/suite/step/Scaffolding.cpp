@@ -205,6 +205,16 @@ Result ExeLauncher::run(Script const& script)
 }
 
 
+void ExeLauncher::cleanUp()
+{
+    if (subprocess_)
+    {
+        subprocess_->kill();
+        subprocess_.reset();
+    }
+}
+
+
 void ExeLauncher::killChildAndFail()
 {
     Scaffolding::markFailed();

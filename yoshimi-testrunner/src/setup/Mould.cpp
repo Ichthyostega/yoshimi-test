@@ -46,6 +46,7 @@
 #include "suite/step/SoundJudgement.hpp"
 #include "suite/step/SoundRecord.hpp"
 #include "suite/step/Summary.hpp"
+#include "suite/step/CleanUp.hpp"
 
 
 
@@ -114,12 +115,13 @@ class ExeCliMould
                              .addStep<SoundRecord>(shallRecordBaseline_
                                                   ,*soundProbe, *baseline, pathSetup);
 
-        ///////////////////////////////////////////////////////////////////////////////TODO add steps for verification here
-        /*mark done*/      addStep<Summary>(spec.at(KEY_Test_topic)
+
+        /*mark result*/    addStep<Summary>(spec.at(KEY_Test_topic)
                                            ,invocation
                                            ,baseline);
+                           addStep<CleanUp>(launcher
+                                           ,soundProbe);
     }
-public:
 };
 
 

@@ -81,6 +81,7 @@ public:
     virtual ~Scaffolding();  ///< this is an interface
 
     virtual Result triggerTest() =0;
+    virtual void   cleanUp()     =0;
 
     bool isBroken()  const
     { return not sane_; }
@@ -113,6 +114,7 @@ class ExeLauncher
     Result perform()     override;
     Result triggerTest() override;
     void   markFailed()  override;
+    void   cleanUp()     override;
 
 public:
    ~ExeLauncher();
