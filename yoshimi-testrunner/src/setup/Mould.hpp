@@ -39,6 +39,7 @@
 #include "util/nocopy.hpp"
 #include "setup/Builder.hpp"
 #include "suite/Progress.hpp"
+#include "suite/Timings.hpp"
 
 #include <functional>
 #include <memory>
@@ -51,6 +52,7 @@ using std::string;
 using std::shared_ptr;
 using std::reference_wrapper;
 
+using suite::PTimings;
 using suite::Progress;
 using RProgress = std::reference_wrapper<Progress>;
 
@@ -65,6 +67,7 @@ class Mould
 protected:
     StepSeq   steps_;
     RProgress progressLog_{Progress::null()};
+    PTimings  suiteTimings_;
     bool shallRecordBaseline_{false};
 
 public:
@@ -73,6 +76,12 @@ public:
     Mould& withProgress(Progress& logger)
     {
         progressLog_ = logger;
+        return *this;
+    }
+
+    Mould& withTimings(PTimings timingDataHolder)
+    {
+        suiteTimings_ = timingDataHolder;
         return *this;
     }
     Mould& recordBaseline(bool indeed)

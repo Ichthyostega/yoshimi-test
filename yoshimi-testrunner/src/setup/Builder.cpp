@@ -48,6 +48,7 @@ using std::endl;
 using util::isnil;
 using util::contains;
 using util::formatVal;
+using suite::Timings;
 
 using namespace def;
 
@@ -66,7 +67,7 @@ StepSeq build(Config const& config)
     if (not fs::is_directory(suiteRoot))
         throw error::LogicBroken{"Entry point to Testsuite definition must be a Directory: "+formatVal(suiteRoot)};
 
-    return Builder({suiteRoot, config})
+    return Builder({suiteRoot,config, std::make_shared<Timings>()})
                   .buildTree();
 }
 
@@ -146,6 +147,7 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
     }
 
     return useMould_for(spec[KEY_Test_type])
+                    .withTimings(ctx_.timings)
                     .withProgress(*ctx_.config.progress)
                     .recordBaseline(ctx_.config.baseline)
                     .generateStps(spec);

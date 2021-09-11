@@ -40,6 +40,7 @@
 
 #include "Config.hpp"
 #include "util/nocopy.hpp"
+#include "suite/Timings.hpp"
 #include "suite/TestStep.hpp"
 
 #include <filesystem>
@@ -73,6 +74,7 @@ struct SuiteCtx
 {
     const fs::path root;
     Config const& config;
+    suite::PTimings timings;
 };
 
 
