@@ -58,11 +58,21 @@ class StepSeq
 {
 public:
     template<class CON>
-    StepSeq& moveAppendAll(CON sequence)
+    StepSeq& moveAppendAll(CON&& sequence)
     {
         std::move(std::begin(sequence), std::end(sequence), std::back_inserter(*this));
         return *this;
     }
+};
+
+
+/**
+ * Config context passed as anchor through the build process.
+ */
+struct SuiteCtx
+{
+    const fs::path root;
+    Config const& config;
 };
 
 
@@ -84,20 +94,18 @@ class Builder
         static bool isTestDefinition(fs::path);
     };
 
-    const fs::path root_;
+    /** common anchor context */
+    SuiteCtx const& ctx_;
+
     const fs::path topic_;
     SubTraversal items_;
 
-    /** expose Config throughout the build */
-    Config const& config_;
-
 public:
-    Builder(Config const& config,
-            fs::path root, fs::path topic ="")
-        : root_{root}
+    Builder(SuiteCtx const& anchorCtx,
+            fs::path topic ="")
+        : ctx_{anchorCtx}
         , topic_{topic}
-        , items_{root,topic}
-        , config_{config}
+        , items_{ctx_.root,topic}
     { }
 
     /** actually setup the test suite definition */

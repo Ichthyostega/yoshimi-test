@@ -66,8 +66,8 @@ StepSeq build(Config const& config)
     if (not fs::is_directory(suiteRoot))
         throw error::LogicBroken{"Entry point to Testsuite definition must be a Directory: "+formatVal(suiteRoot)};
 
-    return Builder(config, suiteRoot)
-                .buildTree();
+    return Builder({suiteRoot, config})
+                  .buildTree();
 }
 
 
@@ -104,10 +104,10 @@ StepSeq Builder::buildTree()
 {
     StepSeq wiredSteps;
     for (auto subItem : items_)
-        if (SubTraversal::isTestDefinition(root_ / topic_ / subItem))
+        if (SubTraversal::isTestDefinition(ctx_.root / topic_ / subItem))
             wiredSteps.moveAppendAll(buildTestcase(topic_ / subItem));
         else
-            wiredSteps.moveAppendAll(Builder(config_, root_, topic_ / subItem)
+            wiredSteps.moveAppendAll(Builder(ctx_, topic_ / subItem)
                                             .buildTree());
     return wiredSteps;
 }
@@ -127,17 +127,17 @@ StepSeq Builder::buildTree()
  */
 StepSeq Builder::buildTestcase(fs::path topicPath)
 {
-    MapS spec = util::parseSpec(root_ / topicPath);
+    MapS spec = util::parseSpec(ctx_.root / topicPath);
     Config::supplySettings(spec, def::DEFAULT_TEST_SPEC);
     spec.insert({KEY_Test_subj, selectSubject(spec[KEY_Test_type])});
-    spec.insert({KEY_Test_args, config_.arguments});
+    spec.insert({KEY_Test_args, ctx_.config.arguments});
     spec.insert({KEY_Test_topic, topicPath});
 
-    spec[KEY_workDir] = (root_ / topicPath).parent_path();
+    spec[KEY_workDir] = (ctx_.root / topicPath).parent_path();
     if (contains(spec, KEY_Test_addArgs))
         spec[KEY_Test_args] += " "+spec[KEY_Test_addArgs];
 
-    if (config_.verbose)
+    if (ctx_.config.verbose)
     {
         cout << ".\nTest-Spec("<<formatVal(topicPath)<<"):\n";
         for (auto& entry : spec)
@@ -146,8 +146,8 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
     }
 
     return useMould_for(spec[KEY_Test_type])
-                    .withProgress(*config_.progress)
-                    .recordBaseline(config_.baseline)
+                    .withProgress(*ctx_.config.progress)
+                    .recordBaseline(ctx_.config.baseline)
                     .generateStps(spec);
 }
 
@@ -157,7 +157,7 @@ string Builder::selectSubject(string testTypeID)
     if (def::TYPE_LV2 == testTypeID)
         throw error::ToDo("Testing via LV2 plugin not yet implemented");
 
-    fs::path exe = fs::consolidated(config_.subject);
+    fs::path exe = fs::consolidated(ctx_.config.subject);
     if (not fs::exists(exe))
         throw error::Misconfig("Unable to locate Subject "+formatVal(exe));
     return exe.string();
