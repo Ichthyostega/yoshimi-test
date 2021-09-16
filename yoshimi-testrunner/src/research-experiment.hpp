@@ -11,107 +11,18 @@
 #define TESTRUNNER_RESEARCH_EXPERIMENT_HPP_
 
 
-#include "util/nocopy.hpp"
-#include "util/error.hpp"
-#include "util/utils.hpp"
+#include "util/data.hpp"
 //#include "Config.hpp"
 
 //#include <string>
 //#include <memory>
-#include <utility>
-#include <vector>
-#include <tuple>
 
-using std::vector;
-using std::tuple;
-
-using util::isnil;
+using util::Column;
 
 #include <iostream>
 using std::cout;
 using std::cerr;
 using std::endl;
-
-
-
-template<class FUN, typename...ELMS>
-void forEach(tuple<ELMS...>&& tuple, FUN fun)
-{
-    std::apply([&fun](auto&... elms)
-                    {
-                        (fun(elms), ...);
-                    }
-              ,tuple);
-}
-
-
-template<typename VAL>
-struct Column : util::NonCopyable
-{
-    string header;
-    vector<VAL> data;
-
-
-    Column(string headerID)
-        : header{headerID}
-        , data{}
-    { }
-
-    VAL& get()
-    {
-        if (isnil(data))
-            throw error::State("No rows in DataTable yet");
-        return data.back();
-    }
-
-    operator VAL&()
-    {
-        return get();
-    }
-
-    template<typename X>
-    VAL& operator=(X&& newVal)
-    {
-        return get() = std::forward<X>(newVal);
-    }
-};
-
-
-
-template<class TAB>
-class DataFile
-    : public TAB
-    , util::NonCopyable
-{
-
-public:
-    DataFile()
-    {
-        forEach(TAB::allColumns(),
-                [](auto& col)
-                {
-                    col.data.resize(col.data.size()+1);
-                });
-    }
-
-    template<size_t i>
-    decltype(auto) getCol()
-    {
-        return std::get<i>(TAB::allColumns());
-    }
-
-    template<size_t i>
-    decltype(auto) getStorage()
-    {
-        return getCol<i>().data;
-    }
-    template<size_t i>
-    string getHeader()
-    {
-        return getCol<i>().header;
-    }
-};
-
 
 
 
@@ -129,17 +40,39 @@ struct Storage
 
 int run_experiment_test()
 {
-    using Dataz = DataFile<Storage>;
+    using Dataz = util::DataFile<Storage>;
 
     Dataz daz;
 
-    daz.name = "namberger";
-    daz.x = 22.33;
+    try {
+        string zeil = ";      aba ,  \"uwa ja; \n,leck  \"\t  \n;123,4.56;-78e+2\t";
+        util::CsvLine csv(zeil);
 
-    cout << daz.getHeader<0>()<<":"<<daz.getStorage<0>().back() <<"\n";
-    cout << daz.getHeader<1>()<<":"<<daz.getStorage<1>().back() <<"\n";
-    cout << daz.getHeader<2>()<<":"<<daz.getStorage<2>().back() <<"\n";
-    cout << daz.getHeader<3>()<<":"<<daz.getStorage<3>().back() <<"\n";
+        while (csv)
+        {
+            cout << "Feld."<<csv.getParsedFieldCnt()<<":"<<*csv<<endl;
+            ++csv;
+        }
+
+    }
+    catch (error::Invalid& iva) {
+        cerr << "AUA--->"<<iva.what()<<endl;
+    }
+
+    cout << "............\n";
+    string csv;
+    util::appendCsvField(csv, " blah ");
+    cout <<csv<<endl;
+    util::appendCsvField(csv, string{" blubb "});
+    cout <<csv<<endl;
+    util::appendCsvField(csv, 22);
+    cout <<csv<<endl;
+    util::appendCsvField(csv, 'a');
+    cout <<csv<<endl;
+    util::appendCsvField(csv, 123.45f);
+    cout <<csv<<endl;
+    util::appendCsvField(csv, -23e+45);
+    cout <<csv<<endl;
 
     cerr << "Honk.\n\n" << endl;
     return 0;
