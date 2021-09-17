@@ -90,9 +90,15 @@ namespace def {
                                 };
 
 
+
     /* ========= response patterns at the Yoshimi CLI ========= */
     const string YOSHIMI_SUCCESFULL_START_PATTERN{"Yay! We're up and running :\\-\\)"};
     const string YOSHIMI_PROMPT_PATTERN{"yoshimi>.*"};
+
+    const string NUMBER ="[\\d\\.+\\-e]+";
+    const string YOSHIMI_SETUP_TEST_PATTERN = "yoshimi>\\s+set test";
+    const string YOSHIMI_TEST_TIMING_PATTERN = "^TEST::Complete.+runtime\\s+("+NUMBER+") ns";
+
 
     /* ========= command tokens at the Yoshimi CLI ========= */
     const string CLI_TEST_OUTPUT_PATTERN{"\\s*set\\s+(test\\s+)?ta[rget]*\\s+(\\S+)\\s*(exe[cute]*\\s*)?"};

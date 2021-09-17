@@ -35,6 +35,7 @@
 
 
 #include "util/error.hpp"
+#include "util/utils.hpp"
 #include "suite/Progress.hpp"
 
 #include <iostream>
@@ -42,12 +43,14 @@
 #include <string>
 #include <deque>
 
+using std::regex_search;
 using std::string;
 using std::deque;
 using std::cout;
 using std::cerr;
 using std::endl;
 
+using util::backwards;
 
 namespace suite {
 
@@ -85,6 +88,16 @@ class OutputCapturingSimpleProgress
         cerr << output_.back() <<endl;
     }
 
+    smatch grep(regex const& pattern) const override
+    {
+        smatch mat;
+        for (string const& line : backwards(output_))
+            if (regex_search(line, mat, pattern))
+                break;
+        return mat;
+    }
+
+
 public:
     OutputCapturingSimpleProgress(bool shallEchoOutput =false)
         : echo_{shallEchoOutput}
@@ -98,6 +111,8 @@ class BlackHoleProgress
     void indicateTest(fs::path)  override {/* NOP */}
     void out(string)             override {/* NOP */}
     void err(string)             override {/* NOP */}
+
+    smatch grep(regex const&) const override { return smatch(); }
 };
 
 

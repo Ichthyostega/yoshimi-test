@@ -41,7 +41,6 @@
 #include "Config.hpp"
 #include "Suite.hpp"
 #include "Stage.hpp"
-#include "research-experiment.hpp" ////////////////////////TODO WIP 9/21 remove this when done
 
 #include <iostream>
 
@@ -51,7 +50,6 @@ using std::endl;
 
 int main(int argc, char *argv[])
 {
-    return run_experiment_test();  ////////////////////////TODO WIP 9/21 remove this when done
     try {
         Config config{Config::fromCmdline(argc,argv)
                      ,Config::fromFile(def::SETUP_INI)

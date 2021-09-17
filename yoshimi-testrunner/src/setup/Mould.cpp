@@ -44,6 +44,8 @@
 #include "suite/step/Scaffolding.hpp"
 #include "suite/step/PrepareScript.hpp"
 #include "suite/step/Invocation.hpp"
+#include "suite/step/OutputObservation.hpp"
+#include "suite/step/TimingObservation.hpp"
 #include "suite/step/SoundObservation.hpp"
 #include "suite/step/SoundJudgement.hpp"
 #include "suite/step/SoundRecord.hpp"
@@ -80,6 +82,11 @@ inline bool shallVerifySound(MapS const& spec)
     return util::boolVal(spec.at(KEY_verifySound));
 }
 
+inline bool shallVerifyTimes(MapS const& spec)
+{
+    return util::boolVal(spec.at(KEY_verifyTimes));
+}
+
 
 
 /**
@@ -105,7 +112,8 @@ class ExeCliMould
                                                ,spec.at(KEY_Test_args)
                                                ,progressLog_
                                                ,testScript);
-        auto& invocation = addStep<Invocation>(launcher);
+        auto& invocation = addStep<Invocation>(launcher,progressLog_);
+        auto& output     = addStep<OutputObservation>(invocation);
 
         auto soundProbe  = optionally(shallVerifySound(spec))
                              .addStep<SoundObservation>(invocation, pathSetup);
@@ -117,6 +125,8 @@ class ExeCliMould
                              .addStep<SoundRecord>(shallRecordBaseline_
                                                   ,*soundProbe, *baseline, pathSetup);
 
+        auto times       = optionally(shallVerifyTimes(spec))
+                             .addStep<TimingObservation>(invocation,output, pathSetup);
 
         /*mark result*/    addStep<Summary>(spec.at(KEY_Test_topic)
                                            ,invocation

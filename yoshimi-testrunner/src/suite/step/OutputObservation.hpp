@@ -37,13 +37,23 @@
 #define TESTRUNNER_SUITE_STEP_OUTPUT_OBSERVATION_HPP_
 
 
+#include "Config.hpp"
 #include "util/nocopy.hpp"
 #include "suite/TestStep.hpp"
+#include "suite/step/Invocation.hpp"
 
-//#include <string>
+#include <optional>
+
 
 namespace suite{
 namespace step {
+
+namespace {
+    const regex EXTRACT_RUNTIME{def::YOSHIMI_TEST_TIMING_PATTERN +"|"+def::YOSHIMI_SETUP_TEST_PATTERN
+                               ,regex::optimize};
+}
+
+using std::optional;
 
 
 /**
@@ -52,8 +62,39 @@ namespace step {
 class OutputObservation
     : public TestStep
 {
+    Invocation& theTest_;
+
+    // observed values....
+    optional<double> runtime_;
+
+
+    Result perform()  override
+    {
+        if (not theTest_.isPerformed())
+            return Result::Warn("Skip OutputObservation");
+
+        smatch mat = theTest_.grepOutput(EXTRACT_RUNTIME);
+        if (mat.empty())
+            throw error::LogicBroken{"Launch marked as successful, "
+                                     "but no traces of test invocation in Yoshimi output."};
+        else
+        if (not mat[1].matched)
+            return Result{ResCode::MALFUNCTION, "No timing data reported by Yoshimi"};
+        else
+            runtime_ = util::parseAs<double>(mat[1]);
+
+        return Result::OK();
+    }
+
 public:
-    OutputObservation();
+    OutputObservation(Invocation& invocation)
+        : theTest_{invocation}
+    { }
+
+    optional<double> getRuntime()  const
+    {
+        return runtime_;
+    }
 };
 
 

@@ -35,14 +35,19 @@
 #define TESTRUNNER_SUITE_STEP_INVOCATION_HPP_
 
 
-#include "util/nocopy.hpp"
+#include "util/regex.hpp"
 #include "util/format.hpp"
+#include "util/nocopy.hpp"
 #include "suite/Result.hpp"
 #include "suite/TestStep.hpp"
+#include "suite/Progress.hpp"
 #include "suite/step/Scaffolding.hpp"
 
 namespace suite{
 namespace step {
+
+using std::regex;
+using std::smatch;
 
 
 /**
@@ -51,6 +56,7 @@ namespace step {
 class Invocation
     : public TestStep
 {
+    Progress& progressLog_;
     Scaffolding& scaffolding_;
     bool performed_ = false;
 
@@ -66,8 +72,9 @@ class Invocation
     }
 
 public:
-    Invocation(Scaffolding& scaf)
-        : scaffolding_{scaf}
+    Invocation(Scaffolding& scaf, Progress& log)
+        : progressLog_{log}
+        , scaffolding_{scaf}
     { }
 
     bool isPerformed()  const
@@ -79,6 +86,11 @@ public:
     int getSampleRate()  const
     {
         return 48000; /////////////////////TODO get that from a setup step
+    }
+
+    smatch grepOutput(regex const& pattern)  const
+    {
+        return progressLog_.grep(pattern);
     }
 };
 
