@@ -142,7 +142,8 @@ class ConfigSource
         /** convert string representation of a config setting
          *  into typed value used in the Config instance. */
         template<typename TAR>
-        TAR as();
+        TAR as()
+        { return util::parseAs<TAR>(rawVal_); }
     };
 
     struct Settings : MapS
@@ -173,22 +174,6 @@ public:
     }
 };
 
-
-/* == conversion string -> typed value == */
-
-template<typename TAR>
-inline TAR ConfigSource::Val::as()
-{
-    std::istringstream converter{rawVal_};
-    TAR value;
-    converter >> value;
-    return value;
-}
-template<>
-inline bool ConfigSource::Val::as()
-{
-    return util::boolVal(rawVal_);
-}
 
 
 
@@ -271,11 +256,6 @@ public:
     static void supplySettings(MapS& existingSettings,
                                MapS const& additionalSettings);
 
-    template<typename TAR>
-    static TAR parseAs(string spec)
-    {
-        return ConfigSource::Val(spec).as<TAR>();
-    }
 
 private:
     static Settings combine_with_decreasing_precedence(std::initializer_list<ConfigSource> sources)

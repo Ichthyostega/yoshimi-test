@@ -19,7 +19,9 @@
 
 
 /** @file parse.cpp
- ** Implementation of the test spec file parser, using regular expressions.
+ ** Implementation of parsing functionality, using regular expressions.
+ ** - [parser](\ref util::parseSpec) for test specifications and `*.ini` files.
+ ** - [split a commandline](\ref util::tokeniseCmdline) into command tokens
  **
  */
 
@@ -27,6 +29,7 @@
 #include "util/parse.hpp"
 #include "util/error.hpp"
 #include "util/utils.hpp"
+#include "util/regex.hpp"
 #include "util/format.hpp"
 
 #include <regex>
@@ -51,6 +54,7 @@ using std::filesystem::exists;
 namespace { // Implementation details
 
     using MapS = std::map<string,string>;
+    using VectorS = std::vector<std::string>;
 
 
     /* ========= INI-File Syntax ========= */
@@ -86,7 +90,40 @@ namespace { // Implementation details
         }
         return text;
     }
+
+
+
+    /* ========= Split Commandline Arguments ========= */
+
+    const string MATCH_SINGLE_TOKEN {R"~(([^\s"']+))~"};
+    const string MATCH_QUOTED_TOKEN {R"~('((?:[^'\\]|\'|\\)+)')~"};
+    const string MATCH_QQUOTED_TOKEN{R"~("((?:[^"\\]|\"|\\)+)")~"};
+
+    const regex CMDLINE_TOKENISE{ MATCH_SINGLE_TOKEN +"|"+ MATCH_QQUOTED_TOKEN +"|"+ MATCH_QUOTED_TOKEN
+                                , regex::optimize};
+
+    inline string getToken(smatch mat)
+    {
+        if (mat[1].matched)
+            return mat[1];
+        if (mat[2].matched)
+            return replace(mat[2],"\\\"","\"");
+        if (mat[3].matched)
+            return replace(mat[3],"\\'","'");
+        throw error::LogicBroken("One of the three Branches should have matched.");
+    }
+
 }//(End)Implementation namespace
+
+
+
+VectorS tokeniseCmdline(string argline)
+{
+    VectorS args;
+    for (auto mat : MatchSeq(argline, CMDLINE_TOKENISE))
+        args.push_back(getToken(mat));
+    return args;
+}
 
 
 

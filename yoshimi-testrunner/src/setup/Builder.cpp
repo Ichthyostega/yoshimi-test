@@ -130,8 +130,8 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
 {
     MapS spec = util::parseSpec(ctx_.root / topicPath);
     Config::supplySettings(spec, def::DEFAULT_TEST_SPEC);
-    spec.insert({KEY_Test_subj, selectSubject(spec[KEY_Test_type])});
-    spec.insert({KEY_Test_args, ctx_.config.arguments});
+    spec.insert({KEY_Test_subj,  selectSubject(spec[KEY_Test_type])});
+    spec.insert({KEY_Test_args,  ctx_.config.arguments});
     spec.insert({KEY_Test_topic, topicPath});
 
     spec[KEY_workDir] = (ctx_.root / topicPath).parent_path();

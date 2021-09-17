@@ -23,7 +23,7 @@
  ** - launching as a subprocess requires to fork and connect STDIN / STDOUT
  ** - for the LV2 plugin setup we need to implement a minimalist LV2 host
  **
- ** @todo the LV2-plugin setup is future work as of 7/2021
+ ** @todo the LV2-plugin setup is future work as of 9/2021
  ** @see Scaffolding.hpp
  ** @see TestStep.hpp
  **
@@ -35,19 +35,18 @@
 #include "suite/step/PrepareScript.hpp"
 #include "suite/step/Watcher.hpp"
 #include "util/format.hpp"
-#include "util/utils.hpp"
-#include "util/regex.hpp"
+#include "util/parse.hpp"
 #include "Config.hpp"
 
 #include <cassert>
 #include <utility>
 #include <string>
+#include <regex>
 
 using std::move;
 using std::regex;
 using std::smatch;
 using std::string;
-using util::replace;
 using util::formatVal;
 
 namespace suite{
@@ -55,46 +54,17 @@ namespace step {
 
 namespace {// Implementation helpers
 
-    inline auto parseDuration(string spec)
-    {
-        return std::chrono::seconds(
-                Config::parseAs<int>(spec));
-    }
-
-    // == Split Commandline Arguments...
-    const string MATCH_SINGLE_TOKEN {R"~(([^\s"']+))~"};
-    const string MATCH_QUOTED_TOKEN {R"~('((?:[^'\\]|\'|\\)+)')~"};
-    const string MATCH_QQUOTED_TOKEN{R"~("((?:[^"\\]|\"|\\)+)")~"};
-
-    const regex CMDLINE_TOKENISE{ MATCH_SINGLE_TOKEN +"|"+ MATCH_QQUOTED_TOKEN +"|"+ MATCH_QUOTED_TOKEN
-                                , regex::optimize};
-
-    inline string getToken(smatch mat)
-    {
-        if (mat[1].matched)
-            return mat[1];
-        if (mat[2].matched)
-            return replace(mat[2],"\\\"","\"");
-        if (mat[3].matched)
-            return replace(mat[3],"\\'","'");
-        throw error::LogicBroken("One of the three Branches should have matched.");
-    }
-
-
-    VectorS tokenise(string argline)
-    {
-        VectorS args;
-        for (auto mat : util::MatchSeq(argline, CMDLINE_TOKENISE))
-            args.push_back(getToken(mat));
-        return args;
-    }
-
-
     PrepareTestScript DEFAULT_TEST_SCRIPT{
         "set test execute",
         "Off" //  do not verify sound
     };
 
+
+    auto parseDuration(string spec)
+    {
+        return std::chrono::seconds(
+                util::parseAs<int>(spec));
+    }
 
     MatchCond::Matcher buildMatcherFor(string regExpSpec)
     {
@@ -140,7 +110,7 @@ ExeLauncher::ExeLauncher(fs::path testSubject
     , timeoutSec_{parseDuration(timeoutSpec)}
     , progressLog_{progress}
     , testScript_{script}
-    , arguments_{move(tokenise(exeArguments))}
+    , arguments_{move(util::tokeniseCmdline(exeArguments))}
 { }
 
 

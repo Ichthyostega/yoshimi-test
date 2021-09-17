@@ -41,6 +41,7 @@ namespace util {
 
 namespace {
     using MapS = std::map<std::string, std::string>;
+    using VectorS = std::vector<std::string>;
 }
 
 
@@ -68,6 +69,19 @@ namespace {
  * @throws error::Misconfig on syntax error; might also throw I/O errors.
  */
 MapS parseSpec(std::filesystem::path path);
+
+
+
+/**
+ * Split a commandline into argument tokens.
+ * @remark similar to what a Unix shell does
+ *  - split at whitespace
+ *  - tokens can be quoted to retain whitespace
+ *  - single and double quotes are supported
+ *  - embedded quotes within a quoted argument
+ *    must be escaped with `\`
+ */
+VectorS tokeniseCmdline(std::string argline);
 
 
 }//(End)namespace util

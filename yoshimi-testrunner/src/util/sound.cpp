@@ -325,7 +325,7 @@ double SoundProbe::getDuration()  const  ///< @return seconds
 {
     if (not probe_)
         throw error::LogicBroken("No sound probe loaded yet.");
-    return double{probe_->stat.frames} / probe_->stat.rate;
+    return double(probe_->stat.frames) / probe_->stat.rate;
 }
 
 

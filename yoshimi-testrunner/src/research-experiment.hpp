@@ -39,43 +39,42 @@ struct Storage
 
 
 int run_experiment_test()
-{
+try {
     using Dataz = util::DataFile<Storage>;
 
     Dataz daz;
 
-    try {
-        string zeil = ";      aba ,  \"uwa ja; \n,leck  \"\t  \n;123,4.56;-78e+2\t";
-        util::CsvLine csv(zeil);
+    daz.x = 123e-4;
+    daz.y = -12345e-6;
 
-        while (csv)
-        {
-            cout << "Feld."<<csv.getParsedFieldCnt()<<":"<<*csv<<endl;
-            ++csv;
-        }
-
-    }
-    catch (error::Invalid& iva) {
-        cerr << "AUA--->"<<iva.what()<<endl;
-    }
-
-    cout << "............\n";
     string csv;
-    util::appendCsvField(csv, " blah ");
-    cout <<csv<<endl;
-    util::appendCsvField(csv, string{" blubb "});
+    util::appendCsvField(csv, "Namberger");
     cout <<csv<<endl;
     util::appendCsvField(csv, 22);
     cout <<csv<<endl;
-    util::appendCsvField(csv, 'a');
-    cout <<csv<<endl;
     util::appendCsvField(csv, 123.45f);
     cout <<csv<<endl;
-    util::appendCsvField(csv, -23e+45);
+    util::appendCsvField(csv, -23e-4);
     cout <<csv<<endl;
+
+    cout << "............\n\n";
+    daz.appendRowFromCSV(csv);
+
+    cout << daz.getHeader<0>()<<":"<<daz.getStorage<0>().back() <<"\n";
+    cout << daz.getHeader<1>()<<":"<<daz.getStorage<1>().back() <<"\n";
+    cout << daz.getHeader<2>()<<":"<<daz.getStorage<2>().back() <<"\n";
+    cout << daz.getHeader<3>()<<":"<<daz.getStorage<3>().back() <<"\n";
+
+    for (uint i=0; i<daz.size(); ++i)
+        cout << "Line#"<<i<<"::"<<daz.formatCSVRow(i)<<endl;
 
     cerr << "Honk.\n\n" << endl;
     return 0;
+}
+catch (std::exception& auau)
+{
+    cerr << "AUA--->"<<auau.what()<<endl;
+    return -1;
 }
 
 
