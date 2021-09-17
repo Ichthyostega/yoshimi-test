@@ -6,3 +6,5 @@
 setup.ini
 *.wav
 *.raw
+*.bak
+*.tmp

@@ -42,31 +42,25 @@ int run_experiment_test()
 try {
     using Dataz = util::DataFile<Storage>;
 
-    Dataz daz;
+    Dataz daz("daz.csv");
+    if (util::isnil(daz))
+    {
+        daz.newRow();
+        daz.x = 123e-4;
+        daz.y = -22;
+        daz.name = "Namberger";
+    }
+    else
+        daz.dupRow();
 
-    daz.x = 123e-4;
-    daz.y = -12345e-6;
+    // manipulate current row
+    ++daz.count;
+    daz.x += 1.1;
+    daz.y /= 10.1;
+    daz.name.get() += ".";
 
-    string csv;
-    util::appendCsvField(csv, "Namberger");
-    cout <<csv<<endl;
-    util::appendCsvField(csv, 22);
-    cout <<csv<<endl;
-    util::appendCsvField(csv, 123.45f);
-    cout <<csv<<endl;
-    util::appendCsvField(csv, -23e-4);
-    cout <<csv<<endl;
-
-    cout << "............\n\n";
-    daz.appendRowFromCSV(csv);
-
-    cout << daz.getHeader<0>()<<":"<<daz.getStorage<0>().back() <<"\n";
-    cout << daz.getHeader<1>()<<":"<<daz.getStorage<1>().back() <<"\n";
-    cout << daz.getHeader<2>()<<":"<<daz.getStorage<2>().back() <<"\n";
-    cout << daz.getHeader<3>()<<":"<<daz.getStorage<3>().back() <<"\n";
-
-    for (uint i=0; i<daz.size(); ++i)
-        cout << "Line#"<<i<<"::"<<daz.formatCSVRow(i)<<endl;
+    cout << daz.dumpCSV() <<endl;
+    daz.save(10);
 
     cerr << "Honk.\n\n" << endl;
     return 0;
