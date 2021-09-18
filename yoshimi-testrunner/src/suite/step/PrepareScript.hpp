@@ -50,6 +50,7 @@
 #include "suite/Result.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/Script.hpp"
+#include "suite/step/PathSetup.hpp"
 #include "suite/step/Scaffolding.hpp"
 
 #include <string>
@@ -75,7 +76,7 @@ class PrepareScript
         return preprocess();
     }
 protected:
-    virtual Result preprocess()                           =0;
+    virtual Result preprocess() { return Result::OK(); }
 
     virtual string markWhenSriptIsFinished()  const override;
     virtual string markWhenScriptIsComplete() const override;
@@ -90,22 +91,25 @@ public:
 
 /**
  * Prepare and provide the CLI script for actually launching the test.
+ * @note the output file spec is connected to the PathSetup step
  * @see step::ExeLauncher::triggerTest()
  */
 class PrepareTestScript
     : public PrepareScript
 {
     bool verifySound_;
-    string outFileSpec_;
+    PathSetup& pathSpec_;
 
     Result preprocess() override;
     string markWhenSriptIsFinished() const override;
 
 public:
-    PrepareTestScript(string const& rawCode, bool shallVerifySound)
+    PrepareTestScript(string const& rawCode
+                     ,bool shallVerifySound
+                     ,PathSetup& pathSetup)
         : PrepareScript{rawCode}
         , verifySound_{shallVerifySound}
-        , outFileSpec_{def::SOUND_DEFAULT_PROBE}
+        , pathSpec_{pathSetup}
     { }
 };
 

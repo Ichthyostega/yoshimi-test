@@ -54,11 +54,6 @@ namespace step {
 
 namespace {// Implementation helpers
 
-    PrepareTestScript DEFAULT_TEST_SCRIPT{
-        "set test execute",
-        "Off" //  do not verify sound
-    };
-
 
     auto parseDuration(string spec)
     {
@@ -141,7 +136,7 @@ Result ExeLauncher::triggerTest()
 {
     progressLog_.out("Trigger test in Yoshimi...");
     Result result = testScript_? run(*testScript_)
-                               : run(DEFAULT_TEST_SCRIPT);
+                               : run(PrepareScript{def::DEFAULT_MINIMAL_TEST_SCRIPT});
 
     progressLog_.out("ExeLauncher: wait for Yoshimi to shut down...");
     auto theEnd = subprocess_->retrieveExitCode();

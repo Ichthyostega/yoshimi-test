@@ -78,6 +78,9 @@ class TimingObservation
         if (not theTest_.isPerformed())
             return Result::Warn("Skip TimingObservation");
 
+        FileNameSpec& fileRuntime = pathSpec_[def::KEY_fileRuntime];
+        FileNameSpec& fileExpense = pathSpec_[def::KEY_fileExpense];
+
         cerr << "+++ Runtime="<< *output_.getRuntime() / (1000*1000) << " ms"<<endl;
         return Result::Warn("UNIMPLEMENTED: TimingObservarion");
     }

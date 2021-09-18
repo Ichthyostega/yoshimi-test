@@ -109,17 +109,19 @@ string PrepareTestScript::markWhenSriptIsFinished() const
  *    to be injected, right before the line triggering the test.
  *  - we need to handle the special cases where the script is packaged
  *    into a single line, e.g. `set test target <name> execute`
+ * @note since the output file spec is connected to the PathSetup step,
+ *    SoundOvservation can later retrieve this value to find the file.
  */
 Result PrepareTestScript::preprocess()
 {
     if (not verifySound_) return Result::OK();
-
     smatch mat;
     DequeS& script = *this;
+    FileNameSpec& soundProbe = pathSpec_[def::KEY_fileProbe];
     for (string const& line : backwards(script))
         if (regex_match(line, mat, PARSE_TEST_OUTPUT_SPEC))
         {
-            outFileSpec_ = mat[2];
+            soundProbe = fs::path{mat[2]};
             return Result::OK();
         }
     // Script defines no output file, but we need output to verify the sound...
@@ -128,7 +130,7 @@ Result PrepareTestScript::preprocess()
        {
            string outputSpec = mat[1].matched? def::CLI_ENTER_TEST_CONTEXT+" "+def::CLI_TEST_OUTPUT
                                              : def::CLI_DEFINITION        +" "+def::CLI_TEST_OUTPUT;
-           outputSpec += " "+outFileSpec_;
+           outputSpec += " "+string{soundProbe};
            script.insert(pos, outputSpec); // insert missing output filename into the script
            return Result::OK();
        }

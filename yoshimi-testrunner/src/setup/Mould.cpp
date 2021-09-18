@@ -104,7 +104,8 @@ class ExeCliMould
 
         auto testScript  = optionally(definesTestScript(spec))
                               .addStep<PrepareTestScript>(spec.at(KEY_Test_script)
-                                                         ,shallVerifySound(spec));
+                                                         ,shallVerifySound(spec)
+                                                         ,pathSetup);
 
         auto& launcher   = addStep<ExeLauncher>(spec.at(KEY_Test_subj)
                                                ,spec.at(KEY_Test_topic)

@@ -186,6 +186,17 @@ class PathSetup
         insert({KEY_fileResidual, FileNameSpec(SOUND_RESIDUAL_MARK)
                                       .enforceExt(EXT_SOUND_WAV)
                                       .disambiguate(testcaseID)});
+        insert({KEY_fileRuntime,  FileNameSpec(TIMING_RUNTIME_MARK)
+                                      .enforceExt(EXT_DATA_CSV)
+                                      .disambiguate(testcaseID)});
+        insert({KEY_fileExpense,  FileNameSpec(TIMING_EXPENSE_MARK)
+                                      .enforceExt(EXT_DATA_CSV)
+                                      .disambiguate(testcaseID)});
+/////////////////////////////////////////////////////////////////////////////TODO: the following should better be configured globally
+        insert({KEY_filePlattform,FileNameSpec(TIMING_SUITE_PLATTFORM)
+                                      .enforceExt(EXT_DATA_CSV)});
+        insert({KEY_fileStatistic,FileNameSpec(TIMING_SUITE_STATISTIC)
+                                      .enforceExt(EXT_DATA_CSV)});
         return Result::OK();
     }
 
