@@ -40,12 +40,10 @@
 
 #include "Config.hpp"
 #include "util/nocopy.hpp"
-#include "suite/Timings.hpp"
 #include "suite/TestStep.hpp"
 
 #include <filesystem>
 #include <algorithm>
-#include <vector>
 #include <deque>
 
 namespace setup {
@@ -65,59 +63,6 @@ public:
         return *this;
     }
 };
-
-
-/**
- * Config context passed as anchor through the build process.
- */
-struct SuiteCtx
-{
-    const fs::path root;
-    Config const& config;
-    suite::PTimings timings;
-};
-
-
-/** hard wired defaults for test specifications */
-extern const MapS DEFAULT_TEST_SPEC;
-
-
-
-/**
- * Tool for evaluating test case definitions and building a TestStep graph.
- * @note a Builder is always created for a directory tree.
- */
-class Builder
-    : util::NonCopyable
-{
-    struct SubTraversal : std::vector<fs::path>
-    {
-        SubTraversal(fs::path root, fs::path item);
-        static bool isTestDefinition(fs::path);
-    };
-
-    /** common anchor context */
-    SuiteCtx const& ctx_;
-
-    const fs::path topic_;
-    SubTraversal items_;
-
-public:
-    Builder(SuiteCtx const& anchorCtx,
-            fs::path topic ="")
-        : ctx_{anchorCtx}
-        , topic_{topic}
-        , items_{ctx_.root,topic}
-    { }
-
-    /** actually setup the test suite definition */
-    StepSeq buildTree();
-
-private:
-    StepSeq buildTestcase(fs::path);
-    string selectSubject(string testTypeID);
-};
-
 
 
 /**

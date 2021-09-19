@@ -46,6 +46,9 @@
 #include "suite/step/Invocation.hpp"
 #include "suite/step/OutputObservation.hpp"
 #include "suite/step/TimingObservation.hpp"
+#include "suite/step/TimingJudgement.hpp"
+#include "suite/step/TrendObservation.hpp"
+#include "suite/step/TrendJudgement.hpp"
 #include "suite/step/SoundObservation.hpp"
 #include "suite/step/SoundJudgement.hpp"
 #include "suite/step/SoundRecord.hpp"
@@ -157,6 +160,24 @@ class LV2PluginMould
 
 
 
+/**
+ * Specialised concrete Mould to build the final steps
+ * necessary to complete statistics and decide upon global
+ * trends and alarms.
+ */
+class ClosureMould
+    : public WiringMould
+{
+    void materialise(MapS const& spec)  override
+    {
+        ////////////////////////////////TODO add steps for global statistics here
+        auto& statistics = addStep<TrendObservation>();
+        auto& judgement  = addStep<TrendJudgement>();
+    }
+};
+
+
+
 
 /**
  * @remarks within the implementation, actual Mould instances are managed
@@ -167,12 +188,16 @@ Mould& useMould_for(string testTypeID)
 {
     static ExeCliMould    testViaCli;
     static LV2PluginMould testViaLV2;
+    static ClosureMould   globalClosure;
 
     if (def::TYPE_CLI == testTypeID)
         return testViaCli.startCycle();
     else
     if (def::TYPE_LV2 == testTypeID)
         return testViaLV2.startCycle();
+    else
+    if (def::CLOSURE  == testTypeID)
+        return globalClosure.startCycle();
     else
         throw error::Misconfig("Unknown Test.type='"+testTypeID+"' requested");
 }

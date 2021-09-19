@@ -36,9 +36,11 @@
 #include "util/format.hpp"
 #include "util/parse.hpp"
 #include "util/utils.hpp"
+#include "suite/Timings.hpp"
 
 #include <iostream>
 #include <cassert>
+#include <vector>
 #include <set>
 
 using std::set;
@@ -50,26 +52,70 @@ using util::contains;
 using util::formatVal;
 using suite::Timings;
 
-using namespace def;
-
 
 namespace setup {
 
+namespace { // implementation details of Testsuite build-up
+
+using namespace def;
 
 /**
- * @remarks
- *   - the testsuite is defined within a directory structure, which need to be traversed
- *   - for the implementation we create a nested structure of Builder instances
+ * Config context passed as anchor through the build process.
  */
-StepSeq build(Config const& config)
+struct SuiteCtx
 {
-    fs::path suiteRoot = fs::consolidated(config.suitePath);
-    if (not fs::is_directory(suiteRoot))
-        throw error::LogicBroken{"Entry point to Testsuite definition must be a Directory: "+formatVal(suiteRoot)};
+    const fs::path root;
+    Config const& config;
+    suite::PTimings timings;
+};
 
-    return Builder({suiteRoot,config, std::make_shared<Timings>()})
-                  .buildTree();
-}
+
+
+/**
+ * Tool for evaluating test case definitions and building a TestStep graph.
+ * @note a Builder is always created for a directory tree.
+ */
+class Builder
+    : util::NonCopyable
+{
+    struct SubTraversal : std::vector<fs::path>
+    {
+        SubTraversal(fs::path root, fs::path item);
+        static bool isTestDefinition(fs::path);
+    };
+
+    /** common anchor context */
+    SuiteCtx const& ctx_;
+
+    const fs::path topic_;
+    SubTraversal items_;
+    StepSeq wiredSteps;
+
+public:
+    Builder(SuiteCtx const& anchorCtx,
+            fs::path topic ="")
+        : ctx_{anchorCtx}
+        , topic_{topic}
+        , items_{ctx_.root,topic}
+        , wiredSteps{}
+    { }
+
+    /** setup the test suite definition */
+    Builder& buildTree();
+
+    /** setup global statistics and evaluation */
+    Builder& buildClosure();
+
+    /** retrieve the built TestStep sequence */
+    StepSeq getStepSeq()
+    {   return move(wiredSteps); }
+
+private:
+    string selectSubject(string testTypeID);
+    StepSeq buildTestcase(fs::path);
+    StepSeq applyMould(MapS spec);
+};
+
 
 
 
@@ -101,18 +147,17 @@ bool Builder::SubTraversal::isTestDefinition(fs::path item)
 
 
 
-StepSeq Builder::buildTree()
+Builder& Builder::buildTree()
 {
-    StepSeq wiredSteps;
     for (auto subItem : items_)
         if (SubTraversal::isTestDefinition(ctx_.root / topic_ / subItem))
             wiredSteps.moveAppendAll(buildTestcase(topic_ / subItem));
         else
             wiredSteps.moveAppendAll(Builder(ctx_, topic_ / subItem)
-                                            .buildTree());
-    return wiredSteps;
+                                            .buildTree()
+                                            .getStepSeq());
+    return *this;
 }
-
 
 
 
@@ -146,6 +191,11 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
         cout << "." << endl;
     }
 
+    return applyMould(spec);
+}
+
+StepSeq Builder::applyMould(MapS spec)
+{
     return useMould_for(spec[KEY_Test_type])
                     .withTimings(ctx_.timings)
                     .withProgress(*ctx_.config.progress)
@@ -165,5 +215,37 @@ string Builder::selectSubject(string testTypeID)
     return exe.string();
 }
 
+
+Builder& Builder::buildClosure()
+{
+    MapS spec;
+    spec[KEY_Test_type] = CLOSURE;
+    wiredSteps.moveAppendAll(applyMould(spec));
+    return *this;
+}
+
+}//(End)Implementation details
+
+
+
+
+/**
+ * @remarks
+ *   - the testsuite is defined within a directory structure, which need to be traversed
+ *   - for the implementation we create a nested structure of Builder instances
+ */
+StepSeq build(Config const& config)
+{
+    fs::path suiteRoot = fs::consolidated(config.suitePath);
+    if (not fs::is_directory(suiteRoot))
+        throw error::LogicBroken{"Entry point to Testsuite definition must be a Directory: "+formatVal(suiteRoot)};
+
+    SuiteCtx anchor{suiteRoot,config, Timings::setup(config)};
+
+    return Builder(anchor)
+                  .buildTree()
+                  .buildClosure()
+                  .getStepSeq();
+}
 
 }//(End)namespace setup

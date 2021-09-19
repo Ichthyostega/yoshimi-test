@@ -42,6 +42,12 @@ Timings::~Timings() { }
  * Setup the stage for performing a concrete test suite.
  * @param config parametrisation to control some aspects of the test run.
  */
+PTimings Timings::setup(Config const& config)
+{
+    return PTimings{new Timings};
+}
+
+
 Timings::Timings()
 //  :
 { }

@@ -65,6 +65,7 @@ namespace def {
 
     const string TYPE_CLI = "CLI";
     const string TYPE_LV2 = "LV2";
+    const string CLOSURE  = "CLOSURE";
 
     const string KEY_Test_type    = "Test.type";
     const string KEY_Test_topic   = "Test.topic";
