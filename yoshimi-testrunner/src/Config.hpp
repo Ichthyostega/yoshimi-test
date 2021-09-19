@@ -103,8 +103,10 @@ namespace def {
     const string YOSHIMI_PROMPT_PATTERN{"yoshimi>.*"};
 
     const string NUMBER ="[\\d\\.+\\-e]+";
+    const string INTEGER ="[+\\-]?\\d+";
     const string YOSHIMI_SETUP_TEST_PATTERN = "yoshimi>\\s+set test";
     const string YOSHIMI_TEST_TIMING_PATTERN = "^TEST::Complete.+runtime\\s+("+NUMBER+") ns";
+    const string YOSHIMI_TEST_PARAM_PATTERN = "^@\\s+TEST:.+exec\\s+("+INTEGER+") notes.+each ("+NUMBER+")s.+buffer=("+INTEGER+")";
 
 
     /* ========= command tokens at the Yoshimi CLI ========= */
@@ -128,6 +130,8 @@ namespace def {
     const double WARN_FAINT_PROBE = -60;  // dBFS
     const double DIFF_WARN_LEVEL  = -200; // dB peakRMS against probe average RMS
     const double DIFF_ERROR_LEVEL = -100; // dB peakRMS against probe average RMS
+
+    const size_t EXPECTED_TEST_CNT = 500; // used to reserve() vector allocations
 }
 
 

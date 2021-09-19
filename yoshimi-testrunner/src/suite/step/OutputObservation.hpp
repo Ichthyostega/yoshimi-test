@@ -43,17 +43,20 @@
 #include "suite/step/Invocation.hpp"
 
 #include <optional>
+#include <cassert>
+#include <cmath>
 
 
 namespace suite{
 namespace step {
 
 namespace {
-    const regex EXTRACT_RUNTIME{def::YOSHIMI_TEST_TIMING_PATTERN +"|"+def::YOSHIMI_SETUP_TEST_PATTERN
-                               ,regex::optimize};
+    const regex EXTRACT_RUNTIME{def::YOSHIMI_TEST_TIMING_PATTERN +"|"+def::YOSHIMI_SETUP_TEST_PATTERN, regex::optimize};
+    const regex EXTRACT_PARAMS {def::YOSHIMI_TEST_PARAM_PATTERN  +"|"+def::YOSHIMI_SETUP_TEST_PATTERN, regex::optimize};
 }
 
 using std::optional;
+using util::parseAs;
 
 
 /**
@@ -66,6 +69,10 @@ class OutputObservation
 
     // observed values....
     optional<double> runtime_;
+    optional<uint>   notesCnt_;
+    optional<size_t> samples_;
+    optional<size_t> holdSmp_;
+    optional<size_t> chunkSiz_;
 
 
     Result perform()  override
@@ -73,6 +80,7 @@ class OutputObservation
         if (not theTest_.isPerformed())
             return Result::Warn("Skip OutputObservation");
 
+        // Retrieve the timing measurement from the TestInvoker within Yoshimi
         smatch mat = theTest_.grepOutput(EXTRACT_RUNTIME);
         if (mat.empty())
             throw error::LogicBroken{"Launch marked as successful, "
@@ -83,6 +91,20 @@ class OutputObservation
         else
             runtime_ = util::parseAs<double>(mat[1]);
 
+        // Retrieve further key parameters from the Test-Context in the Yoshimi-CLI
+        mat = theTest_.grepOutput(EXTRACT_PARAMS);
+        assert(!mat.empty()); // we know already that YOSHIMI_SETUP_TEST_PATTERN matches
+        if (not mat[1].matched and not mat[2].matched)
+            return Result{ResCode::MALFUNCTION, "Yoshimi CLI did not report the test parameters (notes count, duration)"};
+        else
+        {
+            // @ TEST: exec 4 notes start (F#2) step 4 up to (F#3) on Ch.1 each 1.0s (hold 80%) buffer=256 write "sound.raw"
+            //             ^1^                                                  ^2^                    ^3^
+            notesCnt_ = parseAs<uint>(mat[1]);
+            chunkSiz_ = parseAs<uint>(mat[3]);
+            samples_  = TODO_workaround_deduceOverallSamplesCnt(parseAs<double>(mat[2]));
+        }
+
         return Result::OK();
     }
 
@@ -91,9 +113,23 @@ public:
         : theTest_{invocation}
     { }
 
-    optional<double> getRuntime()  const
+    optional<double> getRuntime()  const { return runtime_; }
+    optional<uint>   getNotesCnt() const { return notesCnt_;}
+    optional<size_t> getSamples()  const { return samples_; }
+
+
+private:
+    /** @todo better let the TestInvoker in Yoshimi print the exact number
+     *        - the duration is rounded in the CLI output
+     *        - the SynthEngine could process less than the requested chunks
+     */
+    size_t TODO_workaround_deduceOverallSamplesCnt(double duration)
     {
-        return runtime_;
+        int samplerate = theTest_.getSampleRate();
+        //////////////////////////////////////////////////////////////////////////TODO: Code duplicated from Yoshimi TestInvoker.h (line 373)
+        size_t turnCnt = ceilf(duration * samplerate / *chunkSiz_);
+        //////////////////////////////////////////////////////////////////////////TODO: (End) duplicated code
+        return *notesCnt_ * turnCnt * *chunkSiz_;
     }
 };
 

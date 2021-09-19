@@ -49,8 +49,10 @@
 #include "suite/step/Invocation.hpp"
 #include "suite/step/OutputObservation.hpp"
 #include "suite/step/PathSetup.hpp"
+#include "suite/Timings.hpp"
 #include "Config.hpp"
 
+#include <memory>
 //#include <string>
 #include <iostream>////////////////TODO remove this
 using std::cerr;
@@ -58,6 +60,10 @@ using std::endl;   ////////////////TODO remove this
 
 namespace suite{
 namespace step {
+
+class TimingTestData;
+using PData = std::unique_ptr<TimingTestData>;
+
 
 
 /**
@@ -71,6 +77,9 @@ class TimingObservation
     Invocation& theTest_;
     PathSetup& pathSpec_;
     OutputObservation& output_;
+    suite::PTimings globalTimings_;
+
+    PData data_;
 
 
     Result perform()  override
@@ -78,21 +87,33 @@ class TimingObservation
         if (not theTest_.isPerformed())
             return Result::Warn("Skip TimingObservation");
 
-        FileNameSpec& fileRuntime = pathSpec_[def::KEY_fileRuntime];
-        FileNameSpec& fileExpense = pathSpec_[def::KEY_fileExpense];
+        if (not hasCapturedData())
+            return Result::Warn("No runtime measurement -- skip TimingObservation.");
 
-        cerr << "+++ Runtime="<< *output_.getRuntime() / (1000*1000) << " ms"<<endl;
-        return Result::Warn("UNIMPLEMENTED: TimingObservarion");
+        calculateDataRecord();
+        persistTimeSeries();
+        assert(data_);
+        return Result::OK();
     }
 
 public:
+   ~TimingObservation();
     TimingObservation(Invocation& invocation
                      ,OutputObservation& output
-                     ,PathSetup& pathSetup)
-        : theTest_{invocation}
-        , pathSpec_{pathSetup}
-        , output_{output}
-    { }
+                     ,suite::PTimings aggregator
+                     ,PathSetup& pathSetup);
+
+
+private:
+    bool hasCapturedData()  const
+    {
+        return output_.getRuntime().has_value()
+           and output_.getNotesCnt().has_value()
+           and output_.getSamples().has_value();
+    }
+
+    void calculateDataRecord();
+    void persistTimeSeries();
 };
 
 

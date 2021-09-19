@@ -21,21 +21,59 @@
 /** @file Timings.cpp
  ** Implementation details of global statistics calculation.
  ** 
- ** @todo WIP as of 7/21
+ ** @todo WIP as of 9/21
  **
  */
 
 
+#include "Config.hpp"
 #include "util/error.hpp"
+#include "util/statistic.hpp"
 //#include "util/utils.hpp"
 #include "Timings.hpp"
 
+#include <functional>
+#include <vector>
+
 namespace suite {
+
+using TestTable = std::vector<std::reference_wrapper<TimingTest>>;
+
+
+/**
+ * PImpl: data holder and implementation details
+ * for the suite::Timings aggregator.
+ */
+class TimingData
+    : util::NonCopyable
+{
+    TestTable testData_;
+
+public:
+    TimingData()
+        : testData_{}
+    {
+        testData_.reserve(def::EXPECTED_TEST_CNT);
+    }
+
+    void attach(TimingTest& singleTestcaseData)
+    {
+        testData_.push_back(singleTestcaseData);
+    }
+    uint dataCnt()
+    {
+        return testData_.size();
+    }
+};
 
 
 
 // emit dtors here...
 Timings::~Timings() { }
+
+Timings::Timings()
+    : data_{new TimingData}
+{ }
 
 
 /**
@@ -48,9 +86,16 @@ PTimings Timings::setup(Config const& config)
 }
 
 
-Timings::Timings()
-//  :
-{ }
+void Timings::attach(TimingTest& singleTestcaseData)
+{
+    data_->attach(singleTestcaseData);
+}
+
+uint Timings::dataCnt()
+{
+    return data_->dataCnt();
+}
+
 
 
 }//(End)namespace suite

@@ -22,11 +22,11 @@
  ** Statistics context to collect timing data during Testsuite execution.
  ** Running individual tests typically also yields some timing data, which unfortunately
  ** is prone to fluctuations and depends on the execution environment. More robust findings
- ** can be distilled by combining several of these local measurements, yet this process
+ ** can be distilled by combining several of these local measurements, yet such a process
  ** involves global aggregation and necessitates a (re-)calibration of platform speed
- ** factors -- supported by a global data holder used throughout the suite execution;
- ** actually, global statistics calculation can refer directly to the individual
- ** data points observed in the testcases, because each local TimingObservation
+ ** factors -- supported by this global data holder used throughout the suite execution;
+ ** actually, global statistics calculation can refer directly to the individual data
+ ** points observed in the testcases, because each local TimingObservation
  ** hooks itself into this global Timings aggregator.
  ** 
  ** @todo WIP as of 9/21
@@ -48,25 +48,47 @@
 
 
 namespace suite {
-//  class Impl;
 
-//  using PImpl = std::unique_ptr<Impl>;
+class TimingData;
+using PData = std::unique_ptr<TimingData>;
+
 class Timings;
 using PTimings = std::shared_ptr<Timings>;
 
 
 
 /**
- * Execution environment to perform a test suite once.
+ * Interface: a single case of Timing measurement.
+ */
+class TimingTest
+    : util::NonCopyable
+{
+
+protected:
+    TimingTest() { }
+public:
+    virtual ~TimingTest() { }  ///< this is an interface
+};
+
+
+
+/**
+ * Aggregated timing data for the complete Testsuite.
+ * Provides methods to derive global statistics trends.
  */
 class Timings
     : util::NonCopyable
 {
+    PData data_;
 
     Timings();
 public:
    ~Timings();
     static PTimings setup(Config const&);
+
+    void attach(TimingTest&);
+
+    uint dataCnt();
 };
 
 

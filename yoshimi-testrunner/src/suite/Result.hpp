@@ -109,18 +109,18 @@ struct Result
     : util::MoveOnly
 {
     const ResCode code;
-    const string log;
+    const string summary;
     const optional<Statistics> stats;
 
 
     Result(ResCode c, string msg="")
         : code{c}
-        , log{showRes(c) +  (isnil(msg)? "." : ": "+msg)}
+        , summary{showRes(c) +  (isnil(msg)? "." : ": "+msg)}
     { }
 
     Result(Statistics data, string msg="")
         : code(ResCode::GREEN)
-        , log{msg}
+        , summary{msg}
         , stats{std::move(data)}
     { }
 

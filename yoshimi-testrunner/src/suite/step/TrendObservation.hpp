@@ -40,7 +40,10 @@
 
 
 #include "util/nocopy.hpp"
+#include "util/format.hpp"
+#include "suite/Timings.hpp"
 #include "suite/TestStep.hpp"
+#include "suite/Progress.hpp"
 #include "suite/step/Invocation.hpp"
 #include "suite/step/OutputObservation.hpp"
 #include "suite/step/PathSetup.hpp"
@@ -54,6 +57,8 @@ using std::endl;   ////////////////TODO remove this
 namespace suite{
 namespace step {
 
+using util::str;
+
 
 /**
  * Combine timing data tables attached from all test cases
@@ -62,16 +67,22 @@ namespace step {
 class TrendObservation
     : public TestStep
 {
+    Progress& progressLog_;
+    PTimings  timings_;
 
 
     Result perform()  override
     {
+        progressLog_.out("Timings: "+str(timings_->dataCnt())+" data points.");
         return Result::Warn("UNIMPLEMENTED: TrendObservation (global)");
     }
 
 public:
-    TrendObservation()
-//      : theTest_{invocation}
+    TrendObservation(Progress& log
+                    ,PTimings aggregator
+                    )
+        : progressLog_{log}
+        , timings_{aggregator}
     { }
 };
 

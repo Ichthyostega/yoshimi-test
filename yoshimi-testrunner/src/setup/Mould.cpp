@@ -130,7 +130,7 @@ class ExeCliMould
                                                   ,*soundProbe, *baseline, pathSetup);
 
         auto times       = optionally(shallVerifyTimes(spec))
-                             .addStep<TimingObservation>(invocation,output, pathSetup);
+                             .addStep<TimingObservation>(invocation,output,suiteTimings_, pathSetup);
 
         /*mark result*/    addStep<Summary>(spec.at(KEY_Test_topic)
                                            ,invocation
@@ -170,8 +170,9 @@ class ClosureMould
 {
     void materialise(MapS const& spec)  override
     {
-        ////////////////////////////////TODO add steps for global statistics here
-        auto& statistics = addStep<TrendObservation>();
+        ////////////////////////////////TODO add more steps for global statistics here
+        auto& statistics = addStep<TrendObservation>(progressLog_
+                                                    ,suiteTimings_);
         auto& judgement  = addStep<TrendJudgement>();
     }
 };

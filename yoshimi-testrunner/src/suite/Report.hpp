@@ -110,7 +110,7 @@ public:
         for (auto& res : results)
         {
             if (res.code != ResCode::GREEN)
-                out_ << res.log <<endl;
+                out_ << res.summary <<endl;
         }
 
         //---Generate-Summary-------------------------
@@ -120,7 +120,7 @@ public:
         {
             out_ << hr();
             results.forEachMalfunction([&](Result const& res){
-                out_ << bullet(res.log);
+                out_ << bullet(res.summary);
             });
         }
         if (results.hasFailedCases())
@@ -130,7 +130,7 @@ public:
                 out_ << strong("Warnings")+": "+str(results.cntWarnings()) +"\n";
             out_     << strong("Failures")+": "+str(results.cntFailures()) +"\n";
             results.forEachFailedCase([&](Result const& res){
-                out_ << bullet(formatVal(res.stats->topic)+": "+res.log);
+                out_ << bullet(formatVal(res.stats->topic)+": "+res.summary);
             });
             out_ << hr()
                  << strong("RED") +"\n"
