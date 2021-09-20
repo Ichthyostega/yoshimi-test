@@ -38,6 +38,11 @@
 #include "suite/Progress.hpp"
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <chrono>
+#include <ctime>
+
 #include <argp.h>
 
 using std::cout;
@@ -58,6 +63,24 @@ string showAbsolute(fs::path path)
 {
     return util::formatVal(
              fs::consolidated(path));
+}
+
+/**
+ * Helper to generate a current system timestamp.
+ * @return a string in ISO-8601 format, local time zone.
+ * @remark Credits to »[Baum mit Augen]« (see [Stackoverflow 2016])
+ * [Stackoverflow 2016]: https://stackoverflow.com/a/36927792
+ * [Baum mit Augen]: https://stackoverflow.com/users/3002139/baum-mit-augen
+ */
+string currSysTimeISO()
+{
+    using namespace std;
+    using namespace std::chrono;
+    time_t sytime{system_clock::to_time_t(
+                      system_clock::now())};
+    ostringstream oss;
+    oss << put_time(localtime(&sytime), "%FT%T%z");
+    return oss.str();
 }
 
 
@@ -123,6 +146,9 @@ MapS parseCommandline(int argc, char *argv[])
 
 }//(End)Implementation details
 
+
+/** constant fixed timestamp for each invocation of the Yoshimi-testrunner */
+const string Config::timestamp = currSysTimeISO();
 
 
 

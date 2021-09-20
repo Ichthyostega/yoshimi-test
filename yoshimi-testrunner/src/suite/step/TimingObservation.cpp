@@ -35,6 +35,7 @@
 #include "util/data.hpp"
 #include "util/file.hpp"
 #include "util/nocopy.hpp"
+#include "util/statistic.hpp"
 #include "suite/step/TimingObservation.hpp"
 #include "suite/Timings.hpp"
 #include "Config.hpp"
@@ -52,6 +53,7 @@ namespace {
     const size_t MILLISEC_per_NANOSEC = 1000*1000;
 }
 
+using util::averageLastN;
 
 using util::Column;
 
@@ -66,7 +68,7 @@ struct TableRuntime
     Column<double>     runtime{"Runtime ms"};              ///< the actual timing measurement in milliseconds
     Column<size_t>     samples{"Samples count"};
     Column<uint>         notes{"Notes count"};
-    Column<double>   plattform{"Plattform Factor"};        ///< runtime predicted by platform model
+    Column<double>    platform{"Platform ms"};             ///< runtime predicted by platform model (in ms)
     Column<double>     expense{"Expense Factor"};          ///< baseline(expected value) for the expense
     Column<double> expenseCurr{"Expense Factor(current)"}; ///< `runtime == plattform·expenseCurr`
     Column<double>       delta{"Delta ms"};                ///< Δ of measured runtime against `plattform·expense`
@@ -79,7 +81,7 @@ struct TableRuntime
                        ,runtime
                        ,samples
                        ,notes
-                       ,plattform
+                       ,platform
                        ,expense
                        ,expenseCurr
                        ,delta
@@ -103,7 +105,7 @@ struct TableExpense
     Column<double>     runtime{"Runtime(avg) ms"};         ///< averaged runtime used to define this baseline
     Column<size_t>     samples{"Samples count"};           ///< samples count of the underlying test
     Column<uint>         notes{"Notes count"};             ///< notes count of the underlying test
-    Column<double>   plattform{"Plattform Factor"};        ///< runtime predicted by platform model for this baseline
+    Column<double>    platform{"Platform ms"};             ///< runtime predicted by platform model for this baseline
     Column<double>     expense{"Expense Factor"};          ///< expected value for the expense. This is the *actual baseline*.
 
     auto allColumns()
@@ -112,7 +114,7 @@ struct TableExpense
                        ,runtime
                        ,samples
                        ,notes
-                       ,plattform
+                       ,platform
                        ,expense
                        );
     }
@@ -138,6 +140,7 @@ class TimingTestData
 
     /* === Interface: TimingTest === */
 
+    //////////////TODO add here methods required to use this data point in global statistics
 
 public:
     TimingTestData(fs::path fileRuntime, fs::path fileExpense)
@@ -145,21 +148,47 @@ public:
         , expense_{fileExpense}
     { }
 
+    bool hasBaseline()  const
+    {   return not expense_.empty(); }
+
+
     /**
-     * build up one data record based on the current timing measurement.
+     * Build up one data record based on the current timing measurement.
+     * @param prediction the runtime as _predicted by the platform model_
+     * @remark the *platform model* is fitted with all timing measurements
+     *         within the Testsuite and thus yields a simplified (linear)
+     *         prediction based on the number of samples. Individual tests
+     *         are more or less expensive, which is captured by the current
+     *         _expense factor._ For each test case an averaged expense factor
+     *         is stored as *baseline* -- and thus deviations can be detected.
      */
-    void calculatePoint(uint notes, size_t smps, double rawTime)
+    void calculatePoint(uint notes, size_t smps, double rawTime, double prediction)
     {
         runtime_.dupRow();
         runtime_.notes = notes;
         runtime_.samples = smps;
         runtime_.runtime = rawTime / MILLISEC_per_NANOSEC;
-        /////////////////////////////////////////////////////TODO derive current expense and Δ
+
+        runtime_.platform = prediction / MILLISEC_per_NANOSEC;
+        runtime_.expense     = hasBaseline()? expense_.expense : 0.0;
+
+        // apply the prediction model to factor out system dependency
+        double expectedTime  = prediction * runtime_.expense;
+        runtime_.expenseCurr = 0.0 < prediction?   rawTime / prediction : 0.0;
+        runtime_.delta       = 0.0 < expectedTime? rawTime - expectedTime : 0.0;
+
+        // moving averages
+        runtime_.ma05 = averageLastN(runtime_.runtime.data, 5);
+        runtime_.ma10 = averageLastN(runtime_.runtime.data, 10);
+        runtime_.ma50 = averageLastN(runtime_.runtime.data, 50);
+
+        // Timestamp of current Testsuite run
+        runtime_.timestamp = Config::timestamp;
     }
 
     void persistRuntimes()
     {
-        runtime_.save(); /////////////TODO limit number of past data retained ⟹ Config-Param "runtimeKeep"
+        runtime_.save(); /////////////TODO limit number of past data to retain ⟹ Config-Param "runtimeKeep"
     }
 private:
 };
@@ -192,13 +221,14 @@ void TimingObservation::calculateDataRecord()
     uint   notes   = *output_.getNotesCnt();
     size_t smps    = *output_.getSamples();
     cerr << "+++ Runtime="<< runtime / (1000*1000) << " ms  ("<<notes<<"|"<<smps<<"smps)"<<endl; ///////////////////TODO: debugging code
-    // individual timing measurement successfully observed
+
+    double prediction = globalTimings_->calcPlatformModel(notes,smps);
 
     FileNameSpec& fileRuntime = pathSpec_[def::KEY_fileRuntime];
     FileNameSpec& fileExpense = pathSpec_[def::KEY_fileExpense];
 
     data_.reset(new TimingTestData(fileRuntime, fileExpense));
-    data_->calculatePoint(notes,smps,runtime);
+    data_->calculatePoint(notes,smps,runtime,prediction);
 
     globalTimings_->attach(*data_);
 }

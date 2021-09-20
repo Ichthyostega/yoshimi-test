@@ -88,7 +88,9 @@ public:
 
     void attach(TimingTest&);
 
-    uint dataCnt();
+    double calcPlatformModel(uint notes, size_t smps)  const;
+
+    uint dataCnt()  const;
 };
 
 

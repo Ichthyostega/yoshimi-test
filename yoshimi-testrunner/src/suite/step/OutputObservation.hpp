@@ -71,7 +71,6 @@ class OutputObservation
     optional<double> runtime_;
     optional<uint>   notesCnt_;
     optional<size_t> samples_;
-    optional<size_t> holdSmp_;
     optional<size_t> chunkSiz_;
 
 

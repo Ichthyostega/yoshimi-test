@@ -83,8 +83,6 @@ namespace def {
     const string KEY_fileResidual = "fileResidual";
     const string KEY_fileRuntime  = "fileRuntime";
     const string KEY_fileExpense  = "fileExpense";
-    const string KEY_filePlattform= "filePlattform";
-    const string KEY_fileStatistic= "fileStatistic";
 
     /** @note all defaults for test specifications defined here
      *        can be omitted within the actual *.test files. */
@@ -121,7 +119,7 @@ namespace def {
     const string SOUND_RESIDUAL_MARK{"residual"};
     const string TIMING_RUNTIME_MARK{"runtime"};
     const string TIMING_EXPENSE_MARK{"expense"};
-    const string TIMING_SUITE_PLATTFORM{"Suite-plattform"};
+    const string TIMING_SUITE_PLATFORM{"Suite-platform"};
     const string TIMING_SUITE_STATISTIC{"Suite-statistic"};
     const string EXT_SOUND_RAW{".raw"};
     const string EXT_SOUND_WAV{".wav"};
@@ -226,6 +224,7 @@ public:
 
     //--global-Facilities----
     suite::PProgress progress;
+    static const string timestamp;
 
 
 private: /* ===== Initialisation from raw settings ===== */
