@@ -69,6 +69,7 @@ protected:
     RProgress progressLog_{Progress::null()};
     PTimings  suiteTimings_;
     bool shallRecordBaseline_{false};
+    bool shallCalibrateTiming_{false};
 
 public:
     virtual ~Mould();  ///< this is an interface
@@ -87,6 +88,11 @@ public:
     Mould& recordBaseline(bool indeed)
     {
         shallRecordBaseline_ = indeed;
+        return *this;
+    }
+    Mould& calibrateTiming(bool indeed)
+    {
+        shallCalibrateTiming_ = indeed;
         return *this;
     }
 

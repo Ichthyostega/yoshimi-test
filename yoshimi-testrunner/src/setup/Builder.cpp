@@ -200,6 +200,7 @@ StepSeq Builder::applyMould(MapS spec)
                     .withTimings(ctx_.timings)
                     .withProgress(*ctx_.config.progress)
                     .recordBaseline(ctx_.config.baseline)
+                    .calibrateTiming(ctx_.config.calibrate)
                     .generateStps(spec);
 }
 

@@ -34,6 +34,7 @@
 
 #include "util/data.hpp"
 #include "util/file.hpp"
+#include "util/utils.hpp"
 #include "util/nocopy.hpp"
 #include "util/statistic.hpp"
 #include "suite/step/TimingObservation.hpp"
@@ -41,10 +42,7 @@
 #include "Config.hpp"
 
 #include <tuple>
-//#include <string>
-#include <iostream>////////////////TODO remove this
-using std::cerr;
-using std::endl;   ////////////////TODO remove this
+#include <string>
 
 namespace suite{
 namespace step {
@@ -53,6 +51,8 @@ namespace {
     const size_t MILLISEC_per_NANOSEC = 1000*1000;
 }
 
+using util::isnil;
+using util::backwards;
 using util::averageLastN;
 
 using util::Column;
@@ -72,9 +72,9 @@ struct TableRuntime
     Column<double>     expense{"Expense Factor"};          ///< baseline(expected value) for the expense
     Column<double> expenseCurr{"Expense Factor(current)"}; ///< `runtime == plattform·expenseCurr`
     Column<double>       delta{"Delta ms"};                ///< Δ of measured runtime against `plattform·expense`
-    Column<double>        ma05{"Runtime MA-5"};            ///< moving average of runtime (last 5 measurements)
-    Column<double>        ma10{"Runtime MA-10"};
-    Column<double>        ma50{"Runtime MA-50"};
+    Column<double>        ma05{"Expense MA-5"};            ///< moving average of expense factor (last 5 measurements)
+    Column<double>        ma10{"Expense MA-10"};
+    Column<double>        ma50{"Expense MA-50"};
 
     auto allColumns()
     {   return std::tie(timestamp
@@ -140,7 +140,18 @@ class TimingTestData
 
     /* === Interface: TimingTest === */
 
-    //////////////TODO add here methods required to use this data point in global statistics
+    Point getAveragedDataPoint(size_t avgPoints)  const override
+    {
+        if (isnil(runtime_))
+            throw error::LogicBroken("Attempt to extract test data prior to performing any measurements");
+
+        avgPoints = ensureEquivalentDataPoints(avgPoints);
+        return Point{double(runtime_.samples)
+                    ,averageLastN(runtime_.runtime.data, avgPoints)
+                    ,double(runtime_.expense)
+                    };
+    }
+
 
 public:
     TimingTestData(fs::path fileRuntime, fs::path fileExpense)
@@ -170,25 +181,76 @@ public:
         runtime_.runtime = rawTime / MILLISEC_per_NANOSEC;
 
         runtime_.platform = prediction / MILLISEC_per_NANOSEC;
-        runtime_.expense     = hasBaseline()? expense_.expense : 0.0;
+        runtime_.expense  = hasBaseline()? expense_.expense : 0.0;
 
         // apply the prediction model to factor out system dependency
         double expectedTime  = prediction * runtime_.expense;
         runtime_.expenseCurr = 0.0 < prediction?   rawTime / prediction : 0.0;
         runtime_.delta       = 0.0 < expectedTime? rawTime - expectedTime : 0.0;
+        runtime_.delta      /= MILLISEC_per_NANOSEC;
 
         // moving averages
-        runtime_.ma05 = averageLastN(runtime_.runtime.data, 5);
-        runtime_.ma10 = averageLastN(runtime_.runtime.data, 10);
-        runtime_.ma50 = averageLastN(runtime_.runtime.data, 50);
+        runtime_.ma05 = averageLastN(runtime_.expenseCurr.data, 5);
+        runtime_.ma10 = averageLastN(runtime_.expenseCurr.data, 10);
+        runtime_.ma50 = averageLastN(runtime_.expenseCurr.data, 50);
 
         // Timestamp of current Testsuite run
         runtime_.timestamp = Config::timestamp;
     }
 
-    void persistRuntimes()
+    void persistRuntimes(uint rows2keep)
     {
-        runtime_.save(); /////////////TODO limit number of past data to retain ⟹ Config-Param "runtimeKeep"
+        runtime_.save(rows2keep);
+    }
+
+    void storeNewBaseline(uint baselineAvg, uint baselineKeep)
+    {
+        expense_.dupRow();
+        // record contextual info
+        expense_.points = baselineAvg;
+        expense_.samples  = runtime_.samples;
+        expense_.notes    = runtime_.notes;
+        expense_.platform = runtime_.platform;
+
+        // define new baseline: average of the last timing measurements
+        expense_.runtime = averageLastN(runtime_.runtime.data, baselineAvg);
+        expense_.expense = expense_.runtime / expense_.platform;
+
+        // Timestamp of creating this new baseline
+        expense_.timestamp = Config::timestamp;
+        expense_.save(baselineKeep);
+    }
+
+    /**
+     * Find out how much comparable measurement points are available for averaging.
+     * @remark "comparable" here implies an equivalent measurement setup
+     *         - the number of samples was the same for all data points
+     *         - the baseline expense factor was not changed/adjusted,
+     *           which implies that the user judges the situation as stable
+     */
+    size_t ensureEquivalentDataPoints(size_t limit)  const
+    {
+        size_t refSamples = runtime_.samples;
+        double refExpense = runtime_.expense;
+        auto samplesData = backwards(runtime_.samples.data);
+        auto expenseData = backwards(runtime_.expense.data);
+        size_t maxPoints = runtime_.size();
+
+        auto samples = begin(samplesData);
+        auto expense = begin(expenseData);
+        uint points = 0;
+        while (points < limit and points < maxPoints
+               and samples != end(samplesData)
+               and expense != end(expenseData)
+               and *samples == refSamples
+               and *expense == refExpense)
+        {
+            ++points;
+            ++samples;
+            ++expense;
+        }
+        assert (0 < points and points <= limit and points <= maxPoints);
+        return points;
     }
 private:
 };
@@ -220,7 +282,6 @@ void TimingObservation::calculateDataRecord()
     double runtime = *output_.getRuntime();
     uint   notes   = *output_.getNotesCnt();
     size_t smps    = *output_.getSamples();
-    cerr << "+++ Runtime="<< runtime / (1000*1000) << " ms  ("<<notes<<"|"<<smps<<"smps)"<<endl; ///////////////////TODO: debugging code
 
     double prediction = globalTimings_->calcPlatformModel(notes,smps);
 
@@ -234,9 +295,12 @@ void TimingObservation::calculateDataRecord()
 }
 
 
-void TimingObservation::persistTimeSeries()
+void TimingObservation::saveData(bool includingBaseline)
 {
-    data_->persistRuntimes();
+    data_->persistRuntimes(globalTimings_->timingsKeep);
+    if (includingBaseline)
+        data_->storeNewBaseline(globalTimings_->baselineAvg
+                               ,globalTimings_->baselineKeep);
 }
 
 

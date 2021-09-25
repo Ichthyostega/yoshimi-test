@@ -30,6 +30,7 @@
 #include "util/file.hpp"
 #include "util/data.hpp"
 #include "util/error.hpp"
+#include "util/format.hpp"
 #include "util/statistic.hpp"
 //#include "util/utils.hpp"
 #include "Timings.hpp"
@@ -40,9 +41,15 @@
 
 namespace suite {
 
+namespace {
+    const size_t MILLISEC_per_NANOSEC = 1000*1000;
+}
+
 using step::FileNameSpec;
 
 using util::Column;
+using util::formatVal;
+
 
 
 /**
@@ -59,8 +66,9 @@ struct TablePlatform
 {
     Column<string>   timestamp{"Timestamp"};               ///< Timestamp of the `--calibrate` Testsuite run
     Column<size_t>      points{"Data points"};             ///< number of fitted data points (=test cases)
-    Column<double>      socket{"Socket ns"};               ///< constant base costs per testcase
+    Column<double>      socket{"Socket ms"};               ///< constant base costs per testcase
     Column<double>       speed{"Speed ns/smp"};            ///< crunch speed (time per computed sample)
+    Column<double> correlation{"Correlation"};             ///< observed correlation coefficient between (x,y)
     Column<double>    maxDelta{"Delta (max)"};             ///< maximum (absolute) Δ for this platform fit
     Column<double>   sdevDelta{"Delta (sdev)"};            ///< standard deviation √σ² for this platform fit
 
@@ -69,6 +77,7 @@ struct TablePlatform
                        ,points
                        ,socket
                        ,speed
+                       ,correlation
                        ,maxDelta
                        ,sdevDelta
                        );
@@ -89,7 +98,7 @@ struct TableStatistic
 {
     Column<string>   timestamp{"Timestamp"};               ///< Timestamp of the `--calibrate` Testsuite run
     Column<size_t>      points{"Data points"};             ///< number of fitted data points (=test cases)
-    Column<double>      socket{"Socket ns"};               ///< constant base costs per testcase
+    Column<double>      socket{"Socket ms"};               ///< constant base costs per testcase (in milliseconds)
     Column<double>       speed{"Speed ns/smp"};            ///< crunch speed (time per computed sample)
     Column<double>    avgDelta{"Delta (avg)"};             ///< averaged signed Δ against expected measurements
     Column<double>    maxDelta{"Delta (max)"};             ///< maximum (absolute) Δ against expected measurements
@@ -108,10 +117,44 @@ struct TableStatistic
 };
 
 
+/**
+ * Data storage to document the platform model fit calculated by linear regression.
+ * This data is computed and stored only when performing `--calibrate`; it can be used
+ * to manually investigate the quality of the model fit. It documents the normalised
+ * run times used for fitting, together with the prediction produced by this model
+ * and the delta. Each data point corresponds to a single test case with timing
+ * measurement, averaging the last measurement points.
+ */
+struct TableModelFit
+{
+    Column<double>     samples{"Samples count"};     ///< Predictor variable (x value) : samples for this test case
+    Column<double>     runtime{"Runtime ms"};        ///< averaged real runtime value for this test case
+    Column<double>    timeNorm{"Runtime(norm)"};     ///< runtime normalised with the expense factor
+    Column<double>  prediction{"Runtime(model)"};    ///< runtime as predicted by the computed model for the given samples count
+    Column<double>     expense{"Expense Factor"};    ///< weight factor: baseline expense factor defined for this case
+    Column<double>       delta{"Delta"};             ///< delat of the actual normalised runtime against model prediction
+
+    auto allColumns()
+    {   return std::tie(samples
+                       ,runtime
+                       ,timeNorm
+                       ,prediction
+                       ,expense
+                       ,delta
+                       );
+    }
+};
+
+
 
 using TestTable = std::vector<std::reference_wrapper<TimingTest>>;
 using PlatformData = util::DataFile<TablePlatform>;
 using StatisticData = util::DataFile<TableStatistic>;
+
+using util::RegressionData;
+using util::RegressionPoint;
+
+using ModelFit = util::DataFile<TableModelFit>;
 
 
 /**
@@ -121,17 +164,20 @@ using StatisticData = util::DataFile<TableStatistic>;
 class TimingData
     : util::NonCopyable
 {
-    TestTable     testData_;
-    PlatformData  plattform_;
-    StatisticData statistic_;
+    TestTable      testData_;
+    PlatformData   plattform_;
+    StatisticData  statistic_;
+    ModelFit       modelFit_;
 
 public:
     TimingData(fs::path filePlatform
               ,fs::path fileStatistic
+              ,fs::path fileRegression
               )
         : testData_{}
         , plattform_{filePlatform}
         , statistic_{fileStatistic}
+        , modelFit_{fileRegression}
     {
         testData_.reserve(def::EXPECTED_TEST_CNT);
     }
@@ -157,7 +203,90 @@ public:
      */
     double calcPlatformModel(uint, size_t smps)  const
     {
-        return plattform_.socket + smps * plattform_.speed;
+        return plattform_.socket*MILLISEC_per_NANOSEC + smps * plattform_.speed;
+    }
+
+
+    /**
+     * Condition the raw timing measurement data as preparation for model fit.
+     * A DataPoint corresponds to a single test case, but averaged over a small number
+     * of Testsuite runs [as configured](\ref Config::baselineAvg).
+     * Moreover, the data point is normalised to the current _expense factor_ for this test case,
+     * which means, the known specific expense for this situation is factored out, to focus on
+     * modelling of the generic behaviour ("platform model"). However, we use this local
+     * expense factor also as weight; deviations on very expensive computations will thus
+     * count more for the linear regression used to build the platform model.
+     */
+    RegressionData preprocessRegressionData(uint avgPoints)
+    {
+        RegressionData data;
+        data.reserve(testData_.size());
+        for (TimingTest const& test : testData_)
+        {
+            auto [samples, runtime, expense] = test.getAveragedDataPoint(avgPoints);
+            if (expense <= 0.0) expense = 1.0; // no baseline yet; use timing as-is, unweighted
+            data.emplace_back(RegressionPoint{samples, runtime / expense, expense});
+        }
+        return data;
+    }
+
+    void buildPlatformModel(RegressionData points)
+    {
+        auto [socket, speed
+             ,predictedPoints
+             ,predictionDeltas
+             ,correlation
+             ,maxDelta
+             ,sdevDelta]  = util::computeLinearRegression(points);
+
+        // setup new platform model based on computed regression
+        plattform_.dupRow();
+        plattform_.socket = socket;                         // socked denoted in ms
+        plattform_.speed  = speed  * MILLISEC_per_NANOSEC;  // regression based on timings in ms
+        plattform_.correlation = correlation;
+        plattform_.maxDelta = maxDelta;
+        plattform_.sdevDelta = sdevDelta;
+
+        // Mark new model with Timestamp of current Testsuite run
+        plattform_.timestamp = Config::timestamp;
+        plattform_.points = points.size();
+
+        // capture data underlying the computed regression (for manual inspection)
+        swap(modelFit_.prediction.data, predictedPoints);
+        swap(modelFit_.delta.data,     predictionDeltas);
+        modelFit_.samples.data.clear();
+        modelFit_.samples.data.reserve(points.size());
+        modelFit_.runtime.data.clear();
+        modelFit_.runtime.data.reserve(points.size());
+        modelFit_.expense.data.clear();
+        modelFit_.expense.data.reserve(points.size());
+        modelFit_.timeNorm.data.clear();
+        modelFit_.timeNorm.data.reserve(points.size());
+        for (auto& p : points)
+        {
+            modelFit_.samples.data.push_back(p.x);
+            modelFit_.expense.data.push_back(p.w);
+            modelFit_.timeNorm.data.push_back(p.y);    // data for regression is normalised
+            modelFit_.runtime.data.push_back(p.w*p.y); // reverse normalisation to get real data
+        }
+    }
+
+    void save(bool includingCalibration, uint timingsKeep, uint calibrationKeep)
+    {
+        statistic_.save(timingsKeep);
+        if (not includingCalibration) return;
+        plattform_.save(calibrationKeep);
+        modelFit_.save();
+    }
+
+    string sumariseCalibration()  const
+    {
+        return "socket=" +formatVal(double{plattform_.socket})+"ms "
+               "speed="  +formatVal(double{plattform_.speed})+"ns/smp "
+               "| corr: "+formatVal(double{plattform_.correlation})+
+               "  Δmax:" +formatVal(double{plattform_.maxDelta})+"ms"
+               " σ = "   +formatVal(double{plattform_.sdevDelta})+"ms"
+               ;
     }
 };
 
@@ -166,12 +295,18 @@ public:
 // emit dtors here...
 Timings::~Timings() { }
 
-Timings::Timings()
+Timings::Timings(fs::path root, uint timings, uint avgPonts, uint baseline)
     : data_{new TimingData{FileNameSpec(def::TIMING_SUITE_PLATFORM)
                             .enforceExt(def::EXT_DATA_CSV)
                           ,FileNameSpec(def::TIMING_SUITE_STATISTIC)
                             .enforceExt(def::EXT_DATA_CSV)
+                          ,FileNameSpec(def::TIMING_SUITE_REGRESSION)
+                            .enforceExt(def::EXT_DATA_CSV)
                           }}
+    , suitePath{consolidated(root)}
+    , timingsKeep{timings}
+    , baselineAvg{avgPonts}
+    , baselineKeep{baseline}
 { }
 
 
@@ -181,10 +316,13 @@ Timings::Timings()
  */
 PTimings Timings::setup(Config const& config)
 {
-    // CWD to the Testsuite root
-    fs::current_path(config.suitePath);
+    fs::path suiteRoot = consolidated(config.suitePath);
+    fs::current_path(suiteRoot); // CWD to testsuite root
 
-    return PTimings{new Timings};
+    return PTimings{new Timings(suiteRoot
+                               ,config.timingsKeep
+                               ,config.baselineAvg
+                               ,config.baselineKeep)};
 }
 
 
@@ -193,9 +331,30 @@ void Timings::attach(TimingTest& singleTestcaseData)
     data_->attach(singleTestcaseData);
 }
 
+void Timings::fitNewPlatformModel()
+{
+    data_->buildPlatformModel(
+            data_->preprocessRegressionData(baselineAvg));
+}
+
+void Timings::saveData(bool includingCalibration)
+{
+    // tests have navigated down into the tree;
+    // return to the Testsuite root prior to saving
+    fs::current_path(suitePath);
+
+    data_->save(includingCalibration, timingsKeep,baselineKeep);
+}
+
+string Timings::sumariseCalibration()  const
+{
+    return data_->sumariseCalibration();
+}
+
+
 double Timings::calcPlatformModel(uint notes, size_t smps)  const
 {
-    if (data_->hasPlatformCalibration())
+    if (isCalibrated())
         return data_->calcPlatformModel(notes,smps);
     else
         return 0.0;
@@ -204,6 +363,11 @@ double Timings::calcPlatformModel(uint notes, size_t smps)  const
 uint Timings::dataCnt()  const
 {
     return data_->dataCnt();
+}
+
+bool Timings::isCalibrated()  const
+{
+    return data_->hasPlatformCalibration();
 }
 
 

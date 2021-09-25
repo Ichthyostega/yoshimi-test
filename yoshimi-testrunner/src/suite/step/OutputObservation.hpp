@@ -93,15 +93,18 @@ class OutputObservation
         // Retrieve further key parameters from the Test-Context in the Yoshimi-CLI
         mat = theTest_.grepOutput(EXTRACT_PARAMS);
         assert(!mat.empty()); // we know already that YOSHIMI_SETUP_TEST_PATTERN matches
-        if (not mat[1].matched and not mat[2].matched)
+        if (not mat[2].matched and not mat[3].matched)
             return Result{ResCode::MALFUNCTION, "Yoshimi CLI did not report the test parameters (notes count, duration)"};
         else
         {
             // @ TEST: exec 4 notes start (F#2) step 4 up to (F#3) on Ch.1 each 1.0s (hold 80%) buffer=256 write "sound.raw"
-            //             ^1^                                                  ^2^                    ^3^
-            notesCnt_ = parseAs<uint>(mat[1]);
-            chunkSiz_ = parseAs<uint>(mat[3]);
-            samples_  = TODO_workaround_deduceOverallSamplesCnt(parseAs<double>(mat[2]));
+            //             ^1^                                                  ^2^3^                  ^4^
+            chunkSiz_ = parseAs<uint>(mat[4]);
+            if (mat[1].matched)
+                notesCnt_ = parseAs<uint>(mat[1]);
+            else
+                notesCnt_ = 1;
+            samples_  = TODO_workaround_deduceOverallSamplesCnt(parseAs<double>(mat[2]), mat[3]);
         }
 
         return Result::OK();
@@ -122,9 +125,11 @@ private:
      *        - the duration is rounded in the CLI output
      *        - the SynthEngine could process less than the requested chunks
      */
-    size_t TODO_workaround_deduceOverallSamplesCnt(double duration)
+    size_t TODO_workaround_deduceOverallSamplesCnt(double duration, string timeUnit)
     {
         int samplerate = theTest_.getSampleRate();
+        if (timeUnit == "ms")
+            duration /= 1000.0;
         //////////////////////////////////////////////////////////////////////////TODO: Code duplicated from Yoshimi TestInvoker.h (line 373)
         size_t turnCnt = ceilf(duration * samplerate / *chunkSiz_);
         //////////////////////////////////////////////////////////////////////////TODO: (End) duplicated code

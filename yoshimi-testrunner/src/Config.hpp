@@ -104,7 +104,7 @@ namespace def {
     const string INTEGER ="[+\\-]?\\d+";
     const string YOSHIMI_SETUP_TEST_PATTERN = "yoshimi>\\s+set test";
     const string YOSHIMI_TEST_TIMING_PATTERN = "^TEST::Complete.+runtime\\s+("+NUMBER+") ns";
-    const string YOSHIMI_TEST_PARAM_PATTERN = "^@\\s+TEST:.+exec\\s+("+INTEGER+") notes.+each ("+NUMBER+")s.+buffer=("+INTEGER+")";
+    const string YOSHIMI_TEST_PARAM_PATTERN = "^@ TEST: exec (?:("+INTEGER+") notes)?.+ on Ch\\..+(?:each|for) ("+NUMBER+")(s|ms).+buffer=("+INTEGER+")";
 
 
     /* ========= command tokens at the Yoshimi CLI ========= */
@@ -121,6 +121,7 @@ namespace def {
     const string TIMING_EXPENSE_MARK{"expense"};
     const string TIMING_SUITE_PLATFORM{"Suite-platform"};
     const string TIMING_SUITE_STATISTIC{"Suite-statistic"};
+    const string TIMING_SUITE_REGRESSION{"Suite-regression"};
     const string EXT_SOUND_RAW{".raw"};
     const string EXT_SOUND_WAV{".wav"};
     const string EXT_DATA_CSV {".csv"};
@@ -218,6 +219,10 @@ public:
     CFG_PARAM(fs::path, subject);
     CFG_PARAM(string,   arguments);
     CFG_PARAM(fs::path, suitePath);
+    CFG_PARAM(uint,     timingsKeep);
+    CFG_PARAM(uint,     baselineAvg);
+    CFG_PARAM(uint,     baselineKeep);
+    CFG_PARAM(bool,     calibrate);
     CFG_PARAM(bool,     baseline);
     CFG_PARAM(bool,     verbose);
     CFG_PARAM(fs::path, report);
@@ -233,21 +238,29 @@ private: /* ===== Initialisation from raw settings ===== */
 
     /** @internal extract all relevant parameters from the combined configuration
      *            and initialise the member fields in this Config instance. */
-    Config(Settings rawSettings)
-        : subject  {rawSettings[KEY_subject]}
-        , arguments{rawSettings[KEY_arguments]}
-        , suitePath{rawSettings[KEY_suitePath]}
-        , baseline {rawSettings[KEY_baseline].as<bool>()}
-        , verbose  {rawSettings[KEY_verbose].as<bool>()}
-        , report   {rawSettings[KEY_report]}
-        , progress {setupProgressLog(verbose)}
+    Config(Settings rawParam)
+        : subject     {rawParam[KEY_subject]}
+        , arguments   {rawParam[KEY_arguments]}
+        , suitePath   {rawParam[KEY_suitePath]}
+        , timingsKeep {rawParam[KEY_timingsKeep].as<uint>()}
+        , baselineAvg {rawParam[KEY_baselineAvg].as<uint>()}
+        , baselineKeep{rawParam[KEY_baselineKeep].as<uint>()}
+        , calibrate   {rawParam[KEY_calibrate].as<bool>()}
+        , baseline    {rawParam[KEY_baseline].as<bool>()}
+        , verbose     {rawParam[KEY_verbose].as<bool>()}
+        , report      {rawParam[KEY_report]}
+        , progress    {setupProgressLog(verbose)}
     {
         if (verbose)
         {
-            dump(rawSettings);
+            dump(rawParam);
             CFG_DUMP(subject);
             CFG_DUMP(arguments);
             CFG_DUMP(suitePath);
+            CFG_DUMP(timingsKeep);
+            CFG_DUMP(baselineAvg);
+            CFG_DUMP(baselineKeep);
+            CFG_DUMP(calibrate);
             CFG_DUMP(baseline);
             CFG_DUMP(verbose);
             CFG_DUMP(report);
@@ -265,7 +278,7 @@ public:
      *        if it hasn't been established already by previous sources.
      */
     Config(std::initializer_list<ConfigSource> sources)
-        : Config(combine_with_decreasing_precedence(sources))
+        : Config(combine_and_preprocess(sources))
     { }
 
     /* === Builder Functions === */
@@ -279,12 +292,18 @@ public:
 
 
 private:
-    static Settings combine_with_decreasing_precedence(std::initializer_list<ConfigSource> sources)
+    static Settings combine_and_preprocess(std::initializer_list<ConfigSource> sources)
     {
-        Settings rawSettings;
+        Settings settings;
         for (auto& src : sources)
-            src.injectSettingsInto(rawSettings);
-        return rawSettings;
+            src.injectSettingsInto(settings);
+
+        /* validate and consolidate params */
+        if (settings[KEY_baseline].as<bool>()
+           and settings[KEY_calibrate].as<bool>())
+            throw error::Misconfig("unwise to store --baseline and then --calibrate after the suite in one run; "
+                                   "better store --baseline in the next run, based on the new calibration.");
+        return settings;
     }
 
     static suite::PProgress setupProgressLog(bool verbose);

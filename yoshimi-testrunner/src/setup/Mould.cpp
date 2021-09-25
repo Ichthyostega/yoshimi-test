@@ -45,8 +45,11 @@
 #include "suite/step/PrepareScript.hpp"
 #include "suite/step/Invocation.hpp"
 #include "suite/step/OutputObservation.hpp"
+#include "suite/step/PlatformCalibration.hpp"
+#include "suite/step/PersistModelTrend.hpp"
 #include "suite/step/TimingObservation.hpp"
 #include "suite/step/TimingJudgement.hpp"
+#include "suite/step/PersistTimings.hpp"
 #include "suite/step/TrendObservation.hpp"
 #include "suite/step/TrendJudgement.hpp"
 #include "suite/step/SoundObservation.hpp"
@@ -117,7 +120,6 @@ class ExeCliMould
                                                ,progressLog_
                                                ,testScript);
         auto& invocation = addStep<Invocation>(launcher,progressLog_);
-        auto& output     = addStep<OutputObservation>(invocation);
 
         auto soundProbe  = optionally(shallVerifySound(spec))
                              .addStep<SoundObservation>(invocation, pathSetup);
@@ -129,8 +131,14 @@ class ExeCliMould
                              .addStep<SoundRecord>(shallRecordBaseline_
                                                   ,*soundProbe, *baseline, pathSetup);
 
-        auto times       = optionally(shallVerifyTimes(spec))
-                             .addStep<TimingObservation>(invocation,output,suiteTimings_, pathSetup);
+        auto output      = optionally(shallVerifyTimes(spec))
+                             .addStep<OutputObservation>(invocation);
+
+        auto timings     = optionally(shallVerifyTimes(spec))
+                             .addStep<TimingObservation>(invocation,*output,suiteTimings_, pathSetup);
+
+                           optionally(shallVerifyTimes(spec))
+                             .addStep<PersistTimings>(shallRecordBaseline_, *timings);
 
         /*mark result*/    addStep<Summary>(spec.at(KEY_Test_topic)
                                            ,invocation
@@ -171,9 +179,11 @@ class ClosureMould
     void materialise(MapS const& spec)  override
     {
         ////////////////////////////////TODO add more steps for global statistics here
-        auto& statistics = addStep<TrendObservation>(progressLog_
-                                                    ,suiteTimings_);
+                           optionally(shallCalibrateTiming_)
+                             .addStep<PlatformCalibration>(progressLog_, suiteTimings_);
+        auto& statistics = addStep<TrendObservation>(progressLog_, suiteTimings_);
         auto& judgement  = addStep<TrendJudgement>();
+                           addStep<PersistModelTrend>(suiteTimings_, shallCalibrateTiming_);
     }
 };
 

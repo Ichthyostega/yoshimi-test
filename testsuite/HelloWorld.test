@@ -10,4 +10,4 @@ Script
 End-Script
 
 verifySound = On
-verifyTimes = On
+verifyTimes = Off

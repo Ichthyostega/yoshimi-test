@@ -1,0 +1,16 @@
+#
+# Sample calculation time
+#
+description = Runtime: Add-Synth / simple Oscil / 0.1s
+
+[Test]
+Script
+    set test
+    set duration 0.1
+    set holdfraction 1.0
+    set repetitions 1
+    execute
+End-Script
+
+verifySound = Off
+verifyTimes = On

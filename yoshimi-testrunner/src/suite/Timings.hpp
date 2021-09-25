@@ -45,6 +45,7 @@
 
 //#include <string>
 #include <memory>
+#include <tuple>
 
 
 namespace suite {
@@ -68,6 +69,11 @@ protected:
     TimingTest() { }
 public:
     virtual ~TimingTest() { }  ///< this is an interface
+
+    /// Abstracted Data point: (samples,runtime,expense)
+    using Point = std::tuple<double,double,double>;
+
+    virtual Point getAveragedDataPoint(size_t avgPoints)  const  =0;
 };
 
 
@@ -81,7 +87,7 @@ class Timings
 {
     PData data_;
 
-    Timings();
+    Timings(fs::path, uint,uint,uint);
 public:
    ~Timings();
     static PTimings setup(Config const&);
@@ -89,8 +95,18 @@ public:
     void attach(TimingTest&);
 
     double calcPlatformModel(uint notes, size_t smps)  const;
+    void fitNewPlatformModel();
+    void saveData(bool includingCalibration);
 
     uint dataCnt()  const;
+    bool isCalibrated()  const;
+    string sumariseCalibration() const;
+
+    /* config params */
+    const fs::path suitePath;
+    const uint timingsKeep;   ///< number of timing data points to retain in the time series
+    const uint baselineAvg;   ///< number of past measurements to average when defining new baseline
+    const uint baselineKeep;  ///< number of past baseline definitions to retain
 };
 
 

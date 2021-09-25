@@ -91,7 +91,6 @@ class TimingObservation
             return Result::Warn("No runtime measurement -- skip TimingObservation.");
 
         calculateDataRecord();
-        persistTimeSeries();
         assert(data_);
         return Result::OK();
     }
@@ -104,6 +103,14 @@ public:
                      ,PathSetup& pathSetup);
 
 
+    operator bool()  const
+    {
+        return hasCapturedData()
+           and bool{data_};
+    }
+
+    void saveData(bool includingBaseline);
+
 private:
     bool hasCapturedData()  const
     {
@@ -113,7 +120,6 @@ private:
     }
 
     void calculateDataRecord();
-    void persistTimeSeries();
 };
 
 
