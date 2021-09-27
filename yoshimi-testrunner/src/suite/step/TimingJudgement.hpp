@@ -41,6 +41,8 @@
 
 #include "util/nocopy.hpp"
 #include "suite/TestStep.hpp"
+#include "suite/step/TimingObservation.hpp"
+#include "suite/Timings.hpp"
 
 //#include <string>
 
@@ -54,8 +56,58 @@ namespace step {
 class TimingJudgement
     : public TestStep
 {
+    TimingObservation& timings_;
+    suite::PTimings globalTimings_;
+
+
+    Result perform()  override
+    {
+        if (not timings_)
+            return Result::Warn("Skip TimingJudgement");
+
+        Result judgement = determineTestResult();
+        succeeded = (ResCode::GREEN == judgement.code);
+        return judgement;
+    }
+
+    Result determineTestResult()
+    {
+        auto [runtime,expense,currDelta,tolerance]  = timings_.getTestResults();
+        auto [modelStdev,testCnt] = globalTimings_->getModelTolerance();
+        double modelTolerance = 3 * modelStdev;
+        if (testCnt > 2) modelTolerance *= testCnt/(testCnt-1);
+        modelTolerance *= expense;   // since expense is normalised out of model values
+                                     // the model variance underestimates the spread by this factor
+
+        double overallTolerance = std::max(tolerance, modelTolerance);
+        if (currDelta < -overallTolerance)
+            return Result::Warn("Runtime was smaller than the established baseline; Δ ="+formatVal(currDelta)+"ms");
+        else
+        if (overallTolerance < currDelta and currDelta <= 1.1 * overallTolerance)
+            return Result::Warn("Runtime ("+formatVal(runtime)+"ms) slightly above established baseline; Δ = "+formatVal(currDelta)+"ms");
+        else
+        if (overallTolerance < currDelta)
+            return Result::Fail("Test failed: Runtime ("+formatVal(runtime)+"ms) above established baseline; Δ = "+formatVal(currDelta)+"ms");
+        else
+            return Result::OK();
+
+//        // TODO get also Trend
+//        return Result::Warn("So sorry");
+    }
+
 public:
-    TimingJudgement();
+    TimingJudgement(TimingObservation& timings
+                   ,suite::PTimings aggregator)
+        : timings_{timings}
+        , globalTimings_{aggregator}
+    { }
+
+    bool succeeded = false;
+
+    string describe()
+    {
+        return "nebbich";
+    }
 };
 
 

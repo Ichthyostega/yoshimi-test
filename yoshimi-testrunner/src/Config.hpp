@@ -220,8 +220,9 @@ public:
     CFG_PARAM(string,   arguments);
     CFG_PARAM(fs::path, suitePath);
     CFG_PARAM(uint,     timingsKeep);
-    CFG_PARAM(uint,     baselineAvg);
     CFG_PARAM(uint,     baselineKeep);
+    CFG_PARAM(uint,     baselineAvg);
+    CFG_PARAM(uint,     longtermAvg);
     CFG_PARAM(bool,     calibrate);
     CFG_PARAM(bool,     baseline);
     CFG_PARAM(bool,     verbose);
@@ -243,8 +244,9 @@ private: /* ===== Initialisation from raw settings ===== */
         , arguments   {rawParam[KEY_arguments]}
         , suitePath   {rawParam[KEY_suitePath]}
         , timingsKeep {rawParam[KEY_timingsKeep].as<uint>()}
-        , baselineAvg {rawParam[KEY_baselineAvg].as<uint>()}
         , baselineKeep{rawParam[KEY_baselineKeep].as<uint>()}
+        , baselineAvg {rawParam[KEY_baselineAvg].as<uint>()}
+        , longtermAvg {rawParam[KEY_longtermAvg].as<uint>()}
         , calibrate   {rawParam[KEY_calibrate].as<bool>()}
         , baseline    {rawParam[KEY_baseline].as<bool>()}
         , verbose     {rawParam[KEY_verbose].as<bool>()}
@@ -258,8 +260,9 @@ private: /* ===== Initialisation from raw settings ===== */
             CFG_DUMP(arguments);
             CFG_DUMP(suitePath);
             CFG_DUMP(timingsKeep);
-            CFG_DUMP(baselineAvg);
             CFG_DUMP(baselineKeep);
+            CFG_DUMP(baselineAvg);
+            CFG_DUMP(longtermAvg);
             CFG_DUMP(calibrate);
             CFG_DUMP(baseline);
             CFG_DUMP(verbose);

@@ -42,6 +42,7 @@
 #include "Config.hpp"
 
 #include <tuple>
+#include <vector>
 #include <string>
 
 namespace suite{
@@ -70,11 +71,10 @@ struct TableRuntime
     Column<uint>         notes{"Notes count"};
     Column<double>    platform{"Platform ms"};             ///< runtime predicted by platform model (in ms)
     Column<double>     expense{"Expense Factor"};          ///< baseline(expected value) for the expense
-    Column<double> expenseCurr{"Expense Factor(current)"}; ///< `runtime == plattform·expenseCurr`
-    Column<double>       delta{"Delta ms"};                ///< Δ of measured runtime against `plattform·expense`
-    Column<double>        ma05{"Expense MA-5"};            ///< moving average of expense factor (last 5 measurements)
-    Column<double>        ma10{"Expense MA-10"};
-    Column<double>        ma50{"Expense MA-50"};
+    Column<double> expenseCurr{"Expense Factor(current)"}; ///< `runtime == platform·expenseCurr`
+    Column<double>       delta{"Delta ms"};                ///< Δ of measured runtime against `platform·expense`
+    Column<double>      maTime{"MA Time short"};           ///< moving average of runtime (baselineAvg/2 points)
+    Column<double>   tolerance{"Tolerance band"};          ///< tolerance band based on the variance observed (over baselineAvg points)
 
     auto allColumns()
     {   return std::tie(timestamp
@@ -85,9 +85,8 @@ struct TableRuntime
                        ,expense
                        ,expenseCurr
                        ,delta
-                       ,ma05
-                       ,ma10
-                       ,ma50
+                       ,maTime
+                       ,tolerance
                        );
     }
 };
@@ -142,9 +141,7 @@ class TimingTestData
 
     Point getAveragedDataPoint(size_t avgPoints)  const override
     {
-        if (isnil(runtime_))
-            throw error::LogicBroken("Attempt to extract test data prior to performing any measurements");
-
+        __requireMeasurementDone();
         avgPoints = ensureEquivalentDataPoints(avgPoints);
         return Point{double(runtime_.samples)
                     ,averageLastN(runtime_.runtime.data, avgPoints)
@@ -152,16 +149,29 @@ class TimingTestData
                     };
     }
 
+    void recalc_and_save_current(PlatformFun model) override
+    {
+        __requireMeasurementDone();
+        recalcCurrentPoint(model(runtime_.notes, runtime_.samples));
+        runtime_.save();
+    }
+
 
 public:
-    TimingTestData(fs::path fileRuntime, fs::path fileExpense)
-        : runtime_{fileRuntime}
+    TimingTestData(string testID, fs::path fileRuntime, fs::path fileExpense)
+        : TimingTest{testID}
+        , runtime_{fileRuntime}
         , expense_{fileExpense}
     { }
 
     bool hasBaseline()  const
     {   return not expense_.empty(); }
 
+    void __requireMeasurementDone()  const
+    {
+        if (isnil(runtime_))
+            throw error::LogicBroken("Attempt to extract test data prior to performing any measurements");
+    }
 
     /**
      * Build up one data record based on the current timing measurement.
@@ -173,29 +183,40 @@ public:
      *         _expense factor._ For each test case an averaged expense factor
      *         is stored as *baseline* -- and thus deviations can be detected.
      */
-    void calculatePoint(uint notes, size_t smps, double rawTime, double prediction)
+    void calculatePoint(uint notes, size_t smps, double rawTime, double prediction, uint baselineAvg)
     {
         runtime_.dupRow();
-        runtime_.notes = notes;
-        runtime_.samples = smps;
-        runtime_.runtime = rawTime / MILLISEC_per_NANOSEC;
+        auto& r = runtime_;
+        r.notes = notes;
+        r.samples = smps;
+        r.runtime = rawTime / MILLISEC_per_NANOSEC;
 
-        runtime_.platform = prediction / MILLISEC_per_NANOSEC;
-        runtime_.expense  = hasBaseline()? expense_.expense : 0.0;
+        r.platform = prediction / MILLISEC_per_NANOSEC; // all below in ms
+        r.expense  = hasBaseline()? expense_.expense : 0.0;
 
         // apply the prediction model to factor out system dependency
-        double expectedTime  = prediction * runtime_.expense;
-        runtime_.expenseCurr = 0.0 < prediction?   rawTime / prediction : 0.0;
-        runtime_.delta       = 0.0 < expectedTime? rawTime - expectedTime : 0.0;
-        runtime_.delta      /= MILLISEC_per_NANOSEC;
+        double expectedTime  = r.platform * r.expense;
+        r.expenseCurr = 0.0 < prediction?   r.runtime / r.platform : 0.0;
+        r.delta       = 0.0 < expectedTime? r.runtime - expectedTime : 0.0;
 
-        // moving averages
-        runtime_.ma05 = averageLastN(runtime_.expenseCurr.data, 5);
-        runtime_.ma10 = averageLastN(runtime_.expenseCurr.data, 10);
-        runtime_.ma50 = averageLastN(runtime_.expenseCurr.data, 50);
+        // moving average used as reference to establish a tolerance band
+        r.maTime = averageLastN(r.runtime.data, 5);
+        r.tolerance = calcLocalTolerance(baselineAvg);
 
         // Timestamp of current Testsuite run
-        runtime_.timestamp = Config::timestamp;
+        r.timestamp = Config::timestamp;
+    }
+
+    /** adjust current runtime measurement to factor in a changed platform model */
+    void recalcCurrentPoint(double prediction)
+    {
+        auto& r = runtime_;
+        assert(0.0 < prediction);
+        r.platform = prediction / MILLISEC_per_NANOSEC; // all below in ms
+        r.expenseCurr = r.runtime / r.platform;
+        double expectedTime  = r.platform * r.expense;
+        r.delta = 0.0 < expectedTime? r.runtime - expectedTime : 0.0;
+        r.maTime = averageLastN(r.runtime.data, 5);
     }
 
     void persistRuntimes(uint rows2keep)
@@ -219,6 +240,37 @@ public:
         // Timestamp of creating this new baseline
         expense_.timestamp = Config::timestamp;
         expense_.save(baselineKeep);
+    }
+
+    array<double,4> getExpenseDeltaTolerance()  const
+    {
+        return {runtime_.runtime
+               ,runtime_.expense
+               ,runtime_.delta
+               ,runtime_.tolerance};
+    }
+
+
+private:
+    double calcLocalTolerance(size_t avgPoints) const
+    {
+        size_t siz = runtime_.size();
+        assert (siz > 0);
+        if (siz==1) // for the 1st value....
+            return runtime_.delta; // just tolerate the actual delta
+
+        avgPoints = std::min(avgPoints, siz);
+        size_t oldest = siz - avgPoints;
+        double variance = 0.0;
+        for (size_t i=siz; oldest < i; --i)
+        {   // use moving average of the /previous/ points as guess for "the actual" value
+            double avgVal = i>1? runtime_.maTime.data[i-2] : runtime_.maTime.data[i-1];
+            double delta = runtime_.runtime.data[i-1] - avgVal;
+            variance += delta*delta;
+        }
+        variance /= avgPoints > 1? avgPoints-1 : 1;
+        // divide by N-1 since it's a guess for the real variance
+        return 3 * sqrt(variance);
     }
 
     /**
@@ -252,7 +304,6 @@ public:
         assert (0 < points and points <= limit and points <= maxPoints);
         return points;
     }
-private:
 };
 
 
@@ -288,8 +339,10 @@ void TimingObservation::calculateDataRecord()
     FileNameSpec& fileRuntime = pathSpec_[def::KEY_fileRuntime];
     FileNameSpec& fileExpense = pathSpec_[def::KEY_fileExpense];
 
-    data_.reset(new TimingTestData(fileRuntime, fileExpense));
-    data_->calculatePoint(notes,smps,runtime,prediction);
+    data_.reset(new TimingTestData(pathSpec_.getTestcaseID()
+                                  ,fileRuntime,fileExpense));
+    data_->calculatePoint(notes,smps,runtime,prediction
+                         ,globalTimings_->baselineAvg);
 
     globalTimings_->attach(*data_);
 }
@@ -302,6 +355,13 @@ void TimingObservation::saveData(bool includingBaseline)
         data_->storeNewBaseline(globalTimings_->baselineAvg
                                ,globalTimings_->baselineKeep);
 }
+
+
+array<double,4> TimingObservation::getTestResults() const
+{
+    return data_->getExpenseDeltaTolerance();
+}
+
 
 
 

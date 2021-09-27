@@ -132,7 +132,8 @@ struct TableModelFit
     Column<double>    timeNorm{"Runtime(norm)"};     ///< runtime normalised with the expense factor
     Column<double>  prediction{"Runtime(model)"};    ///< runtime as predicted by the computed model for the given samples count
     Column<double>     expense{"Expense Factor"};    ///< weight factor: baseline expense factor defined for this case
-    Column<double>       delta{"Delta"};             ///< delat of the actual normalised runtime against model prediction
+    Column<double>       delta{"Delta"};             ///< delta of the actual normalised runtime against model prediction
+    Column<string>      testID{"Test-ID"};           ///< ID of the testcase underlying this timing measurement
 
     auto allColumns()
     {   return std::tie(samples
@@ -141,6 +142,7 @@ struct TableModelFit
                        ,prediction
                        ,expense
                        ,delta
+                       ,testID
                        );
     }
 };
@@ -165,7 +167,7 @@ class TimingData
     : util::NonCopyable
 {
     TestTable      testData_;
-    PlatformData   plattform_;
+    PlatformData   platform_;
     StatisticData  statistic_;
     ModelFit       modelFit_;
 
@@ -175,7 +177,7 @@ public:
               ,fs::path fileRegression
               )
         : testData_{}
-        , plattform_{filePlatform}
+        , platform_{filePlatform}
         , statistic_{fileStatistic}
         , modelFit_{fileRegression}
     {
@@ -193,7 +195,7 @@ public:
     }
     bool hasPlatformCalibration()  const
     {
-        return not plattform_.empty();
+        return not platform_.empty();
     }
 
     /**
@@ -203,7 +205,12 @@ public:
      */
     double calcPlatformModel(uint, size_t smps)  const
     {
-        return plattform_.socket*MILLISEC_per_NANOSEC + smps * plattform_.speed;
+        return platform_.socket*MILLISEC_per_NANOSEC + smps * platform_.speed;
+    }
+
+    tuple<double,size_t> getModelTolerance() const
+    {
+        return {platform_.sdevDelta, platform_.points};
     }
 
 
@@ -232,6 +239,10 @@ public:
 
     void buildPlatformModel(RegressionData points)
     {
+        auto clearColumn = [size=points.size()](auto& col){
+                               col.data.clear();
+                               col.data.reserve(size);
+                           };
         auto [socket, speed
              ,predictedPoints
              ,predictionDeltas
@@ -240,28 +251,25 @@ public:
              ,sdevDelta]  = util::computeLinearRegression(points);
 
         // setup new platform model based on computed regression
-        plattform_.dupRow();
-        plattform_.socket = socket;                         // socked denoted in ms
-        plattform_.speed  = speed  * MILLISEC_per_NANOSEC;  // regression based on timings in ms
-        plattform_.correlation = correlation;
-        plattform_.maxDelta = maxDelta;
-        plattform_.sdevDelta = sdevDelta;
+        platform_.dupRow();
+        platform_.socket = socket;                         // socked denoted in ms
+        platform_.speed  = speed  * MILLISEC_per_NANOSEC;  // regression based on timings in ms
+        platform_.correlation = correlation;
+        platform_.maxDelta = maxDelta;
+        platform_.sdevDelta = sdevDelta;
 
         // Mark new model with Timestamp of current Testsuite run
-        plattform_.timestamp = Config::timestamp;
-        plattform_.points = points.size();
+        platform_.timestamp = Config::timestamp;
+        platform_.points = points.size();
 
         // capture data underlying the computed regression (for manual inspection)
         swap(modelFit_.prediction.data, predictedPoints);
         swap(modelFit_.delta.data,     predictionDeltas);
-        modelFit_.samples.data.clear();
-        modelFit_.samples.data.reserve(points.size());
-        modelFit_.runtime.data.clear();
-        modelFit_.runtime.data.reserve(points.size());
-        modelFit_.expense.data.clear();
-        modelFit_.expense.data.reserve(points.size());
-        modelFit_.timeNorm.data.clear();
-        modelFit_.timeNorm.data.reserve(points.size());
+        clearColumn(modelFit_.samples);
+        clearColumn(modelFit_.runtime);
+        clearColumn(modelFit_.expense);
+        clearColumn(modelFit_.timeNorm);
+        clearColumn(modelFit_.testID);
         for (auto& p : points)
         {
             modelFit_.samples.data.push_back(p.x);
@@ -269,23 +277,28 @@ public:
             modelFit_.timeNorm.data.push_back(p.y);    // data for regression is normalised
             modelFit_.runtime.data.push_back(p.w*p.y); // reverse normalisation to get real data
         }
+        for (TimingTest& test : testData_)
+            modelFit_.testID.data.push_back(test.testID);
     }
 
     void save(bool includingCalibration, uint timingsKeep, uint calibrationKeep)
     {
         statistic_.save(timingsKeep);
         if (not includingCalibration) return;
-        plattform_.save(calibrationKeep);
+        platform_.save(calibrationKeep);
         modelFit_.save();
+        for (TimingTest& test : testData_)
+            test.recalc_and_save_current([this](uint notes, size_t samples)
+                                         { return calcPlatformModel(notes,samples); });
     }
 
     string sumariseCalibration()  const
     {
-        return "socket=" +formatVal(double{plattform_.socket})+"ms "
-               "speed="  +formatVal(double{plattform_.speed})+"ns/smp "
-               "| corr: "+formatVal(double{plattform_.correlation})+
-               "  Δmax:" +formatVal(double{plattform_.maxDelta})+"ms"
-               " σ = "   +formatVal(double{plattform_.sdevDelta})+"ms"
+        return "socket=" +formatVal(double{platform_.socket})+"ms "
+               "speed="  +formatVal(double{platform_.speed})+"ns/smp "
+               "| corr: "+formatVal(double{platform_.correlation})+
+               "  Δmax:" +formatVal(double{platform_.maxDelta})+"ms"
+               " σ = "   +formatVal(double{platform_.sdevDelta})+"ms"
                ;
     }
 };
@@ -295,7 +308,11 @@ public:
 // emit dtors here...
 Timings::~Timings() { }
 
-Timings::Timings(fs::path root, uint timings, uint avgPonts, uint baseline)
+Timings::Timings(fs::path root
+                ,uint keepT
+                ,uint keepB
+                ,uint baseline
+                ,uint longterm)
     : data_{new TimingData{FileNameSpec(def::TIMING_SUITE_PLATFORM)
                             .enforceExt(def::EXT_DATA_CSV)
                           ,FileNameSpec(def::TIMING_SUITE_STATISTIC)
@@ -304,9 +321,10 @@ Timings::Timings(fs::path root, uint timings, uint avgPonts, uint baseline)
                             .enforceExt(def::EXT_DATA_CSV)
                           }}
     , suitePath{consolidated(root)}
-    , timingsKeep{timings}
-    , baselineAvg{avgPonts}
-    , baselineKeep{baseline}
+    , timingsKeep{keepT}
+    , baselineKeep{keepB}
+    , baselineAvg{baseline}
+    , longtermAvg{longterm}
 { }
 
 
@@ -321,8 +339,10 @@ PTimings Timings::setup(Config const& config)
 
     return PTimings{new Timings(suiteRoot
                                ,config.timingsKeep
+                               ,config.baselineKeep
                                ,config.baselineAvg
-                               ,config.baselineKeep)};
+                               ,config.longtermAvg
+                               )};
 }
 
 
@@ -358,6 +378,11 @@ double Timings::calcPlatformModel(uint notes, size_t smps)  const
         return data_->calcPlatformModel(notes,smps);
     else
         return 0.0;
+}
+
+tuple<double,size_t> Timings::getModelTolerance() const
+{
+    return data_->getModelTolerance();
 }
 
 uint Timings::dataCnt()  const

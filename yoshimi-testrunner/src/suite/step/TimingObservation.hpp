@@ -52,6 +52,7 @@
 #include "suite/Timings.hpp"
 #include "Config.hpp"
 
+#include <array>
 #include <memory>
 //#include <string>
 #include <iostream>////////////////TODO remove this
@@ -60,6 +61,8 @@ using std::endl;   ////////////////TODO remove this
 
 namespace suite{
 namespace step {
+
+using std::array;
 
 class TimingTestData;
 using PData = std::unique_ptr<TimingTestData>;
@@ -110,6 +113,8 @@ public:
     }
 
     void saveData(bool includingBaseline);
+
+    array<double,4> getTestResults() const;
 
 private:
     bool hasCapturedData()  const

@@ -210,6 +210,10 @@ public:
                                     +"for testcase "+topicPath_.string());
         return const_cast<FileNameSpec&>(this->at(key));
     }
+
+
+    string getTestcaseID()  const
+    { return topicPath_.stem(); }
 };
 
 

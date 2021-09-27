@@ -43,7 +43,8 @@
 #include "Config.hpp"
 #include "util/nocopy.hpp"
 
-//#include <string>
+#include <functional>
+#include <string>
 #include <memory>
 #include <tuple>
 
@@ -56,6 +57,7 @@ using PData = std::unique_ptr<TimingData>;
 class Timings;
 using PTimings = std::shared_ptr<Timings>;
 
+using std::tuple;
 
 
 /**
@@ -66,14 +68,21 @@ class TimingTest
 {
 
 protected:
-    TimingTest() { }
+    TimingTest(string testID)
+        : testID{testID}
+    { }
+
 public:
     virtual ~TimingTest() { }  ///< this is an interface
 
+    const string testID;
+
     /// Abstracted Data point: (samples,runtime,expense)
     using Point = std::tuple<double,double,double>;
+    using PlatformFun = std::function<double(uint,size_t)>;
 
     virtual Point getAveragedDataPoint(size_t avgPoints)  const  =0;
+    virtual void recalc_and_save_current(PlatformFun)            =0;
 };
 
 
@@ -87,7 +96,7 @@ class Timings
 {
     PData data_;
 
-    Timings(fs::path, uint,uint,uint);
+    Timings(fs::path, uint,uint,uint,uint);
 public:
    ~Timings();
     static PTimings setup(Config const&);
@@ -101,12 +110,14 @@ public:
     uint dataCnt()  const;
     bool isCalibrated()  const;
     string sumariseCalibration() const;
+    tuple<double,size_t> getModelTolerance() const;
 
     /* config params */
     const fs::path suitePath;
     const uint timingsKeep;   ///< number of timing data points to retain in the time series
-    const uint baselineAvg;   ///< number of past measurements to average when defining new baseline
     const uint baselineKeep;  ///< number of past baseline definitions to retain
+    const uint baselineAvg;   ///< number of past measurements to average for baseline decisions
+    const uint longtermAvg;   ///< number of past measurements to average for long term trends
 };
 
 
