@@ -124,7 +124,7 @@ public:
             });
         }
         if (results.hasFailedCases())
-        {
+        {   // any of the test cases was marked *in summary* as Warning or Violation
             out_ << hr();
             if (results.hasWarnings())
                 out_ << strong("Warnings")+": "+str(results.cntWarnings()) +"\n";
@@ -133,11 +133,11 @@ public:
                 out_ << bullet(formatVal(res.stats->topic)+": "+res.summary);
             });
             out_ << hr()
-                 << strong("RED") +"\n"
+                 << strong(results.hasViolations()? "RED":"Yellow") +"\n"
                  << endl;
         }
         else
-        {
+        {   // there might have been some further warnings like e.g. skipped parts
             out_ << hr()
                  << emph(results.hasWarnings()? "YELLOW":"GREEN") <<"\n\n"
                  << endl;

@@ -75,6 +75,7 @@ class SoundJudgement
 
         Result judgement = determineTestResult();
         succeeded = (ResCode::GREEN == judgement.code);
+        resCode = judgement.code;
         return judgement;
     }
 
@@ -108,6 +109,7 @@ public:
     { }
 
     bool succeeded = false;
+    ResCode resCode = ResCode::MALFUNCTION;
 
     string describe()
     {

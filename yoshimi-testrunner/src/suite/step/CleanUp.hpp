@@ -40,6 +40,7 @@
 #include "suite/TestStep.hpp"
 #include "suite/step/Scaffolding.hpp"
 #include "suite/step/SoundObservation.hpp"
+#include "suite/Progress.hpp"
 #include "suite/Result.hpp"
 
 #include <string>
@@ -57,6 +58,7 @@ class CleanUp
     : public TestStep
 {
     Scaffolding& scaffolding_;
+    Progress& progressLog_;
 
     MaybeRef<SoundObservation> soundProbe_;
 
@@ -64,6 +66,7 @@ class CleanUp
     Result perform()  override
     try {
         scaffolding_.cleanUp();
+        progressLog_.clearLog();
         if (soundProbe_)
             soundProbe_->discardStorage();
         return Result::OK();
@@ -79,8 +82,10 @@ class CleanUp
 
 public:
     CleanUp(Scaffolding& scaffolding
-           ,MaybeRef<SoundObservation> sound)
+           ,MaybeRef<SoundObservation> sound
+           ,Progress& progressLog)
         : scaffolding_{scaffolding}
+        , progressLog_{progressLog}
         , soundProbe_{sound}
     { }
 };

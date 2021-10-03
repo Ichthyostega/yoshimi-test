@@ -137,7 +137,7 @@ class ExeCliMould
         auto timings     = optionally(shallVerifyTimes(spec))
                              .addStep<TimingObservation>(invocation,*output,suiteTimings_, pathSetup);
 
-        auto trend       = optionally(shallVerifyTimes(spec))
+        auto timeTrend   = optionally(shallVerifyTimes(spec))
                              .addStep<TimingJudgement>(*timings,suiteTimings_);
 
                            optionally(shallVerifyTimes(spec))
@@ -145,9 +145,11 @@ class ExeCliMould
 
         /*mark result*/    addStep<Summary>(spec.at(KEY_Test_topic)
                                            ,invocation
-                                           ,baseline);
+                                           ,baseline
+                                           ,timeTrend);
                            addStep<CleanUp>(launcher
-                                           ,soundProbe);
+                                           ,soundProbe
+                                           ,progressLog_);
     }
 };
 

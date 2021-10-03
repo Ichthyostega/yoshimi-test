@@ -67,6 +67,9 @@ class OutputCapturingSimpleProgress
     deque<string> output_;
 
 
+    void clearLog()  override
+    { output_.clear(); }
+
     void indicateTest(fs::path topicPath)  override
     {
         output_.clear();
@@ -111,6 +114,7 @@ class BlackHoleProgress
     void indicateTest(fs::path)  override {/* NOP */}
     void out(string)             override {/* NOP */}
     void err(string)             override {/* NOP */}
+    void clearLog()              override {/* NOP */}
 
     smatch grep(regex const&) const override { return smatch(); }
 };

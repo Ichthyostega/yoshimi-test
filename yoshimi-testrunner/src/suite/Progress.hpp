@@ -88,6 +88,9 @@ public:
     /** capture and maybe show error condition */
     virtual void err(string line)                   =0;
 
+    /** discard log data storage */
+    virtual void clearLog()                         =0;
+
     /** search _backwards_ for pattern */
     virtual smatch grep(regex const&)  const        =0;
 };

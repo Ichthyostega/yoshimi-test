@@ -41,6 +41,7 @@
 #include "suite/TestStep.hpp"
 #include "suite/step/Invocation.hpp"
 #include "suite/step/SoundJudgement.hpp"
+#include "suite/step/TimingJudgement.hpp"
 #include "suite/Result.hpp"
 
 #include <string>
@@ -62,6 +63,7 @@ class Summary
     Invocation& theTest_;
 
     MaybeRef<SoundJudgement> judgeSound_;
+    MaybeRef<TimingJudgement> judgeTiming_;
 
 
     Result perform()  override
@@ -75,10 +77,16 @@ class Summary
         {
             report += " "+judgeSound_->describe();
             if (not judgeSound_->succeeded)
-                testOutcome = ResCode::VIOLATION;
+                testOutcome = judgeSound_->resCode;
         }
-        ////////////TODO retrieve further results here
-        ///
+        if (judgeTiming_)
+        {
+            report += " "+judgeTiming_->describe();
+            if (not judgeSound_->succeeded
+                and int(judgeTiming_->resCode) > int(judgeSound_->resCode)
+               )
+                testOutcome = judgeTiming_->resCode;
+        }
         Statistics data{topic_, testOutcome};
         return Result(std::move(data), report);
     }
@@ -86,10 +94,12 @@ class Summary
 public:
     Summary(fs::path topic
            ,Invocation& ivo
-           ,MaybeRef<SoundJudgement> soundJudgement)
+           ,MaybeRef<SoundJudgement> soundJudgement
+           ,MaybeRef<TimingJudgement> timingJudgement)
         : topic_{topic}
         , theTest_{ivo}
         , judgeSound_{soundJudgement}
+        , judgeTiming_{timingJudgement}
     { }
 };
 

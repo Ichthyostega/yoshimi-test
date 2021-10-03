@@ -25,10 +25,11 @@
  ** and the effort predicted by the platform model for the given sample count of
  ** the actual test case. This data record is stored persistently into a time series
  ** for this test case, together with contextual information and the moving averages.
- ** 
- ** @todo WIP as of 9/21
+ **
  ** @see data.hpp maintaining CSV encoded time-series data
- ** 
+ ** @see statistic.hpp
+ ** @see suite::step::TimingJudgement
+ **
  */
 
 
@@ -52,9 +53,11 @@ namespace {
     const size_t MILLISEC_per_NANOSEC = 1000*1000;
 }
 
+using std::min;
 using util::isnil;
 using util::backwards;
 using util::averageLastN;
+using util::computeTimeSeriesLinearRegression;
 
 using util::Column;
 
@@ -173,6 +176,11 @@ public:
             throw error::LogicBroken("Attempt to extract test data prior to performing any measurements");
     }
 
+    uint size()  const
+    {
+        return runtime_.size();
+    }
+
     /**
      * Build up one data record based on the current timing measurement.
      * @param prediction the runtime as _predicted by the platform model_
@@ -250,29 +258,33 @@ public:
                ,runtime_.tolerance};
     }
 
-
-private:
-    double calcLocalTolerance(size_t avgPoints) const
+    array<double,3> calcDeltaTrend(uint n) const
     {
-        size_t siz = runtime_.size();
-        assert (siz > 0);
-        if (siz==1) // for the 1st value....
-            return runtime_.delta; // just tolerate the actual delta
-
-        avgPoints = std::min(avgPoints, siz);
-        size_t oldest = siz - avgPoints;
-        double variance = 0.0;
-        for (size_t i=siz; oldest < i; --i)
-        {   // use moving average of the /previous/ points as guess for "the actual" value
-            double avgVal = i>1? runtime_.maTime.data[i-2] : runtime_.maTime.data[i-1];
-            double delta = runtime_.runtime.data[i-1] - avgVal;
-            variance += delta*delta;
-        }
-        variance /= avgPoints > 1? avgPoints-1 : 1;
-        // divide by N-1 since it's a guess for the real variance
-        return 3 * sqrt(variance);
+        return util::array_from_tuple(
+                computeTimeSeriesLinearRegression(
+                        util::lastN(runtime_.delta.data, n)));
     }
 
+    /**
+     * find timespan into the past without significant changes to the platform/environment.
+     * @remark implemented by observing the runtime predicted by the platform model.
+     * @return number of points while this prediction changed less than the local fluctuations
+     */
+    uint stablePlatformTimespan()  const
+    {
+        double anchor = runtime_.platform;     // current platform model prediction
+        double tolerance = runtime_.tolerance; // local fluctuations
+        auto platformData = backwards(runtime_.platform.data);
+        uint points = 0;
+        for (auto p = begin(platformData);
+             p != end(platformData) and fabs(*p - anchor) <= tolerance;
+             ++p
+            )
+            ++points;
+        return points;
+    }
+
+private:
     /**
      * Find out how much comparable measurement points are available for averaging.
      * @remark "comparable" here implies an equivalent measurement setup
@@ -303,6 +315,28 @@ private:
         }
         assert (0 < points and points <= limit and points <= maxPoints);
         return points;
+    }
+
+    /** determine the amplitude of local fluctuations */
+    double calcLocalTolerance(size_t avgPoints) const
+    {
+        size_t siz = runtime_.size();
+        assert (siz > 0);
+        if (siz==1) // for the 1st value....
+            return runtime_.delta; // just tolerate the actual delta
+
+        avgPoints = std::min(avgPoints, siz);
+        size_t oldest = siz - avgPoints;
+        double variance = 0.0;
+        for (size_t i=siz; oldest < i; --i)
+        {   // use moving average of the /previous/ points as guess for "the actual" value
+            double avgVal = i>1? runtime_.maTime.data[i-2] : runtime_.maTime.data[i-1];
+            double delta = runtime_.runtime.data[i-1] - avgVal;
+            variance += delta*delta;
+        }
+        variance /= avgPoints > 1? avgPoints-1 : 1;
+        // divide by N-1 since it's a guess for the real variance
+        return 3 * sqrt(variance);
     }
 };
 
@@ -356,13 +390,29 @@ void TimingObservation::saveData(bool includingBaseline)
                                ,globalTimings_->baselineKeep);
 }
 
+uint TimingObservation::shortTermTimespan() const
+{
+    return min(data_->size(), globalTimings_->baselineAvg);
+}
 
+uint TimingObservation::longTermTimespan()  const
+{
+    return min(data_->stablePlatformTimespan()
+              ,globalTimings_->longtermAvg);
+}
+
+/** @return current (runtime, expense, delta, tolerance) */
 array<double,4> TimingObservation::getTestResults() const
 {
     return data_->getExpenseDeltaTolerance();
 }
 
-
+/** linear regression over n delta values into the past
+ * @return (socket,gradient,correlation) */
+array<double,3> TimingObservation::calcDeltaTrend(uint n) const
+{
+    return data_->calcDeltaTrend(n);
+}
 
 
 }}//(End)namespace suite::step

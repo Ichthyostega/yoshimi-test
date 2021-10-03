@@ -24,13 +24,23 @@
  ** have extracted and documented the behaviour, this step performs the assessment against
  ** timing expectations established in the past and recorded as »baseline«. This assessment
  ** is somewhat problematic, since timings depend very much on the actual system and platform.
- ** @todo work out a concept to establish a common _system speed factor_ -- allowing to judge
- **       within certain tolerance limits if the test case was successful
+ ** - using statistics to level out random fluctuations
+ ** - detect systematic trends by means of a linear regression over the time series data.
+ ** \par trigger threshold
+ ** Establishing sensible thresholds is a tightrope walk -- even more so, since the calibration
+ ** for the actual execution platform of the testsuite inevitably incurs some additional fuzziness.
+ ** Assuming that a baseline runtime has already been established for all test cases, this calibration
+ ** is established by a linear regression over run times in the testsuite, which implies there is now
+ ** a known error deviation band for each test case. As a remedy, to establish tighter thresholds, the
+ ** actual fluctuation of the timing values is observed relative to a moving average; additionally a
+ ** linear regression over the time series of measurements can be computed, allowing to detect some
+ ** systematic trend while levelling out single random outliers.
  ** 
  ** @todo WIP as of 9/21
  ** @see Invocation.hpp
  ** @see OututObservation.hpp
- ** @see TestStep.hpp
+ ** @see Timings.hpp
+ ** @see statistic.hpp
  ** 
  */
 
@@ -40,24 +50,33 @@
 
 
 #include "util/nocopy.hpp"
+#include "util/format.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/TimingObservation.hpp"
 #include "suite/Timings.hpp"
 
-//#include <string>
+#include <string>
 
 namespace suite{
 namespace step {
 
+using std::string;
+using util::formatVal;
+
 
 /**
- * Step to assess the behaviour and decide about success or failure.
+ * Step to assess the timing behaviour and decide upon success or failure.
+ * - The actual timing measurement is done by the Test-Invoker built into Yoshimi
+ * - the OutputObservation, which is a preceding TestStep, retrieves this data from the CLI output
+ * - the TimingObservation performs all basic calculations and stores the timing data as CSV file
+ * - the global suite::Timings aggregator maintains the platform calibration (linear model)
  */
 class TimingJudgement
     : public TestStep
 {
     TimingObservation& timings_;
     suite::PTimings globalTimings_;
+    string msg_{"unknown timing result"};
 
 
     Result perform()  override
@@ -67,6 +86,8 @@ class TimingJudgement
 
         Result judgement = determineTestResult();
         succeeded = (ResCode::GREEN == judgement.code);
+        resCode = judgement.code;
+        msg_ = judgement.summary;
         return judgement;
     }
 
@@ -74,26 +95,56 @@ class TimingJudgement
     {
         auto [runtime,expense,currDelta,tolerance]  = timings_.getTestResults();
         auto [modelStdev,testCnt] = globalTimings_->getModelTolerance();
-        double modelTolerance = 3 * modelStdev;
+        double modelTolerance = 3 * modelStdev;   // ±3σ covers 99% of all cases
         if (testCnt > 2) modelTolerance *= testCnt/(testCnt-1);
         modelTolerance *= expense;   // since expense is normalised out of model values
                                      // the model variance underestimates the spread by this factor
-
         double overallTolerance = std::max(tolerance, modelTolerance);
+
+        // check this single measurement against the tolerance band...
         if (currDelta < -overallTolerance)
-            return Result::Warn("Runtime was smaller than the established baseline; Δ ="+formatVal(currDelta)+"ms");
-        else
+            return Result::Warn("Runtime "+formatVal(runtime)
+                               +"ms decreased by "+formatVal(100*currDelta / runtime)+"% below baseline; Δ ="+formatVal(currDelta)+"ms");
         if (overallTolerance < currDelta and currDelta <= 1.1 * overallTolerance)
             return Result::Warn("Runtime ("+formatVal(runtime)+"ms) slightly above established baseline; Δ = "+formatVal(currDelta)+"ms");
-        else
         if (overallTolerance < currDelta)
-            return Result::Fail("Test failed: Runtime ("+formatVal(runtime)+"ms) above established baseline; Δ = "+formatVal(currDelta)+"ms");
-        else
-            return Result::OK();
+            return Result::Fail("Test failed: Runtime +"+formatVal(100*currDelta / runtime)
+                               +"% above established baseline; Δ = "+formatVal(currDelta)
+                               +"ms Runtime="+formatVal(runtime)+"ms.");
 
-//        // TODO get also Trend
-//        return Result::Warn("So sorry");
+        // watch out for short term and long term trends...
+        uint longTerm = timings_.longTermTimespan();
+        uint shortTerm = timings_.shortTermTimespan();
+        auto [socketShort,gradientShort,corrShort] = timings_.calcDeltaTrend(shortTerm);
+        auto [socketLong,gradientLong,corrLong]    = timings_.calcDeltaTrend(longTerm);
+
+        double shortTermTrend = gradientShort * shortTerm * fabs(corrShort);
+        double longTermTrend  = gradientLong * longTerm   * fabs(corrShort);
+        // Use slope of the regression as trend indicator, but weighted by correlation to sort out random peaks
+        // Criterion: taken over the observation period, this indicator must be within random fluctuation band
+        if (tolerance < shortTermTrend)
+            return Result::Fail("Upward deviation trend: runtime increased by +"
+                               +formatVal(100*shortTermTrend / runtime)
+                               +"% during the last "+formatVal(shortTerm)+" test runs."
+                               +"Current runtime: " +formatVal(runtime)+"ms.");
+        if (shortTermTrend < -tolerance)
+            return Result::Warn("Downward trend on the run times: "
+                               +formatVal(100*shortTermTrend / runtime)
+                               +"% during the last "+formatVal(shortTerm)+" test runs."
+                               +"Current runtime: " +formatVal(runtime)+"ms.");
+        if (tolerance < longTermTrend)
+            return Result::Warn("Long-term upward trend on the run times: +"
+                               +formatVal(100*longTermTrend / runtime)
+                               +"% during the last "+formatVal(longTerm)+" test runs."
+                               +"Current runtime: " +formatVal(runtime)+"ms.");
+        if (longTermTrend < -tolerance)
+            return Result::Warn("Note: long-term downward trend on the run times: "
+                               +formatVal(100*longTermTrend / runtime)
+                               +"% during the last "+formatVal(longTerm)+" test runs."
+                               +"Current runtime: " +formatVal(runtime)+"ms.");
+        return Result::OK();
     }
+
 
 public:
     TimingJudgement(TimingObservation& timings
@@ -103,10 +154,11 @@ public:
     { }
 
     bool succeeded = false;
+    ResCode resCode = ResCode::MALFUNCTION;
 
     string describe()
     {
-        return "nebbich";
+        return msg_;
     }
 };
 

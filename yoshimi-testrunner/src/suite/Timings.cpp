@@ -215,7 +215,7 @@ public:
 
 
     /**
-     * Condition the raw timing measurement data as preparation for model fit.
+     * Preprocess and condition the raw timing measurement data as preparation for model fit.
      * A DataPoint corresponds to a single test case, but averaged over a small number
      * of Testsuite runs [as configured](\ref Config::baselineAvg).
      * Moreover, the data point is normalised to the current _expense factor_ for this test case,
