@@ -82,12 +82,16 @@ class Summary
         if (judgeTiming_)
         {
             report += " "+judgeTiming_->describe();
-            if (not judgeSound_->succeeded
-                and int(judgeTiming_->resCode) > int(judgeSound_->resCode)
-               )
+            if (not judgeTiming_->succeeded
+                and (not judgeSound_
+                     or int(judgeTiming_->resCode) > int(judgeSound_->resCode)
+               )    )
                 testOutcome = judgeTiming_->resCode;
         }
-        Statistics data{topic_, testOutcome};
+        Statistics data{topic_
+                       ,testOutcome
+                       ,judgeTiming_? judgeTiming_->getRuntime() : 0.0
+                       };
         return Result(std::move(data), report);
     }
 

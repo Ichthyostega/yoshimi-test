@@ -152,6 +152,13 @@ class TimingTestData
                     };
     }
 
+    double getAveragedDelta(size_t avgPoints)  const override
+    {
+        __requireMeasurementDone();
+        avgPoints = ensureEquivalentDataPoints(avgPoints);
+        return averageLastN(runtime_.delta.data, avgPoints);
+    }
+
     void recalc_and_save_current(PlatformFun model) override
     {
         __requireMeasurementDone();
@@ -368,7 +375,7 @@ void TimingObservation::calculateDataRecord()
     uint   notes   = *output_.getNotesCnt();
     size_t smps    = *output_.getSamples();
 
-    double prediction = globalTimings_->calcPlatformModel(notes,smps);
+    double prediction = globalTimings_->evalPlatformModel(notes,smps);
 
     FileNameSpec& fileRuntime = pathSpec_[def::KEY_fileRuntime];
     FileNameSpec& fileExpense = pathSpec_[def::KEY_fileExpense];

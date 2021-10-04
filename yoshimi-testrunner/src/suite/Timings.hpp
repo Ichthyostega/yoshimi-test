@@ -46,7 +46,7 @@
 #include <functional>
 #include <string>
 #include <memory>
-#include <tuple>
+#include <array>
 
 
 namespace suite {
@@ -57,7 +57,7 @@ using PData = std::unique_ptr<TimingData>;
 class Timings;
 using PTimings = std::shared_ptr<Timings>;
 
-using std::tuple;
+using std::array;
 
 
 /**
@@ -81,8 +81,9 @@ public:
     using Point = std::tuple<double,double,double>;
     using PlatformFun = std::function<double(uint,size_t)>;
 
-    virtual Point getAveragedDataPoint(size_t avgPoints)  const  =0;
-    virtual void recalc_and_save_current(PlatformFun)            =0;
+    virtual Point getAveragedDataPoint(size_t avgPoints)  const =0;
+    virtual double getAveragedDelta(size_t avgPoints)     const =0;
+    virtual void recalc_and_save_current(PlatformFun)           =0;
 };
 
 
@@ -103,14 +104,33 @@ public:
 
     void attach(TimingTest&);
 
-    double calcPlatformModel(uint notes, size_t smps)  const;
+    double evalPlatformModel(uint notes, size_t smps)  const;
     void fitNewPlatformModel();
     void saveData(bool includingCalibration);
 
-    uint dataCnt()  const;
+    size_t dataCnt()  const;
     bool isCalibrated()  const;
     string sumariseCalibration() const;
-    tuple<double,size_t> getModelTolerance() const;
+    double getModelTolerance() const;
+
+    void calcSuiteStatistics();
+    array<double,3> getDeltaStatistics()  const;
+
+    struct SuiteStatistics
+    {
+        double currAvgDelta{0.0};
+        double pastDeltaAvg{0.0};
+        double pastDeltaSDev{0.0};
+
+        uint shortTerm{0};
+        uint longTerm{0};
+
+        double gradientShortTerm{0.0};
+        double corrShortTerm{0.0};
+        double gradientLongTerm{0.0};
+        double corrLongTerm{0.0};
+    };
+    SuiteStatistics suite;
 
     /* config params */
     const fs::path suitePath;

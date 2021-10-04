@@ -183,11 +183,11 @@ class ClosureMould
 {
     void materialise(MapS const& spec)  override
     {
-        ////////////////////////////////TODO add more steps for global statistics here
                            optionally(shallCalibrateTiming_)
                              .addStep<PlatformCalibration>(progressLog_, suiteTimings_);
+
         auto& statistics = addStep<TrendObservation>(progressLog_, suiteTimings_);
-        auto& judgement  = addStep<TrendJudgement>();
+        auto& judgement  = addStep<TrendJudgement>(suiteTimings_);
                            addStep<PersistModelTrend>(suiteTimings_, shallCalibrateTiming_);
     }
 };

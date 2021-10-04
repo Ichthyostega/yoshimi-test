@@ -99,6 +99,7 @@ struct Statistics
 {
     const fs::path topic;
     const ResCode outcome;
+    const double runtime_ms;
 };
 
 

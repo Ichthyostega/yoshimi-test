@@ -73,8 +73,27 @@ class TrendObservation
 
     Result perform()  override
     {
-        progressLog_.out("Timings: "+str(timings_->dataCnt())+" data points.");
-        return Result::Warn("UNIMPLEMENTED: TrendObservation (global)");
+        size_t points = timings_->dataCnt();
+        progressLog_.out("Timings: "+str(points)+" data points.");
+        if (0 == points)
+            return Result::Warn("Skip global statistics: no timings observed.");
+
+        timings_->calcSuiteStatistics();
+        auto [avgDelta,maxDelta,sdevDelta] = timings_->getDeltaStatistics();
+        progressLog_.out("Timings: Δ avg="+formatVal(avgDelta)+"ms "
+                        +"max="+formatVal(maxDelta)+"ms "
+                        +"sdev="+formatVal(sdevDelta)+"ms.");
+        double platformErr = timings_->getModelTolerance();
+        progressLog_.out("Timings: platform calibration tolerance: "
+                        +formatVal(platformErr)+"ms.");
+
+        if (maxDelta == 0.0)
+            return Result::Fail("Missing calibration or timing baselines ⟹ no timing Δ observed.");
+        if (maxDelta < 0.1 or points < 5)
+            return Result::Warn("Unreliable timing statistics. "
+                               +formatVal(points)+" data points "
+                               +"Δmax="+formatVal(maxDelta));
+        return Result::OK();
     }
 
 public:

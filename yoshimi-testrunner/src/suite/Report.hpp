@@ -63,6 +63,7 @@ using util::formatVal;
 namespace {// Implementation details: Markdown formatting
 
 inline string h1(string txt) { return "# "+txt+"\n"; }
+inline string h2(string txt) { return "## "+txt+"\n"; }
 
 inline string hr()           { return string(40, '-') + "\n"; }
 
@@ -81,6 +82,7 @@ class Report
 {
     util::TeeStream out_;
     std::ofstream file_;
+    bool reportTimes_{false};
 
 public:
     Report(Config const& config)
@@ -101,14 +103,28 @@ public:
 
         if (config.baseline)
             out_ << "+++ "+emph("Baseline capturing mode")+" +++\n\n" <<endl;
+        if (config.verbose)
+            reportTimes_ = true;
     }
 
 
     void generate(TestLog const& results)
     {
-        /////////////////TODO how to render the individual results??
+        if (reportTimes_ or results.hasWarnings())
+        {
+            out_ << hr()
+                 << h2("Results")
+                 <<endl;
+        }
+        /////////////////TODO better way to render the individual results??
+        auto hasTimingSummary = [](Result const& res)
+                                {  return res.stats.has_value()
+                                      and res.stats->runtime_ms > 0.0;
+                                };
         for (auto& res : results)
         {
+            if (reportTimes_ and hasTimingSummary(res))
+                out_ << res.stats->topic.stem()<<": \t"<<res.stats->runtime_ms<<"ms" <<endl;
             if (res.code != ResCode::GREEN)
                 out_ << res.summary <<endl;
         }

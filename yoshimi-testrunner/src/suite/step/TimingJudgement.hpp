@@ -77,6 +77,7 @@ class TimingJudgement
     TimingObservation& timings_;
     suite::PTimings globalTimings_;
     string msg_{"unknown timing result"};
+    double runtime_{0.0};
 
 
     Result perform()  override
@@ -94,12 +95,11 @@ class TimingJudgement
     Result determineTestResult()
     {
         auto [runtime,expense,currDelta,tolerance]  = timings_.getTestResults();
-        auto [modelStdev,testCnt] = globalTimings_->getModelTolerance();
-        double modelTolerance = 3 * modelStdev;   // ±3σ covers 99% of all cases
-        if (testCnt > 2) modelTolerance *= testCnt/(testCnt-1);
+        double modelTolerance = globalTimings_->getModelTolerance();    // ±3σ covers 99% of all cases
         modelTolerance *= expense;   // since expense is normalised out of model values
-                                     // the model variance underestimates the spread by this factor
-        double overallTolerance = std::max(tolerance, modelTolerance);
+                                     // the model error(stdev) underestimates the spread by this factor
+        double overallTolerance = tolerance + modelTolerance;
+        runtime_ = runtime;
 
         // check this single measurement against the tolerance band...
         if (currDelta < -overallTolerance)
@@ -156,10 +156,8 @@ public:
     bool succeeded = false;
     ResCode resCode = ResCode::MALFUNCTION;
 
-    string describe()
-    {
-        return msg_;
-    }
+    string describe()   const { return msg_; }
+    double getRuntime() const { return runtime_; }
 };
 
 

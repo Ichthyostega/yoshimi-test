@@ -124,7 +124,6 @@ Result ExeLauncher::perform()
     [&] {
             auto condition = subprocess_->matchTask
                     .onCondition(MATCH_YOSHIMI_READY)
-                    .logOutputInto(progressLog_)
                     .activate();
             waitFor(condition);
             return Result::OK();

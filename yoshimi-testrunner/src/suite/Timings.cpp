@@ -32,12 +32,14 @@
 #include "util/error.hpp"
 #include "util/format.hpp"
 #include "util/statistic.hpp"
-//#include "util/utils.hpp"
+#include "util/utils.hpp"
 #include "Timings.hpp"
 #include "suite/step/PathSetup.hpp"
 
 #include <functional>
+#include <cassert>
 #include <vector>
+#include <tuple>
 
 namespace suite {
 
@@ -45,10 +47,15 @@ namespace {
     const size_t MILLISEC_per_NANOSEC = 1000*1000;
 }
 
+using std::tie;
+using std::make_tuple;
+
 using step::FileNameSpec;
 
+using util::isnil;
 using util::Column;
 using util::formatVal;
+using util::backwards;
 
 
 
@@ -149,6 +156,7 @@ struct TableModelFit
 
 
 
+using VecD = std::vector<double>;
 using TestTable = std::vector<std::reference_wrapper<TimingTest>>;
 using PlatformData = util::DataFile<TablePlatform>;
 using StatisticData = util::DataFile<TableStatistic>;
@@ -189,10 +197,15 @@ public:
         testData_.push_back(singleTestcaseData);
     }
 
-    uint dataCnt()  const
+    size_t dataCnt()  const
     {
         return testData_.size();
     }
+    size_t timeSeriesSize()  const
+    {
+        return statistic_.size();
+    }
+
     bool hasPlatformCalibration()  const
     {
         return not platform_.empty();
@@ -203,16 +216,23 @@ public:
      * @todo by means of a multi variable linear regression, we could
      *       factor in the typical NoteOn / NoteOff expenses.
      */
-    double calcPlatformModel(uint, size_t smps)  const
+    double evalPlatformModel(uint, size_t smps)  const
     {
         return platform_.socket*MILLISEC_per_NANOSEC + smps * platform_.speed;
     }
 
-    tuple<double,size_t> getModelTolerance() const
+    double getPlatformErrorSDev() const
     {
-        return {platform_.sdevDelta, platform_.points};
+        return platform_.sdevDelta;
     }
 
+    array<double,3> getDeltaStatistics()  const
+    {
+        return {statistic_.avgDelta
+               ,statistic_.maxDelta
+               ,statistic_.sdevDelta
+               };
+    }
 
     /**
      * Preprocess and condition the raw timing measurement data as preparation for model fit.
@@ -252,7 +272,7 @@ public:
 
         // setup new platform model based on computed regression
         platform_.dupRow();
-        platform_.socket = socket;                         // socked denoted in ms
+        platform_.socket = socket;                         // socket denoted in ms
         platform_.speed  = speed  * MILLISEC_per_NANOSEC;  // regression based on timings in ms
         platform_.correlation = correlation;
         platform_.maxDelta = maxDelta;
@@ -281,6 +301,68 @@ public:
             modelFit_.testID.data.push_back(test.testID);
     }
 
+    /**
+     * capture current global timing statistics as a single time series data point.
+     * @remark observing only actual delta against established baseline for each test.
+     * @param avgPoints individual past measurements to pre-average for each test case data point
+     * @return current delta averaged over all test cases
+     */
+    double calcSuiteStatistics(uint avgPoints)
+    {
+        assert(not isnil(testData_));
+        statistic_.dupRow();
+        statistic_.points = testData_.size();
+        statistic_.socket = platform_.socket;
+        statistic_.speed  = platform_.speed;
+
+        size_t n = testData_.size();
+        double avg=0.0, max=0.0;
+        VecD deltas; deltas.reserve(n);
+        for (TimingTest const& test : testData_)
+        {
+            double delta = test.getAveragedDelta(avgPoints);
+            deltas.push_back(delta);
+            avg += delta;
+            max = std::max(max, fabs(delta));
+        }
+        avg /= n;
+        statistic_.avgDelta  = avg;
+        statistic_.maxDelta  = max;
+        statistic_.sdevDelta = util::sdev(deltas, avg);
+        statistic_.timestamp = Config::timestamp; // current Testsuite run
+        return avg;
+    }
+
+    /** calculate statistics over the past time series for the avgDelta */
+    auto calcDeltaPastStatistics(uint avgPoints)
+    {
+        double movingAvg = util::averageLastN(statistic_.avgDelta.data, avgPoints);
+        double pastSDev = util::sdevLastN(statistic_.avgDelta.data, movingAvg, avgPoints);
+        return make_tuple(movingAvg, pastSDev);
+    }
+
+    /** calculate linear regression over the past time series ov avgDelta */
+    auto calcDeltaTrend(uint avgPoints) const
+    {
+        return computeTimeSeriesLinearRegression(
+                   util::lastN(statistic_.avgDelta.data, avgPoints));
+    }
+
+    /** find time span into the past without changes to the platform model */
+    uint stablePlatformTimespan()  const
+    {
+        double anchor = platform_.speed;    // current platform model factor
+        auto timeSeries = backwards(statistic_.speed.data);
+        uint points = 0;
+        for (auto p = begin(timeSeries);
+             p != end(timeSeries) and *p == anchor;
+             ++p
+            )
+            ++points;
+        return points;
+    }
+
+
     void save(bool includingCalibration, uint timingsKeep, uint calibrationKeep)
     {
         statistic_.save(timingsKeep);
@@ -289,7 +371,7 @@ public:
         modelFit_.save();
         for (TimingTest& test : testData_)
             test.recalc_and_save_current([this](uint notes, size_t samples)
-                                         { return calcPlatformModel(notes,samples); });
+                                         { return evalPlatformModel(notes,samples); });
     }
 
     string sumariseCalibration()  const
@@ -357,6 +439,26 @@ void Timings::fitNewPlatformModel()
             data_->preprocessRegressionData(baselineAvg));
 }
 
+void Timings::calcSuiteStatistics()
+{
+    if (dataCnt() == 0)
+        throw error::LogicBroken("No timing measurement performed yet.");
+
+    suite.currAvgDelta = data_->calcSuiteStatistics(baselineAvg);
+
+    suite.shortTerm = std::min(data_->timeSeriesSize(), size_t(baselineAvg));
+    suite.longTerm  = std::min(data_->stablePlatformTimespan(), longtermAvg);
+    tie(suite.pastDeltaAvg
+       ,suite.pastDeltaSDev) = data_->calcDeltaPastStatistics(suite.shortTerm);
+    tie(std::ignore // socket
+       ,suite.gradientShortTerm
+       ,suite.corrShortTerm) = data_->calcDeltaTrend(suite.shortTerm);
+    tie(std::ignore // socket
+       ,suite.gradientLongTerm
+       ,suite.corrLongTerm)  = data_->calcDeltaTrend(suite.longTerm);
+}
+
+
 void Timings::saveData(bool includingCalibration)
 {
     // tests have navigated down into the tree;
@@ -372,20 +474,28 @@ string Timings::sumariseCalibration()  const
 }
 
 
-double Timings::calcPlatformModel(uint notes, size_t smps)  const
+double Timings::evalPlatformModel(uint notes, size_t smps)  const
 {
     if (isCalibrated())
-        return data_->calcPlatformModel(notes,smps);
+        return data_->evalPlatformModel(notes,smps);
     else
         return 0.0;
 }
 
-tuple<double,size_t> Timings::getModelTolerance() const
+/** @return stdev estimated by mean square error of model fitting */
+double Timings::getModelTolerance() const
 {
-    return data_->getModelTolerance();
+    return 3 * data_->getPlatformErrorSDev();  // ±3σ covers 99% of all cases
 }
 
-uint Timings::dataCnt()  const
+/** @return `(avgDelta,maxDelta,sdevDelta)` */
+array<double,3> Timings::getDeltaStatistics()  const
+{
+    return data_->getDeltaStatistics();
+}
+
+
+size_t Timings::dataCnt()  const
 {
     return data_->dataCnt();
 }
