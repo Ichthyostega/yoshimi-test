@@ -122,26 +122,26 @@ class ExeCliMould
         auto& invocation = addStep<Invocation>(launcher,progressLog_);
 
         auto soundProbe  = optionally(shallVerifySound(spec))
-                             .addStep<SoundObservation>(invocation, pathSetup);
+                              .addStep<SoundObservation>(invocation, pathSetup);
 
         auto baseline    = optionally(shallVerifySound(spec))
-                             .addStep<SoundJudgement>(*soundProbe, pathSetup);
+                              .addStep<SoundJudgement>(*soundProbe, pathSetup);
 
                            optionally(shallVerifySound(spec))
-                             .addStep<SoundRecord>(shallRecordBaseline_
+                              .addStep<SoundRecord>(shallRecordBaseline_
                                                   ,*soundProbe, *baseline, pathSetup);
 
         auto output      = optionally(shallVerifyTimes(spec))
-                             .addStep<OutputObservation>(invocation);
+                              .addStep<OutputObservation>(invocation);
 
         auto timings     = optionally(shallVerifyTimes(spec))
-                             .addStep<TimingObservation>(invocation,*output,suiteTimings_, pathSetup);
+                              .addStep<TimingObservation>(invocation,*output,suiteTimings_, pathSetup);
 
         auto timeTrend   = optionally(shallVerifyTimes(spec))
-                             .addStep<TimingJudgement>(*timings,suiteTimings_);
+                              .addStep<TimingJudgement>(*timings,suiteTimings_);
 
                            optionally(shallVerifyTimes(spec))
-                             .addStep<PersistTimings>(shallRecordBaseline_, *timings);
+                              .addStep<PersistTimings>(shallRecordBaseline_, *timings);
 
         /*mark result*/    addStep<Summary>(spec.at(KEY_Test_topic)
                                            ,invocation
@@ -183,12 +183,11 @@ class ClosureMould
 {
     void materialise(MapS const& spec)  override
     {
-                           optionally(shallCalibrateTiming_)
-                             .addStep<PlatformCalibration>(progressLog_, suiteTimings_);
-
-        auto& statistics = addStep<TrendObservation>(progressLog_, suiteTimings_);
-        auto& judgement  = addStep<TrendJudgement>(suiteTimings_);
-                           addStep<PersistModelTrend>(suiteTimings_, shallCalibrateTiming_);
+        optionally(shallCalibrateTiming_)
+           .addStep<PlatformCalibration>(progressLog_, suiteTimings_);
+        addStep<TrendObservation>(progressLog_, suiteTimings_);
+        addStep<TrendJudgement>(suiteTimings_);
+        addStep<PersistModelTrend>(suiteTimings_, shallCalibrateTiming_);
     }
 };
 

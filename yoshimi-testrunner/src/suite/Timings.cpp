@@ -110,6 +110,7 @@ struct TableStatistic
     Column<double>    avgDelta{"Delta (avg)"};             ///< averaged signed Δ against expected measurements
     Column<double>    maxDelta{"Delta (max)"};             ///< maximum (absolute) Δ against expected measurements
     Column<double>   sdevDelta{"Delta (sdev)"};            ///< standard deviation √σ² against expected measurements
+    Column<double>   tolerance{"Tolerance"};               ///< tolerance band (3·σ) by error propagation from measurements
 
     auto allColumns()
     {   return std::tie(timestamp
@@ -119,6 +120,7 @@ struct TableStatistic
                        ,avgDelta
                        ,maxDelta
                        ,sdevDelta
+                       ,tolerance
                        );
     }
 };
@@ -307,37 +309,40 @@ public:
      * @param avgPoints individual past measurements to pre-average for each test case data point
      * @return current delta averaged over all test cases
      */
-    double calcSuiteStatistics(uint avgPoints)
+    auto calcSuiteStatistics(uint avgPoints)
     {
         assert(not isnil(testData_));
         statistic_.dupRow();
-        statistic_.points = testData_.size();
-        statistic_.socket = platform_.socket;
-        statistic_.speed  = platform_.speed;
-
-        size_t n = testData_.size();
-        double avg=0.0, max=0.0;
+        if (hasPlatformCalibration())
+        {
+            statistic_.socket = platform_.socket;
+            statistic_.speed  = platform_.speed;
+        }
+        size_t n = statistic_.points = testData_.size();
+        double avg=0.0, max=0.0, err=0.0;
         VecD deltas; deltas.reserve(n);
         for (TimingTest const& test : testData_)
         {
-            double delta = test.getAveragedDelta(avgPoints);
+            auto [delta, tolerance] = test.getAveragedError(avgPoints);
             deltas.push_back(delta);
             avg += delta;
+            err += tolerance*tolerance;    // error propagation; tolerance ~ 3·σ
             max = std::max(max, fabs(delta));
         }
         avg /= n;
         statistic_.avgDelta  = avg;
         statistic_.maxDelta  = max;
         statistic_.sdevDelta = util::sdev(deltas, avg);
+        statistic_.tolerance = sqrt(err)/n;       // ~ 3·σ
         statistic_.timestamp = Config::timestamp; // current Testsuite run
-        return avg;
+        return make_tuple(avg, double{statistic_.tolerance});
     }
 
     /** calculate statistics over the past time series for the avgDelta */
     auto calcDeltaPastStatistics(uint avgPoints)
     {
         double movingAvg = util::averageLastN(statistic_.avgDelta.data, avgPoints);
-        double pastSDev = util::sdevLastN(statistic_.avgDelta.data, movingAvg, avgPoints);
+        double pastSDev = util::sdevLastN(statistic_.avgDelta.data, avgPoints, movingAvg);
         return make_tuple(movingAvg, pastSDev);
     }
 
@@ -351,6 +356,8 @@ public:
     /** find time span into the past without changes to the platform model */
     uint stablePlatformTimespan()  const
     {
+        if (not hasPlatformCalibration())
+            return timeSeriesSize();
         double anchor = platform_.speed;    // current platform model factor
         auto timeSeries = backwards(statistic_.speed.data);
         uint points = 0;
@@ -444,7 +451,8 @@ void Timings::calcSuiteStatistics()
     if (dataCnt() == 0)
         throw error::LogicBroken("No timing measurement performed yet.");
 
-    suite.currAvgDelta = data_->calcSuiteStatistics(baselineAvg);
+    tie(suite.currAvgDelta
+       ,suite.tolerance) = data_->calcSuiteStatistics(baselineAvg);
 
     suite.shortTerm = std::min(data_->timeSeriesSize(), size_t(baselineAvg));
     suite.longTerm  = std::min(data_->stablePlatformTimespan(), longtermAvg);
@@ -476,16 +484,15 @@ string Timings::sumariseCalibration()  const
 
 double Timings::evalPlatformModel(uint notes, size_t smps)  const
 {
-    if (isCalibrated())
-        return data_->evalPlatformModel(notes,smps);
-    else
-        return 0.0;
+    return isCalibrated()? data_->evalPlatformModel(notes,smps)
+                         : 0.0;
 }
 
 /** @return stdev estimated by mean square error of model fitting */
 double Timings::getModelTolerance() const
-{
-    return 3 * data_->getPlatformErrorSDev();  // ±3σ covers 99% of all cases
+{                       // ±3σ covers 99% of all cases
+    return isCalibrated()? 3 * data_->getPlatformErrorSDev()
+                         : 0.0;
 }
 
 /** @return `(avgDelta,maxDelta,sdevDelta)` */

@@ -77,7 +77,7 @@ struct TableRuntime
     Column<double> expenseCurr{"Expense Factor(current)"}; ///< `runtime == platform·expenseCurr`
     Column<double>       delta{"Delta ms"};                ///< Δ of measured runtime against `platform·expense`
     Column<double>      maTime{"MA Time short"};           ///< moving average of runtime (baselineAvg/2 points)
-    Column<double>   tolerance{"Tolerance band"};          ///< tolerance band based on the variance observed (over baselineAvg points)
+    Column<double>   tolerance{"Tolerance"};               ///< tolerance band based on 3·σ observed (over baselineAvg points)
 
     auto allColumns()
     {   return std::tie(timestamp
@@ -152,11 +152,12 @@ class TimingTestData
                     };
     }
 
-    double getAveragedDelta(size_t avgPoints)  const override
+    Error getAveragedError(size_t avgPoints)  const override
     {
         __requireMeasurementDone();
         avgPoints = ensureEquivalentDataPoints(avgPoints);
-        return averageLastN(runtime_.delta.data, avgPoints);
+        return std::make_tuple(averageLastN(runtime_.delta.data, avgPoints)
+                              ,double{runtime_.tolerance});
     }
 
     void recalc_and_save_current(PlatformFun model) override
@@ -239,7 +240,7 @@ public:
         runtime_.save(rows2keep);
     }
 
-    void storeNewBaseline(uint baselineAvg, uint baselineKeep)
+    void maybeStoreNewBaseline(uint baselineAvg, uint baselineKeep)
     {
         expense_.dupRow();
         // record contextual info
@@ -254,7 +255,8 @@ public:
 
         // Timestamp of creating this new baseline
         expense_.timestamp = Config::timestamp;
-        expense_.save(baselineKeep);
+        if (isSignificantExpenseChange())
+            expense_.save(baselineKeep);
     }
 
     array<double,4> getExpenseDeltaTolerance()  const
@@ -345,6 +347,22 @@ private:
         // divide by N-1 since it's a guess for the real variance
         return 3 * sqrt(variance);
     }
+
+    /** determine if the current expense factor _differs significantly._
+     * @return if using the previous expense would change the delta beyond
+     *          1/3 of the current [local tolerance](\ref #calcLocalTolerance)
+     */
+    bool isSignificantExpenseChange()
+    {
+        size_t n = expense_.size();
+        if (n < 2)
+            return true; // significant if there is nothing to compare
+        double newExpense = expense_.expense.data[n-1];
+        double oldExpense = expense_.expense.data[n-2];
+        // by definition: runtime(expected) = platform * expense
+        double deltaChange = expense_.platform * (newExpense-oldExpense);
+        return fabs(deltaChange) > runtime_.tolerance / 3;
+    }
 };
 
 
@@ -393,7 +411,7 @@ void TimingObservation::saveData(bool includingBaseline)
 {
     data_->persistRuntimes(globalTimings_->timingsKeep);
     if (includingBaseline)
-        data_->storeNewBaseline(globalTimings_->baselineAvg
+        data_->maybeStoreNewBaseline(globalTimings_->baselineAvg
                                ,globalTimings_->baselineKeep);
 }
 

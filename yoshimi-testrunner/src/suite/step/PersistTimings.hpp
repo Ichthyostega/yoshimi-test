@@ -58,7 +58,7 @@ namespace step {
 
 /**
  * Write table with timing data and computed statistics into a CSV file.
- * When operate in `--baseline` mode, a new row is added to the baseline
+ * When operating in `--baseline` mode, a new row is added to the baseline
  * timing data for this test case as well.
  * @remark this TestStep is actually just a shallow trigger, while the
  *         saving operation is implemented within the DataFile objects

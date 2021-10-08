@@ -48,6 +48,7 @@
 
 
 #include "util/nocopy.hpp"
+#include "util/statistic.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/Timings.hpp"
 #include "suite/step/TrendObservation.hpp"
@@ -82,14 +83,30 @@ class TrendJudgement
         return judgement;
     }
 
+    /**
+     * Employ heuristics to detect changes beyond statistical fluctuation.
+     * \par Rationale
+     * The `currDelta` is the averaged Δ of all test cases; ideally this should be zero, but in reality
+     * - we can observe fluctuations on the individual Δ (which by error propagation over calculating
+     *   the mean value is reflected by the `s.tolerance` band)
+     * - and we know that the platform model is just a linear approximation, leaving the individual
+     *   delta value more or less tilted
+     * Moreover, `s.pastDeltaSDev` is the empirically observed fluctuation on the average, which typically
+     * is about 1/10 of `s.tolerance`, but can be way larger when actual changes happened and the baselines
+     * were adjusted subsequently. Thus we check the absolute value of averaged Delta against both the
+     * statistical fluctuation and the known platform model discrepancy, and we also trigger an alarm
+     * when observing a strongly correlated trend pointing beyond the statistical fluctuation tolerance.
+     */
     Result determineTestResult()
     {
         size_t points = timings_->dataCnt();
         Timings::SuiteStatistics& s = timings_->suite;
         double currDelta = s.currAvgDelta;
-        double tolerance = s.pastDeltaSDev * 3;    // ±3σ covers 99% of all cases
+        double tolerance = std::max(3 * s.pastDeltaSDev, s.tolerance);    // ±3σ covers 99% of all cases
         double modelTolerance = timings_->getModelTolerance();
-        double overallTolerance = tolerance + modelTolerance;
+        double overallTolerance = util::errorSum(tolerance,modelTolerance);
+        if (tolerance == 0.0 or modelTolerance == 0.0)
+            return Result::Warn("Missing calibration. Unable to watch global trend.");
 
         // check the averaged delta of all tests against the tolerance band...
         if (currDelta < -overallTolerance)

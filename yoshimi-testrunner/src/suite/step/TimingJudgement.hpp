@@ -51,6 +51,7 @@
 
 #include "util/nocopy.hpp"
 #include "util/format.hpp"
+#include "util/statistic.hpp"
 #include "suite/TestStep.hpp"
 #include "suite/step/TimingObservation.hpp"
 #include "suite/Timings.hpp"
@@ -98,8 +99,11 @@ class TimingJudgement
         double modelTolerance = globalTimings_->getModelTolerance();    // ±3σ covers 99% of all cases
         modelTolerance *= expense;   // since expense is normalised out of model values
                                      // the model error(stdev) underestimates the spread by this factor
-        double overallTolerance = tolerance + modelTolerance;
+        double overallTolerance = util::errorSum(tolerance, modelTolerance);
         runtime_ = runtime;
+
+        if (tolerance == 0.0 or modelTolerance == 0.0)
+            return Result::Warn("Missing calibration. Can not judge runtime ("+formatVal(runtime)+"ms)");
 
         // check this single measurement against the tolerance band...
         if (currDelta < -overallTolerance)

@@ -1,14 +1,14 @@
 #
 # Sample calculation time
 #
-description = Runtime: Add-Synth / simple Oscil / 1s
+description = Runtime: Add-Synth / simple Oscil / 4 notes / 1s
 
 [Test]
 Script
     set test
     set duration 1
-    set holdfraction 1.0
-    set repetitions 1
+    set holdfraction 0.8
+    set repetitions 4
     execute
 End-Script
 

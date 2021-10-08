@@ -77,12 +77,14 @@ public:
 
     const string testID;
 
-    /// Abstracted Data point: (samples,runtime,expense)
+    /// Abstracted Data point: `(samples,runtime,expense)`
     using Point = std::tuple<double,double,double>;
+    /// Abstracted Error: `(delta, tolerance)` -- tolerance ~ 3·σ
+    using Error = std::tuple<double,double>;
     using PlatformFun = std::function<double(uint,size_t)>;
 
     virtual Point getAveragedDataPoint(size_t avgPoints)  const =0;
-    virtual double getAveragedDelta(size_t avgPoints)     const =0;
+    virtual Error getAveragedError(size_t avgPoints)      const =0;
     virtual void recalc_and_save_current(PlatformFun)           =0;
 };
 
@@ -119,6 +121,7 @@ public:
     struct SuiteStatistics
     {
         double currAvgDelta{0.0};
+        double tolerance{0.0};
         double pastDeltaAvg{0.0};
         double pastDeltaSDev{0.0};
 
