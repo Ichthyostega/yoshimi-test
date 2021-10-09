@@ -117,8 +117,7 @@ class TimingJudgement
                                +"ms Runtime="+formatVal(runtime)+"ms.");
 
         // watch out for short term and long term trends...
-        uint longTerm = timings_.longTermTimespan();
-        uint shortTerm = timings_.shortTermTimespan();
+        auto [shortTerm, longTerm] = timings_.getIntegrationTimespan();
         auto [socketShort,gradientShort,corrShort] = timings_.calcDeltaTrend(shortTerm);
         auto [socketLong,gradientLong,corrLong]    = timings_.calcDeltaTrend(longTerm);
 

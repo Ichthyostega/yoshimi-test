@@ -114,10 +114,8 @@ public:
 
     void saveData(bool includingBaseline);
 
-    uint shortTermTimespan() const;
-    uint longTermTimespan()  const;
-
-    array<double,4> getTestResults() const;
+    array<uint,2> getIntegrationTimespan() const;
+    array<double,4> getTestResults()       const;
     array<double,3> calcDeltaTrend(uint n) const;
 
 private:

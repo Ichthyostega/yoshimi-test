@@ -77,7 +77,7 @@ struct TablePlatform
     Column<double>       speed{"Speed ns/smp"};            ///< crunch speed (time per computed sample)
     Column<double> correlation{"Correlation"};             ///< observed correlation coefficient between (x,y)
     Column<double>    maxDelta{"Delta (max)"};             ///< maximum (absolute) Δ for this platform fit
-    Column<double>   sdevDelta{"Delta (sdev)"};            ///< standard deviation √σ² for this platform fit
+    Column<double>   sdevDelta{"Delta (sdev)"};            ///< standard deviation √Σσ² for this platform fit
 
     auto allColumns()
     {   return std::tie(timestamp
@@ -109,7 +109,7 @@ struct TableStatistic
     Column<double>       speed{"Speed ns/smp"};            ///< crunch speed (time per computed sample)
     Column<double>    avgDelta{"Delta (avg)"};             ///< averaged signed Δ against expected measurements
     Column<double>    maxDelta{"Delta (max)"};             ///< maximum (absolute) Δ against expected measurements
-    Column<double>   sdevDelta{"Delta (sdev)"};            ///< standard deviation √σ² against expected measurements
+    Column<double>   sdevDelta{"Delta (sdev)"};            ///< standard deviation √Σσ² against expected measurements
     Column<double>   tolerance{"Tolerance"};               ///< tolerance band (3·σ) by error propagation from measurements
 
     auto allColumns()
@@ -454,8 +454,10 @@ void Timings::calcSuiteStatistics()
     tie(suite.currAvgDelta
        ,suite.tolerance) = data_->calcSuiteStatistics(baselineAvg);
 
-    suite.shortTerm = std::min(data_->timeSeriesSize(), size_t(baselineAvg));
-    suite.longTerm  = std::min(data_->stablePlatformTimespan(), longtermAvg);
+    uint availData = data_->stablePlatformTimespan();
+    suite.shortTerm = std::min(availData, baselineAvg);
+    suite.longTerm  = std::min(availData, longtermAvg);
+
     tie(suite.pastDeltaAvg
        ,suite.pastDeltaSDev) = data_->calcDeltaPastStatistics(suite.shortTerm);
     tie(std::ignore // socket
