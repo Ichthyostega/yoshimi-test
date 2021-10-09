@@ -87,6 +87,8 @@ public:
     virtual void out(string line)                   =0;
     /** capture and maybe show error condition */
     virtual void err(string line)                   =0;
+    /** capture and show notice message */
+    virtual void note(string line)                  =0;
 
     /** discard log data storage */
     virtual void clearLog()                         =0;

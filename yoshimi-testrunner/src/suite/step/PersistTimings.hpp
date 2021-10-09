@@ -31,12 +31,11 @@
  ** after normalisation through the platform model to reduce the impact of the local
  ** execution environment. Subsequent invocations will then use this timing baseline
  ** to detect changed temporal behaviour.
- ** 
- ** @todo WIP as of 9/21
+ **
  ** @see TimingObservation.hpp
  ** @see SoundJudgement.hpp
  ** @see PlatformCalibration.hpp
- ** 
+ **
  */
 
 
@@ -48,13 +47,15 @@
 #include "suite/TestStep.hpp"
 #include "suite/step/PathSetup.hpp"
 #include "suite/step/TimingObservation.hpp"
+#include "suite/step/TimingJudgement.hpp"
 #include "Config.hpp"
 
-//#include <string>
+#include <string>
 
 namespace suite{
 namespace step {
 
+using std::string;
 
 /**
  * Write table with timing data and computed statistics into a CSV file.
@@ -72,6 +73,7 @@ class PersistTimings
     : public TestStep
 {
     TimingObservation& timings_;
+    TimingJudgement& judgement_;
     bool recordBasline_;
 
 
@@ -79,8 +81,11 @@ class PersistTimings
     try {
         if (not timings_)
             return Result::Warn("No Timing data to persist.");
-        timings_.saveData(recordBasline_);
-        return Result::OK();
+
+        bool createBaseline = recordBasline_ and not judgement_.succeeded;
+        string idAndExpense = timings_.saveData(createBaseline);
+        return createBaseline? Result::Warn("Store Baseline... "+idAndExpense)
+                             : Result::OK();
 
     }
     catch(error::State& writeFailure)
@@ -96,8 +101,10 @@ class PersistTimings
 
 public:
     PersistTimings(bool baselineMode
-                  ,TimingObservation& timings)
+                  ,TimingObservation& timings
+                  ,TimingJudgement& judgement)
         : timings_{timings}
+        , judgement_{judgement}
         , recordBasline_{baselineMode}
     { }
 };

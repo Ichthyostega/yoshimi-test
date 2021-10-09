@@ -80,7 +80,7 @@ void Stage::renderReport()
  *      - `code == 1` some warnings, maybe tolerable deviations.
  *      - `code == 2` severe deviation from expected behaviour.
  *      - `code == 3` malfunction during test execution
- *      - `code == 4` fatal error and bail-out
+ * @note main() will return `code == -1` when catching an exception
  */
 suite::ResCode Stage::getReturnCode()  const
 {

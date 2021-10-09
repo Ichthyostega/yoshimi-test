@@ -107,7 +107,7 @@ inline STEP& WiringMould::addStep(ARGS&& ...args)
 }
 
 /**
- * Build and add a concrete suite::TestStep
+ * Conditionally build and add a concrete suite::TestStep.
  * @return a reference wrapped into a std::optional
  * @remark allows to express the dependency on an optional step,
  *         i.e. a step which may or may not be present in the test definition.

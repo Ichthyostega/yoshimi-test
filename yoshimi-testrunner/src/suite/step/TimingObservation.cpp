@@ -42,6 +42,7 @@
 #include "suite/Timings.hpp"
 #include "Config.hpp"
 
+#include <cmath>
 #include <tuple>
 #include <vector>
 #include <string>
@@ -240,7 +241,7 @@ public:
         runtime_.save(rows2keep);
     }
 
-    void maybeStoreNewBaseline(uint baselineAvg, uint baselineKeep)
+    void storeNewBaseline(uint baselineAvg, uint baselineKeep)
     {
         expense_.dupRow();
         // record contextual info
@@ -253,10 +254,17 @@ public:
         expense_.runtime = averageLastN(runtime_.runtime.data, baselineAvg);
         expense_.expense = expense_.runtime / expense_.platform;
 
+        // discard excess precision, since error band typically is well above 10%
+        expense_.expense = std::round(expense_.expense*100)/100;
+
         // Timestamp of creating this new baseline
         expense_.timestamp = Config::timestamp;
-        if (isSignificantExpenseChange())
-            expense_.save(baselineKeep);
+        expense_.save(baselineKeep);
+    }
+
+    double getExpense()  const
+    {
+        return hasBaseline()? expense_.expense : 0.0;
     }
 
     array<double,4> getExpenseDeltaTolerance()  const
@@ -347,22 +355,6 @@ private:
         // divide by N-1 since it's a guess for the real variance
         return 3 * sqrt(variance);
     }
-
-    /** determine if the current expense factor _differs significantly._
-     * @return if using the previous expense would change the delta beyond
-     *          1/3 of the current [local tolerance](\ref #calcLocalTolerance)
-     */
-    bool isSignificantExpenseChange()
-    {
-        size_t n = expense_.size();
-        if (n < 2)
-            return true; // significant if there is nothing to compare
-        double newExpense = expense_.expense.data[n-1];
-        double oldExpense = expense_.expense.data[n-2];
-        // by definition: runtime(expected) = platform * expense
-        double deltaChange = expense_.platform * (newExpense-oldExpense);
-        return fabs(deltaChange) > runtime_.tolerance / 3;
-    }
 };
 
 
@@ -407,12 +399,16 @@ void TimingObservation::calculateDataRecord()
 }
 
 
-void TimingObservation::saveData(bool includingBaseline)
+string TimingObservation::saveData(bool includingBaseline)
 {
     data_->persistRuntimes(globalTimings_->timingsKeep);
     if (includingBaseline)
-        data_->maybeStoreNewBaseline(globalTimings_->baselineAvg
-                                    ,globalTimings_->baselineKeep);
+        data_->storeNewBaseline(globalTimings_->baselineAvg
+                               ,globalTimings_->baselineKeep);
+
+    return data_->testID
+         +" ExpenseFactor: "
+         +formatVal(data_->getExpense());
 }
 
 array<uint,2> TimingObservation::getIntegrationTimespan() const

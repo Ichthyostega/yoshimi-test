@@ -91,6 +91,13 @@ class OutputCapturingSimpleProgress
         cerr << output_.back() <<endl;
     }
 
+    void note(string line)  override
+    {
+        output_.emplace_back(line);
+        // Notice messages always printed, but to STDOUT
+        cout << output_.back() <<endl;
+    }
+
     smatch grep(regex const& pattern) const override
     {
         smatch mat;
@@ -114,6 +121,7 @@ class BlackHoleProgress
     void indicateTest(fs::path)  override {/* NOP */}
     void out(string)             override {/* NOP */}
     void err(string)             override {/* NOP */}
+    void note(string)            override {/* NOP */}
     void clearLog()              override {/* NOP */}
 
     smatch grep(regex const&) const override { return smatch(); }

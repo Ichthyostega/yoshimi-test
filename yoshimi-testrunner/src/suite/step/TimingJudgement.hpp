@@ -117,7 +117,7 @@ class TimingJudgement
                                +"ms Runtime="+formatVal(runtime)+"ms.");
 
         // watch out for short term and long term trends...
-        auto [shortTerm, longTerm] = timings_.getIntegrationTimespan();
+        auto [shortTerm, longTerm]                 = timings_.getIntegrationTimespan();
         auto [socketShort,gradientShort,corrShort] = timings_.calcDeltaTrend(shortTerm);
         auto [socketLong,gradientLong,corrLong]    = timings_.calcDeltaTrend(longTerm);
 
@@ -126,25 +126,25 @@ class TimingJudgement
         // Use slope of the regression as trend indicator, but weighted by correlation to sort out random peaks
         // Criterion: taken over the observation period, this indicator must be within random fluctuation band
         if (tolerance < shortTermTrend)
-            return Result::Fail("Upward deviation trend: runtime increased by +"
+            return Result::Fail("Upward deviation trend: runtime Δ increased by +"
                                +formatVal(100*shortTermTrend / runtime)
                                +"% during the last "+formatVal(shortTerm)+" test runs."
-                               +"Current runtime: " +formatVal(runtime)+"ms.");
+                               +" Current runtime: " +formatVal(runtime)+"ms.");
         if (shortTermTrend < -tolerance)
-            return Result::Warn("Downward trend on the run times: "
+            return Result::Warn("Downward trend on the runtime Δ: "
                                +formatVal(100*shortTermTrend / runtime)
                                +"% during the last "+formatVal(shortTerm)+" test runs."
-                               +"Current runtime: " +formatVal(runtime)+"ms.");
+                               +" Current runtime: " +formatVal(runtime)+"ms.");
         if (tolerance < longTermTrend)
             return Result::Warn("Long-term upward trend on the run times: +"
                                +formatVal(100*longTermTrend / runtime)
                                +"% during the last "+formatVal(longTerm)+" test runs."
-                               +"Current runtime: " +formatVal(runtime)+"ms.");
+                               +" Current runtime: " +formatVal(runtime)+"ms.");
         if (longTermTrend < -tolerance)
             return Result::Warn("Note: long-term downward trend on the run times: "
                                +formatVal(100*longTermTrend / runtime)
                                +"% during the last "+formatVal(longTerm)+" test runs."
-                               +"Current runtime: " +formatVal(runtime)+"ms.");
+                               +" Current runtime: " +formatVal(runtime)+"ms.");
         return Result::OK();
     }
 
