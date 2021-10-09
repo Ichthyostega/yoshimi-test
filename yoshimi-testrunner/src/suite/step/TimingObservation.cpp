@@ -286,7 +286,7 @@ public:
         auto platformData = backwards(runtime_.platform.data);
         uint points = 0;
         for (auto p = begin(platformData);
-             p != end(platformData) and fabs(*p - anchor) <= tolerance;
+             p != end(platformData) and *p!=0.0 and fabs(*p - anchor) <= tolerance;
              ++p
             )
             ++points;
@@ -412,18 +412,15 @@ void TimingObservation::saveData(bool includingBaseline)
     data_->persistRuntimes(globalTimings_->timingsKeep);
     if (includingBaseline)
         data_->maybeStoreNewBaseline(globalTimings_->baselineAvg
-                               ,globalTimings_->baselineKeep);
+                                    ,globalTimings_->baselineKeep);
 }
 
-uint TimingObservation::shortTermTimespan() const
+array<uint,2> TimingObservation::getIntegrationTimespan() const
 {
-    return min(data_->size(), globalTimings_->baselineAvg);
-}
-
-uint TimingObservation::longTermTimespan()  const
-{
-    return min(data_->stablePlatformTimespan()
-              ,globalTimings_->longtermAvg);
+    uint availData = data_->stablePlatformTimespan();
+    return { min(availData, globalTimings_->baselineAvg)
+           , min(availData, globalTimings_->longtermAvg)
+           };
 }
 
 /** @return current (runtime, expense, delta, tolerance) */
