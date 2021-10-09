@@ -34,7 +34,7 @@ simplest form, the build can be started with...
 - libSndfile (e.g. `libsndfile1-dev` on Debian/Ubuntu) (**)
 
 Note:
-- (*) we also need the C++17 `<filesystem>` — and thus a complete standard lib, as with e.g. GCC-9
+- (*) we also need the C++17 `<filesystem>` — GCC-9 or above should be fine.
 - (**): we use libSndfile only for reading/writing WAV files. If further dependencies are problematic,
 you might `configure --disable-alsa --disable-external-libs` to omit ALSA, FLAC and Vorbis.
 
@@ -53,7 +53,7 @@ the 'testsuite' subdirectory. Alternatively you might want to use another Yoshim
 
 For the verification of run times, it is necessary to `--calibrate` your setup at least once initially.
 Recommendation is to repeat that *platform calibration* after performing the Testsuite about 10 times.
-Please read the chapter [Speed and Timing measurements]<#speed-and-timing-measurements> to understand
+Please read the chapter [Speed and Timing measurements](#speed-and-timing-measurements) to understand
 what this entails.
 
 
@@ -132,32 +132,35 @@ exhibit random fluctuations. This problem can be mitigated by capturing a *time 
 on the data collected. Thus, each test case with enabled running time verification (Parameter `Test.verifyTimes = On`)
 maintains a data collection, where each further execution of the Testsuite will add another data point. This data is
 stored in CSV files within the Testsuite tree, separate for each test case. The actual time measurement happens directly
-within Yoshimi itself, in the "TestInvoker" built into the CLI — capturing the pure Synth computation time and data
-handling cost between »NoteOn« and »NoteOff«, yet disregarding any communication latency related to MIDI. (Remark 10/2021
-we also intend to add a second test type based on loading as LV2 plugin, which would allow to observe the MIDI protocol
+within Yoshimi itself, in the "TestInvoker" built into the CLI — capturing the pure Synth computation time and data handling
+cost between »NoteOn« and »NoteOff«, yet disregarding any communication latency related to MIDI. (Remark 10/2021 we also
+intend to add a second test type eventually, based on loading as LV2 plugin, which would allow to observe the MIDI protocol
 overhead under controlled conditions). Based on this raw timing data, a *moving average* of the run time can be computed,
 short term and long term *trends* can be observed, and a typical *fluctuation bandwidth* can be established for each
 test case, allowing to distinguish between ephemeral and relevant timing changes.
 
 #### Configuration related to timings
 
-- `timingsKeep` (default: 500) the number of past timing data points to retain for each test case
-- `baselineKeep` (default: 20) history trail of obsolete baseline and calibration values to retain
-- `baselineAvg` (default: 10) integration interval (number of points to average) for the "current value",
-   for *baseline checks*, the *platform calibration* and short-term trends.
-- `longtermAvg` (default: 100) integration interval for detecting long-term trends.
+- `timingsKeep` (default: 500) number of past timing data points to retain for each testcase
+- `baselineKeep` (default: 20) history trail of baseline and calibration values to retain
+- `baselineAvg` (default: 10) integration interval (i.e. number of points to average) for "the"
+   *current value*, for *baseline checks*, the *platform calibration* and *short-term trends*.
+- `longtermAvg` (default: 100) integration interval for detecting *long-term trends*.
 
 
 #### Timing model and Platform Calibration
 
-In regard to the environment dependent and fluctuating nature of timing data, a *simplified Model* for the timings
-is postulated, to structure and segregate the observed timing into several components
+In regard to the environment-dependent and fluctuating nature of timing data, \
+a *simplified Model* for the timings is postulated, to structure and segregate the observed timing into several components
 
-- a common and generic *speed* factor, shared by all computations, and based solely on the number of samples to compute;
-  this is a *linear model*, i.e. time = socketOverhead + speed · sampleCnt
-- on top of this generic **Platform Model**, each individual case is associated with an **Expense Factor**, assumed to
-  be static and independent from the environment
-- and the actual observed time is assumed to fluctuate randomly and uncorrelated (normal distribution)
+- a common and generic *speed* factor, shared by all computations,
+  and based solely on the number of samples to compute; this is a *linear model*, \
+  i.e. time = socketOverhead + speed · sampleCnt
+- on top of this generic **Platform Model** for the whole Testsuite,
+  each individual case is associated with an **Expense Factor**,
+  assumed to be static, portable and independent from the environment
+- and the actual observed time is assumed to fluctuate randomly and uncorrelated \
+  (normal distribution)
 
 > observedTiming ≕ (socketOverhead + speed·sampleCnt) · expenseFactor + ε
 
@@ -217,9 +220,9 @@ When observing these constraints, it is possible to load (and even manipulate) t
   * "Runtime ms": **actual timing measurement** for this test case (milliseconds)
   * "Samples count": overall number of samples computed for this test case
   * "Notes count": overall number of test notes (NoteOn &harr; NoteOff) in this test case
-  * "Platform ms": run time *as predicted by the current platform model* for these (samples,notes)
+  * "Platform ms": run time *predicted by current platform model*, given (samples,notes)
   * "Expense Factor": this is the *established baseline* for this test case (expectation)
-  * "Expense Factor(current)": real expense for this actual runtime
+  * "Expense Factor(current)": effective real expense for this actual runtime
   * "Delta ms": absolute **difference** of current runtime **against expectation**
   * "MA Time short": moving average over the last 5 data points to level out fluctuations
   * "Tolerance": error bandwidth based on the actual fluctuations observed over the last `baselineAvg`
@@ -234,8 +237,10 @@ When observing these constraints, it is possible to load (and even manipulate) t
   * "Runtime(avg) ms": averaged runtime used to define the Baseline
   * "Samples count": (samples,notes) as currently used by this test case
   * "Notes count"
-  * "Platform ms": runtime prediction by the current local platform model for these (samples,notes)
-  * "Expense Factor": resulting **expense baseline**, calculated as `averagedRuntime/platformPrediction`
+  * "Platform ms": runtime prediction by the current local platform model, \
+    using the given (samples,notes) as input
+  * "Expense Factor": resulting **expense baseline**, calculated as
+    > expense ≔ averagedRuntime / platformPrediction
 
 
 - `testsuite/Suite-platform.csv`: Local Platform Model calibration. (&rarr; Timings.cpp)
@@ -258,7 +263,7 @@ When observing these constraints, it is possible to load (and even manipulate) t
   * "Runtime ms": actual (averaged) runtime in milliseconds
   * "Runtime(norm)": after normalising away the (known, established) Expense Factor,
     this is the Y-Value actually used for the regression fit. Thus anything non-linear is
-    "stashed" into the Expense Factor and assumed to be a *property of this specific test case*
+    "stashed" into the Expense Factor and assumed to be a *property of this specific test*
   * "Runtime(model)": Y-value of the regression line for this samples count
   * "Expense Factor": Expense Factor, also used as weight factor on this data point
   * "Delta": difference between Runtime(norm) and model, used to calculate Delta(sdev)
@@ -273,5 +278,5 @@ When observing these constraints, it is possible to load (and even manipulate) t
   * "Speed ns/smp": current local Platform Model parameter (gradient)
   * "Delta (avg)": **averaged Δ** over all test cases; should ideally be zero.
   * "Delta (max)": maximum Δ encountered in any test case
-  * "Delta (sdev)": standard deviation of the individual Δ around ∅Δ
-  * "Tolerance": error tolerance band, based on fluctuation of ∅Δ over time
+  * "Delta (sdev)": standard deviation of the individual Δ around avgΔ
+  * "Tolerance": error tolerance band, based on fluctuation of avgΔ over time

@@ -92,12 +92,12 @@ class PlatformCalibration
     Result perform()  override
     {
         if (not timings_->isCalibrated())
-            progressLog_.err("Calibration: +++ establish new Platform Model +++");
+            progressLog_.note("Calibration: +++ establish new Platform Model +++");
         else
-            progressLog_.out("Calibration: +++ re-fit Platform Model to current data +++");
+            progressLog_.note("Calibration: +++ re-fit Platform Model to current data +++");
         progressLog_.out("Calibration: preparing "+str(timings_->dataCnt())+" data points...");
         timings_->fitNewPlatformModel();
-        progressLog_.out("Calibration: "+timings_->sumariseCalibration());
+        progressLog_.note("Calibration: "+timings_->sumariseCalibration());
         return Result::OK();
     }
 

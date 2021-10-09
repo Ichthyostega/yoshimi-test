@@ -103,6 +103,8 @@ public:
 
         if (config.baseline)
             out_ << "+++ "+emph("Baseline capturing mode")+" +++\n\n" <<endl;
+        if (config.calibrate)
+            out_ << "+++ "+emph("Platform Model (re)calibration")+" +++\n\n" <<endl;
         if (config.verbose)
             reportTimes_ = true;
     }

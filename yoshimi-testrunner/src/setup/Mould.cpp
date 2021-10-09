@@ -141,7 +141,7 @@ class ExeCliMould
                               .addStep<TimingJudgement>(*timings,suiteTimings_);
 
                            optionally(shallVerifyTimes(spec))
-                              .addStep<PersistTimings>(shallRecordBaseline_, *timings);
+                              .addStep<PersistTimings>(shallRecordBaseline_, *timings, *timeTrend);
 
         /*mark result*/    addStep<Summary>(spec.at(KEY_Test_topic)
                                            ,invocation

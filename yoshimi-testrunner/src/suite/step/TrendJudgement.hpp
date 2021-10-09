@@ -116,6 +116,15 @@ class TrendJudgement
         if (overallTolerance < currDelta)
             return Result::Fail("Tests overall slower: ∅Δ ="+formatVal(currDelta)+"ms (averaged "+formatVal(points)+" tests)");
 
+        // helper to show "% change" of a trend,
+        // which is considered more meaningful than showing absolute values
+        auto indicatePrecentChange = [&currDelta](double trend)
+                                     {   // ... yet the problem is: currDelta can be close to zero
+                                         double prevVal = currDelta - trend;
+                                         double refVal = std::max(fabs(prevVal), fabs(currDelta)) + 1e-15;
+                                         return formatVal(100 * trend/refVal)+"% ";
+                                     };
+
         // watch out for short term and long term trends...
         // Explanation: linear regression over the averaged delta values of past Testsuite executions
         double shortTermTrend = s.gradientShortTerm * s.shortTerm * fabs(s.corrShortTerm);
@@ -124,20 +133,20 @@ class TrendJudgement
         // Criterion: taken over the observation period, this indicator must be within random fluctuation band
         if (tolerance < shortTermTrend)
             return Result::Fail("Trend towards longer run times: averaged Δ increased by +"
-                               +formatVal(100*shortTermTrend / fabs(currDelta))
-                               +"% during the last "+formatVal(s.shortTerm)+" test runs.");
+                               +indicatePrecentChange(shortTermTrend)
+                               +"during the last "+formatVal(s.shortTerm)+" test runs.");
         if (shortTermTrend < -tolerance)
             return Result::Warn("Trend towards shorter run times: averaged Δ changed by "
-                               +formatVal(100*shortTermTrend / fabs(currDelta))
-                               +"% during the last "+formatVal(s.shortTerm)+" test runs.");
+                               +indicatePrecentChange(shortTermTrend)
+                               +"during the last "+formatVal(s.shortTerm)+" test runs.");
         if (tolerance < longTermTrend)
             return Result::Warn("Long-term Trend towards longer run times: averaged Δ increased by +"
-                               +formatVal(100*longTermTrend / fabs(currDelta))
-                               +"% during the last "+formatVal(s.longTerm)+" test runs.");
+                               +indicatePrecentChange(longTermTrend)
+                               +"during the last "+formatVal(s.longTerm)+" test runs.");
         if (longTermTrend < -tolerance)
             return Result::Warn("Note: long-term Trend towards shorter run times: averaged Δ changed by "
-                               +formatVal(100*longTermTrend / fabs(currDelta))
-                               +"% during the last "+formatVal(s.longTerm)+" test runs.");
+                               +indicatePrecentChange(longTermTrend)
+                               +"during the last "+formatVal(s.longTerm)+" test runs.");
         return Result::OK();
     }
 

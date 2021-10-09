@@ -112,7 +112,7 @@ public:
            and bool{data_};
     }
 
-    void saveData(bool includingBaseline);
+    string saveData(bool includingBaseline);
 
     array<uint,2> getIntegrationTimespan() const;
     array<double,4> getTestResults()       const;
