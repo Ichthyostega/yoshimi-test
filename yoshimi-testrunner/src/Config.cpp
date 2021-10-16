@@ -153,6 +153,37 @@ const string Config::timestamp = currSysTimeISO();
 
 
 
+/**
+ * Lookup and resolve the actual Yoshimi Session-state file to load when launching.
+ * The bare filename is configured in `defaults.ini` (or `setup.ini` or commandline);
+ * the file is searched within the given work directory first, then falling back
+ * to the configured `suitePath` (Testsuite root directory). This way, a subdirectory
+ * within the Testsuite may define a specific initial state.
+ * @return fully qualified path to the state file
+ * @throw error::Misconfig if not found
+ * @note for reproducible results it is essential to control all state within Yoshimi;
+ *       the file should thus be checked into Git and preferably use default values.
+ */
+fs::path Config::locateInitialState(fs::path workdir)  const
+{
+    if (not fs::is_directory(workdir))
+        throw error::LogicBroken("Testcase definition directory "+util::formatVal(workdir)+" not found.");
+    if (not fs::is_directory(suitePath))
+        throw error::LogicBroken("Testsuite root directory "+util::formatVal(suitePath)+" not found.");
+
+    fs::path stateFile = workdir / initialState;
+    if (not fs::exists(stateFile))
+        stateFile = suitePath / initialState;
+
+    if (fs::exists(stateFile))
+        return fs::consolidated(stateFile);
+    else
+        throw error::Misconfig("Initial Yoshimi Session state file "+util::formatVal(initialState)
+                              +" not found, neither in current Test work directory "+util::formatVal(workdir)
+                              +", nor in the Testsuite root directory "+util::formatVal(suitePath)+".");
+}
+
+
 
 /**
  * Extend the existing specification settings to fill in additional bindings with lower precedence.

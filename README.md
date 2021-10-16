@@ -64,6 +64,14 @@ want to edit this directly, since it is checked into Git — rather, for adaptin
 situation, create a file '`setup.ini`' in the current working directory; these local settings will take precedence
 over the defaults. And command-line options with the same name will take precedence over any configuration.
 
+### Controlling Yoshimi state
+
+Yoshimi maintains a lot of persistent setup and wiring, typically stored into files in '`$HOME/.config/yoshimi`'.
+However, a complete "Session state" snapshot can be stored and reloaded as `*.state` file. For reproducible results,
+the Testsuite must prevent user's configuration from "leaking" into the test execution — a well defined `initial.state`
+file is thus loaded for every launched test. By default, this file is placed into the Testsuite root, while each
+subdirectory within the Suite may define its own copy, which will take precedence over the root default.
+
 
 ## The Testsuite
 
@@ -155,14 +163,14 @@ a *simplified Model* for the timings is postulated, to structure and segregate t
 
 - a common and generic *speed* factor, shared by all computations,
   and based solely on the number of samples to compute; this is a *linear model*, \
-  i.e. time = socketOverhead + speed · sampleCnt
+  i.e. time = baseOverhead + speed · sampleCnt
 - on top of this generic **Platform Model** for the whole Testsuite,
   each individual case is associated with an **Expense Factor**,
   assumed to be static, portable and independent from the environment
 - and the actual observed time is assumed to fluctuate randomly and uncorrelated \
   (normal distribution)
 
-> observedTiming ≕ (socketOverhead + speed·sampleCnt) · expenseFactor + ε
+> observedTiming ≕ (baseOverhead + speed·sampleCnt) · expenseFactor + ε
 
 Obviously, this is an oversimplification of the real situation, yet seemingly enough to *calibrate* for a given environment,
 allowing to *store the Expense Factors* as "Baseline" to *verify observed timings.* Whenever the actual observed timing

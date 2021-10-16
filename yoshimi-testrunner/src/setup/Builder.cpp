@@ -173,13 +173,16 @@ Builder& Builder::buildTree()
  */
 StepSeq Builder::buildTestcase(fs::path topicPath)
 {
+    fs::path testWorkDir = (ctx_.root / topicPath).parent_path();
+
     MapS spec = util::parseSpec(ctx_.root / topicPath);
     Config::supplySettings(spec, def::DEFAULT_TEST_SPEC);
     spec.insert({KEY_Test_subj,  selectSubject(spec[KEY_Test_type])});
     spec.insert({KEY_Test_args,  ctx_.config.arguments});
     spec.insert({KEY_Test_topic, topicPath});
 
-    spec[KEY_workDir] = (ctx_.root / topicPath).parent_path();
+    spec[KEY_workDir] = testWorkDir;
+    spec[KEY_Test_args] += " --state="+string(ctx_.config.locateInitialState(testWorkDir));
     if (contains(spec, KEY_Test_addArgs))
         spec[KEY_Test_args] += " "+spec[KEY_Test_addArgs];
 

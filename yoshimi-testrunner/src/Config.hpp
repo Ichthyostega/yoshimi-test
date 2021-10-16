@@ -151,14 +151,17 @@ class ConfigSource
 {
     class Val
     {
-        string rawVal_;
+        string& rawVal_;
     public:
-        Val(string setting)
+        Val(string& setting)
             : rawVal_{setting}
         { }
 
         operator string()
         { return rawVal_; }
+
+        string& operator=(string const& src)
+        { return rawVal_ = src; }
 
         /** convert string representation of a config setting
          *  into typed value used in the Config instance. */
@@ -219,6 +222,7 @@ public:
     CFG_PARAM(fs::path, subject);
     CFG_PARAM(string,   arguments);
     CFG_PARAM(fs::path, suitePath);
+    CFG_PARAM(fs::path, initialState);
     CFG_PARAM(uint,     timingsKeep);
     CFG_PARAM(uint,     baselineKeep);
     CFG_PARAM(uint,     baselineAvg);
@@ -243,6 +247,7 @@ private: /* ===== Initialisation from raw settings ===== */
         : subject     {rawParam[KEY_subject]}
         , arguments   {rawParam[KEY_arguments]}
         , suitePath   {rawParam[KEY_suitePath]}
+        , initialState{rawParam[KEY_initialState]}
         , timingsKeep {rawParam[KEY_timingsKeep].as<uint>()}
         , baselineKeep{rawParam[KEY_baselineKeep].as<uint>()}
         , baselineAvg {rawParam[KEY_baselineAvg].as<uint>()}
@@ -259,6 +264,7 @@ private: /* ===== Initialisation from raw settings ===== */
             CFG_DUMP(subject);
             CFG_DUMP(arguments);
             CFG_DUMP(suitePath);
+            CFG_DUMP(initialState);
             CFG_DUMP(timingsKeep);
             CFG_DUMP(baselineKeep);
             CFG_DUMP(baselineAvg);
@@ -293,6 +299,7 @@ public:
     static void supplySettings(MapS& existingSettings,
                                MapS const& additionalSettings);
 
+    fs::path locateInitialState(fs::path workdir) const;
 
 private:
     static Settings combine_and_preprocess(std::initializer_list<ConfigSource> sources)
@@ -306,6 +313,11 @@ private:
            and settings[KEY_calibrate].as<bool>())
             throw error::Misconfig("unwise to store --baseline and then --calibrate after the suite in one run; "
                                    "better store --baseline in the next run, based on the new calibration.");
+        fs::path suiteRoot = fs::consolidated(fs::path(settings[KEY_suitePath]));
+        if (not fs::is_directory(suiteRoot))
+            throw error::Misconfig("Testsuite root directory "+util::formatVal(suiteRoot)+" not found.");
+        settings[KEY_suitePath] = string{suiteRoot};
+
         return settings;
     }
 
