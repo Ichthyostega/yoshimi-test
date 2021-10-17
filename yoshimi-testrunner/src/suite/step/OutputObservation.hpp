@@ -52,7 +52,6 @@ namespace step {
 
 namespace {
     const regex EXTRACT_RUNTIME{def::YOSHIMI_TEST_TIMING_PATTERN +"|"+def::YOSHIMI_SETUP_TEST_PATTERN, regex::optimize};
-    const regex EXTRACT_PARAMS {def::YOSHIMI_TEST_PARAM_PATTERN  +"|"+def::YOSHIMI_SETUP_TEST_PATTERN, regex::optimize};
 }
 
 using std::optional;
@@ -69,9 +68,10 @@ class OutputObservation
 
     // observed values....
     optional<double> runtime_;
-    optional<uint>   notesCnt_;
     optional<size_t> samples_;
+    optional<uint>   notesCnt_;
     optional<size_t> chunkSiz_;
+    optional<uint>   smpRate_;
 
 
     Result perform()  override
@@ -85,28 +85,16 @@ class OutputObservation
             throw error::LogicBroken{"Launch marked as successful, "
                                      "but no traces of test invocation in Yoshimi output."};
         else
-        if (not mat[1].matched)
+        if (not mat[1].matched)  //the alternative halting pattern "set test" matched...
             return Result{ResCode::MALFUNCTION, "No timing data reported by Yoshimi"};
-        else
-            runtime_ = util::parseAs<double>(mat[1]);
 
-        // Retrieve further key parameters from the Test-Context in the Yoshimi-CLI
-        mat = theTest_.grepOutput(EXTRACT_PARAMS);
-        assert(!mat.empty()); // we know already that YOSHIMI_SETUP_TEST_PATTERN matches
-        if (not mat[2].matched and not mat[3].matched)
-            return Result{ResCode::MALFUNCTION, "Yoshimi CLI did not report the test parameters (notes count, duration)"};
-        else
-        {
-            // @ TEST: exec 4 notes start (F#2) step 4 up to (F#3) on Ch.1 each 1.0s (hold 80%) buffer=256 write "sound.raw"
-            //             ^1^                                                  ^2^3^                  ^4^
-            chunkSiz_ = parseAs<uint>(mat[4]);
-            if (mat[1].matched)
-                notesCnt_ = parseAs<uint>(mat[1]);
-            else
-                notesCnt_ = 1;
-            samples_  = TODO_workaround_deduceOverallSamplesCnt(parseAs<double>(mat[2]), mat[3]);
-        }
-
+        //TEST::Complete runtime 29233944.0 ns speed 121.8 ns/Sample samples 240000 notes 1 buffer 128 rate 48000
+        //                       ^1^                                         ^2^         ^3^       ^4^      ^5^
+        runtime_  = util::parseAs<double>(mat[1]);
+        samples_  = util::parseAs<size_t>(mat[2]);
+        notesCnt_ = util::parseAs<uint>  (mat[3]);
+        chunkSiz_ = util::parseAs<size_t>(mat[4]);
+        smpRate_  = util::parseAs<uint>  (mat[5]);
         return Result::OK();
     }
 
@@ -115,25 +103,27 @@ public:
         : theTest_{invocation}
     { }
 
-    optional<double> getRuntime()  const { return runtime_; }
-    optional<uint>   getNotesCnt() const { return notesCnt_;}
-    optional<size_t> getSamples()  const { return samples_; }
+    double getRuntime()  const { return assumePresent(runtime_); }
+    uint   getNotesCnt() const { return assumePresent(notesCnt_);}
+    size_t getSamples()  const { return assumePresent(samples_); }
+    uint   getSmpRate()  const { return assumePresent(smpRate_); }
+
+    bool wasCaptured()   const
+    {
+        return theTest_.isPerformed()
+           and runtime_.has_value()
+           and samples_.has_value()
+           and smpRate_.has_value();
+    };
 
 
 private:
-    /** @todo better let the TestInvoker in Yoshimi print the exact number
-     *        - the duration is rounded in the CLI output
-     *        - the SynthEngine could process less than the requested chunks
-     */
-    size_t TODO_workaround_deduceOverallSamplesCnt(double duration, string timeUnit)
+    template<typename VAL>
+    VAL assumePresent(optional<VAL> const& capturedData)  const
     {
-        int samplerate = theTest_.getSampleRate();
-        if (timeUnit == "ms")
-            duration /= 1000.0;
-        //////////////////////////////////////////////////////////////////////////TODO: Code duplicated from Yoshimi TestInvoker.h (line 373)
-        size_t turnCnt = ceilf(duration * samplerate / *chunkSiz_);
-        //////////////////////////////////////////////////////////////////////////TODO: (End) duplicated code
-        return *notesCnt_ * turnCnt * *chunkSiz_;
+        if (capturedData)
+            return *capturedData;
+        throw error::State("Missing data from test, yet no failure signalled.");
     }
 };
 

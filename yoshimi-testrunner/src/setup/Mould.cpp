@@ -121,8 +121,10 @@ class ExeCliMould
                                                ,testScript);
         auto& invocation = addStep<Invocation>(launcher,progressLog_);
 
+        auto& output     = addStep<OutputObservation>(invocation);
+
         auto soundProbe  = optionally(shallVerifySound(spec))
-                              .addStep<SoundObservation>(invocation, pathSetup);
+                              .addStep<SoundObservation>(output, pathSetup);
 
         auto baseline    = optionally(shallVerifySound(spec))
                               .addStep<SoundJudgement>(*soundProbe, pathSetup);
@@ -131,11 +133,8 @@ class ExeCliMould
                               .addStep<SoundRecord>(shallRecordBaseline_
                                                   ,*soundProbe, *baseline, pathSetup);
 
-        auto output      = optionally(shallVerifyTimes(spec))
-                              .addStep<OutputObservation>(invocation);
-
         auto timings     = optionally(shallVerifyTimes(spec))
-                              .addStep<TimingObservation>(invocation,*output,suiteTimings_, pathSetup);
+                              .addStep<TimingObservation>(output,suiteTimings_, pathSetup);
 
         auto timeTrend   = optionally(shallVerifyTimes(spec))
                               .addStep<TimingJudgement>(*timings,suiteTimings_);

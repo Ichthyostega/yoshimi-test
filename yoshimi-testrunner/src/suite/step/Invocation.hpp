@@ -83,11 +83,6 @@ public:
            and not scaffolding_.isBroken();
     }
 
-    int getSampleRate()  const
-    {
-        return 48000; /////////////////////TODO get that from a setup step
-    }
-
     smatch grepOutput(regex const& pattern)  const
     {
         return progressLog_.grep(pattern);

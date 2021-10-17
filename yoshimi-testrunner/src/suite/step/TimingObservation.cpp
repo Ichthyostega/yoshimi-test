@@ -366,13 +366,11 @@ private:
 TimingObservation::~TimingObservation() { }
 
 
-TimingObservation::TimingObservation(Invocation& invocation
-                                    ,OutputObservation& output
+TimingObservation::TimingObservation(OutputObservation& output
                                     ,suite::PTimings aggregator
                                     ,PathSetup& pathSetup)
-    : theTest_{invocation}
-    , pathSpec_{pathSetup}
-    , output_{output}
+    : pathSpec_{pathSetup}
+    , testData{output}
     , globalTimings_{aggregator}
     , data_{}
 { }
@@ -381,9 +379,9 @@ TimingObservation::TimingObservation(Invocation& invocation
 
 void TimingObservation::calculateDataRecord()
 {
-    double runtime = *output_.getRuntime();
-    uint   notes   = *output_.getNotesCnt();
-    size_t smps    = *output_.getSamples();
+    double runtime = testData.getRuntime();
+    uint   notes   = testData.getNotesCnt();
+    size_t smps    = testData.getSamples();
 
     double prediction = globalTimings_->evalPlatformModel(notes,smps);
 

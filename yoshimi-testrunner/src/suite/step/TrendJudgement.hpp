@@ -132,7 +132,7 @@ class TrendJudgement
         // Use slope of the regression as trend indicator, but weighted by correlation to sort out random peaks
         // Criterion: taken over the observation period, this indicator must be within random fluctuation band
         if (tolerance < shortTermTrend)
-            return Result::Fail("Trend towards longer run times: averaged Δ increased by +"
+            return Result::Warn("Trend towards longer run times: averaged Δ increased by +"
                                +indicatePrecentChange(shortTermTrend)
                                +"during the last "+formatVal(s.shortTerm)+" test runs.");
         if (shortTermTrend < -tolerance)

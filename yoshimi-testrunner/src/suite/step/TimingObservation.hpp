@@ -46,9 +46,8 @@
 
 #include "util/nocopy.hpp"
 #include "suite/TestStep.hpp"
-#include "suite/step/Invocation.hpp"
-#include "suite/step/OutputObservation.hpp"
 #include "suite/step/PathSetup.hpp"
+#include "suite/step/OutputObservation.hpp"
 #include "suite/Timings.hpp"
 #include "Config.hpp"
 
@@ -77,9 +76,8 @@ using PData = std::unique_ptr<TimingTestData>;
 class TimingObservation
     : public TestStep
 {
-    Invocation& theTest_;
     PathSetup& pathSpec_;
-    OutputObservation& output_;
+    OutputObservation& testData;
     suite::PTimings globalTimings_;
 
     PData data_;
@@ -87,10 +85,7 @@ class TimingObservation
 
     Result perform()  override
     {
-        if (not theTest_.isPerformed())
-            return Result::Warn("Skip TimingObservation");
-
-        if (not hasCapturedData())
+        if (not testData.wasCaptured())
             return Result::Warn("No runtime measurement -- skip TimingObservation.");
 
         calculateDataRecord();
@@ -100,15 +95,14 @@ class TimingObservation
 
 public:
    ~TimingObservation();
-    TimingObservation(Invocation& invocation
-                     ,OutputObservation& output
+    TimingObservation(OutputObservation& output
                      ,suite::PTimings aggregator
                      ,PathSetup& pathSetup);
 
 
     operator bool()  const
     {
-        return hasCapturedData()
+        return testData.wasCaptured()
            and bool{data_};
     }
 
@@ -119,13 +113,6 @@ public:
     array<double,3> calcDeltaTrend(uint n) const;
 
 private:
-    bool hasCapturedData()  const
-    {
-        return output_.getRuntime().has_value()
-           and output_.getNotesCnt().has_value()
-           and output_.getSamples().has_value();
-    }
-
     void calculateDataRecord();
 };
 

@@ -103,8 +103,11 @@ namespace def {
     const string NUMBER ="[\\d\\.+\\-e]+";
     const string INTEGER ="[+\\-]?\\d+";
     const string YOSHIMI_SETUP_TEST_PATTERN = "yoshimi>\\s+set test";
-    const string YOSHIMI_TEST_TIMING_PATTERN = "^TEST::Complete.+runtime\\s+("+NUMBER+") ns";
-    const string YOSHIMI_TEST_PARAM_PATTERN = "^@ TEST: exec (?:("+INTEGER+") notes)?.+ on Ch\\..+(?:each|for) ("+NUMBER+")(s|ms).+buffer=("+INTEGER+")";
+    const string YOSHIMI_TEST_TIMING_PATTERN = "^TEST::Complete.+runtime\\s+("+NUMBER+") ns.+"
+                                                                "samples\\s+("+INTEGER+") "
+                                                                "notes\\s+("  +INTEGER+") "
+                                                                "buffer\\s+(" +INTEGER+") "
+                                                                "rate\\s+("   +INTEGER+")";
 
 
     /* ========= command tokens at the Yoshimi CLI ========= */

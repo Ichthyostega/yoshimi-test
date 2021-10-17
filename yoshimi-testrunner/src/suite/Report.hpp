@@ -70,6 +70,7 @@ inline string hr()           { return string(40, '-') + "\n"; }
 inline string emph(string txt)   { return "*"+txt+"*"; }
 inline string strong(string txt) { return "**"+txt+"**"; }
 inline string bullet(string txt) { return "- "+txt +"\n"; }
+inline string code(string txt)   { return "`"+txt+"`"; }
 
 }//(End)Implementation details
 
@@ -107,6 +108,8 @@ public:
             out_ << "+++ "+emph("Platform Model (re)calibration")+" +++\n\n" <<endl;
         if (config.verbose)
             reportTimes_ = true;
+
+        out_ << code(config.timestamp) <<endl;
     }
 
 

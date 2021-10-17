@@ -76,7 +76,7 @@ using SampleVec = std::vector<float>;
 
 struct SoundStat       ///< @internal raw aggregation results
 {
-    int    rate;
+    uint   rate;
     size_t frames;
     float  peak;
     double rmsAll;     ///< @note: actually squares (σ²)
@@ -88,9 +88,17 @@ namespace { // Implementation details
     const double RMS_WINDOW_sec = double{30}/1000;
     const uint CHANNELS = 2; // Yoshimi TestInvoker always generates Stereo sound
 
+    inline int validate(uint sampleRate)
+    {
+        if (0 < sampleRate and sampleRate < 1e6)
+            return int(sampleRate);
+        else
+            throw error::State("Possibly invalid sample rate "+str(sampleRate));
+    }
+
 
     /** construct a libSndfile Handle for reading a RAW file */
-    SndfileHandle openSndfileRead(fs::path rawSound, int sampleRate)
+    SndfileHandle openSndfileRead(fs::path rawSound, uint sampleRate)
     {
         if (not hasExtRAW(rawSound))
             throw error::LogicBroken("Expecting a RAW soundfile written by Yoshimi.");
@@ -98,7 +106,7 @@ namespace { // Implementation details
             throw error::LogicBroken("Could not find expected RAW soundfile \""+rawSound.string()+"\"");
 
         auto sndFormat = SF_FORMAT_RAW | SF_FORMAT_FLOAT;
-        SndfileHandle sndFile{rawSound, SFM_READ, sndFormat, CHANNELS, sampleRate};
+        SndfileHandle sndFile{rawSound, SFM_READ, sndFormat, CHANNELS, validate(sampleRate)};
         if (not sndFile)
             throw error::State("Buffer allocation error while opening \""+rawSound.filename().string()+"\"");
         if (sndFile.error())
@@ -132,13 +140,13 @@ namespace { // Implementation details
 
 
     /** construct a libSndfile Handle for writing a WAV file */
-    SndfileHandle openSndfileWrite(fs::path target, int sampleRate)
+    SndfileHandle openSndfileWrite(fs::path target, uint sampleRate)
     {
         if (not hasExtWAV(target))
             throw error::LogicBroken("Expecting WAV file extension for writing \""+string{target}+"\".");
 
         auto sndFormat = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-        SndfileHandle sndFile{target, SFM_WRITE, sndFormat, CHANNELS, sampleRate};
+        SndfileHandle sndFile{target, SFM_WRITE, sndFormat, CHANNELS, validate(sampleRate)};
         if (not sndFile)
             throw error::State("Buffer allocation error while creating \""+target.filename().string()+"\"");
         if (sndFile.error())
@@ -183,7 +191,7 @@ namespace { // Implementation details
     }
 
 
-    SoundStat calculateStats(SampleVec const& samples, int smpPerSec)
+    SoundStat calculateStats(SampleVec const& samples, uint smpPerSec)
     {
         size_t window = RMS_WINDOW_sec * smpPerSec * CHANNELS;
 
