@@ -127,7 +127,7 @@ class ExeCliMould
                               .addStep<SoundObservation>(output, pathSetup);
 
         auto baseline    = optionally(shallVerifySound(spec))
-                              .addStep<SoundJudgement>(*soundProbe, pathSetup);
+                              .addStep<SoundJudgement>(*soundProbe, pathSetup, progressLog_);
 
                            optionally(shallVerifySound(spec))
                               .addStep<SoundRecord>(shallRecordBaseline_

@@ -130,8 +130,8 @@ namespace def {
     const string EXT_DATA_CSV {".csv"};
 
     const double WARN_FAINT_PROBE = -60;  // dBFS
-    const double DIFF_WARN_LEVEL  = -200; // dB peakRMS against probe average RMS
-    const double DIFF_ERROR_LEVEL = -100; // dB peakRMS against probe average RMS
+    const double DIFF_WARN_LEVEL  = -120; // dB peakRMS against probe average RMS
+    const double DIFF_ERROR_LEVEL = -90;  // dB peakRMS against probe average RMS
 
     const size_t EXPECTED_TEST_CNT = 500; // used to reserve() vector allocations
 }

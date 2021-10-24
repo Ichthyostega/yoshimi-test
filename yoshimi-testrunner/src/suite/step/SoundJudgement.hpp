@@ -40,6 +40,7 @@
 #include "util/nocopy.hpp"
 #include "util/format.hpp"
 #include "suite/TestStep.hpp"
+#include "suite/Progress.hpp"
 #include "suite/step/PathSetup.hpp"
 #include "suite/step/SoundObservation.hpp"
 #include "Config.hpp"
@@ -66,6 +67,7 @@ class SoundJudgement
 {
     SoundObservation& soundProbe_;
     PathSetup&        pathSpec_;
+    Progress&     progressLog_;
 
 
     Result perform()  override
@@ -92,6 +94,15 @@ class SoundJudgement
             return Result::Fail("Assessment rejected: " + *mismatch);
 
         double peakRMS = soundProbe_.getDiffRMSPeak();
+        if (peakRMS == 0.0)
+            progressLog_.out("SoundJudgement: *no difference* against Baseline.");
+        else
+        if (0.0 < peakRMS and peakRMS < def::DIFF_WARN_LEVEL)
+            progressLog_.out("SoundJudgement: marginal sound differences classified as numerics error; Peak Δ "+formatVal(peakRMS)+"dB(RMS)");
+        else
+            progressLog_.out("SoundJudgement: calculated sound *differs* from Baseline; Peak Δ "+formatVal(peakRMS)+"dB(RMS)");
+
+        // raise alarm on significant differences
         if (peakRMS < def::DIFF_WARN_LEVEL)
             return Result::OK();
         else
@@ -103,9 +114,11 @@ class SoundJudgement
 
 public:
     SoundJudgement(SoundObservation& sound
-                  ,PathSetup& pathSetup)
+                  ,PathSetup& pathSetup
+                  ,Progress& log)
         : soundProbe_{sound}
         , pathSpec_{pathSetup}
+        , progressLog_{log}
     { }
 
     bool succeeded = false;

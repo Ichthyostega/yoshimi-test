@@ -319,8 +319,8 @@ double SoundProbe::getDiffRMSPeak()  const
 {
     if (not hasDiff())
         throw error::LogicBroken("Need to compute a diff first.");
-    return 10*log10(residual_->stat.rmsMax / probe_->stat.rmsAll);
-}   // note: raw values in stat.rmsXXX are squares (σ²)
+    return 20/2*log10(residual_->stat.rmsMax/probe_->stat.rmsAll);
+}   // note: raw values in stat.rmsXXX are squares (σ²)  √ ⟹ 1/2
 
 double SoundProbe::getProbePeak()  const
 {
