@@ -45,6 +45,7 @@
 #include <functional>
 #include <utility>
 #include <sstream>
+#include <limits>
 #include <string>
 #include <map>
 
@@ -76,6 +77,7 @@ namespace def {
     const string KEY_verifySound  = "Test.verifySound";
     const string KEY_verifyTimes  = "Test.verifyTimes";
     const string KEY_cliTimeout   = "Test.cliTimeout";
+    const string KEY_warnLevel    = "Test.warnLevel";
 
     const string KEY_workDir      = "workDir";
     const string KEY_fileProbe    = "fileProbe";
@@ -129,9 +131,12 @@ namespace def {
     const string EXT_SOUND_WAV{".wav"};
     const string EXT_DATA_CSV {".csv"};
 
+    const double MINUS_INF{-std::numeric_limits<double>::infinity()};
+
     const double WARN_FAINT_PROBE = -60;  // dBFS
-    const double DIFF_WARN_LEVEL  = -120; // dB peakRMS against probe average RMS
     const double DIFF_ERROR_LEVEL = -90;  // dB peakRMS against probe average RMS
+    const double DIFF_WARN_LEVEL  = -120; // dB peakRMS against probe average RMS
+    const double DIFF_STRICT      = -180; // lowered trigger level for --strict
 
     const size_t EXPECTED_TEST_CNT = 500; // used to reserve() vector allocations
 }
@@ -233,6 +238,7 @@ public:
     CFG_PARAM(bool,     calibrate);
     CFG_PARAM(bool,     baseline);
     CFG_PARAM(bool,     verbose);
+    CFG_PARAM(bool,     strict);
     CFG_PARAM(fs::path, report);
 
     //--global-Facilities----
@@ -258,6 +264,7 @@ private: /* ===== Initialisation from raw settings ===== */
         , calibrate   {rawParam[KEY_calibrate].as<bool>()}
         , baseline    {rawParam[KEY_baseline].as<bool>()}
         , verbose     {rawParam[KEY_verbose].as<bool>()}
+        , strict      {rawParam[KEY_strict].as<bool>()}
         , report      {rawParam[KEY_report]}
         , progress    {setupProgressLog(verbose)}
     {
@@ -275,6 +282,7 @@ private: /* ===== Initialisation from raw settings ===== */
             CFG_DUMP(calibrate);
             CFG_DUMP(baseline);
             CFG_DUMP(verbose);
+            CFG_DUMP(strict);
             CFG_DUMP(report);
         }
     }

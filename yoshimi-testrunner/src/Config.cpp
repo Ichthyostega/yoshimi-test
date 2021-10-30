@@ -98,7 +98,8 @@ const argp_option OPTIONS[] =
     ,{"baseline",   11,  nullptr, 0, "activate baseline capturing mode: overwrite baseline WAV when detecting difference", 1}
     ,{"calibrate",  12,  nullptr, 0, "determine a platform factor to normalise timing measurements", 1}
     ,{"verbose",   'v',  nullptr, 0, "verbose diagnostic output while running tests", 2}
-    ,{"report",     13,  "<file>",0, "save test report into the given file", 3}
+    ,{"strict",     13,  nullptr, 0, "strict sound verification with low error tolerance", 2}
+    ,{"report",     14,  "<file>",0, "save test report into the given file", 3}
     ,{ nullptr }
     };
 

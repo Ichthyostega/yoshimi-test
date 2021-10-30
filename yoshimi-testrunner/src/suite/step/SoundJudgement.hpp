@@ -45,12 +45,14 @@
 #include "suite/step/SoundObservation.hpp"
 #include "Config.hpp"
 
-//#include <string>
+#include <limits>
+#include <string>
 
 namespace suite{
 namespace step {
 
 using util::formatVal;
+using std::string;
 
 
 /**
@@ -68,6 +70,7 @@ class SoundJudgement
     SoundObservation& soundProbe_;
     PathSetup&        pathSpec_;
     Progress&     progressLog_;
+    double        warnLevel_;
 
 
     Result perform()  override
@@ -94,7 +97,7 @@ class SoundJudgement
             return Result::Fail("Assessment rejected: " + *mismatch);
 
         double peakRMS = soundProbe_.getDiffRMSPeak();
-        if (peakRMS == 0.0)
+        if (peakRMS <= def::MINUS_INF)
             progressLog_.out("SoundJudgement: *no difference* against Baseline.");
         else
         if (0.0 < peakRMS and peakRMS < def::DIFF_WARN_LEVEL)
@@ -103,7 +106,7 @@ class SoundJudgement
             progressLog_.out("SoundJudgement: calculated sound *differs* from Baseline; Peak Δ "+formatVal(peakRMS)+"dB(RMS)");
 
         // raise alarm on significant differences
-        if (peakRMS < def::DIFF_WARN_LEVEL)
+        if (peakRMS < warnLevel_)
             return Result::OK();
         else
         if (peakRMS < def::DIFF_ERROR_LEVEL)
@@ -115,10 +118,12 @@ class SoundJudgement
 public:
     SoundJudgement(SoundObservation& sound
                   ,PathSetup& pathSetup
-                  ,Progress& log)
+                  ,Progress& log
+                  ,double warnLevel)
         : soundProbe_{sound}
         , pathSpec_{pathSetup}
         , progressLog_{log}
+        , warnLevel_{warnLevel}
     { }
 
     bool succeeded = false;

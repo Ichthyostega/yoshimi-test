@@ -181,6 +181,11 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
     spec.insert({KEY_Test_args,  ctx_.config.arguments});
     spec.insert({KEY_Test_topic, topicPath});
 
+    // trigger level for sound differences, usually the global default
+    spec.insert({KEY_warnLevel,  formatVal(def::DIFF_WARN_LEVEL)});
+    if (ctx_.config.strict)
+        spec[KEY_warnLevel] = formatVal(def::DIFF_STRICT); // force any difference to trigger a warning
+
     spec[KEY_workDir] = testWorkDir;
     spec[KEY_Test_args] += " --state="+string(ctx_.config.locateInitialState(testWorkDir));
     if (contains(spec, KEY_Test_addArgs))

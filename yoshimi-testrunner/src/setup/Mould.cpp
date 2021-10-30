@@ -38,6 +38,7 @@
 #include "Config.hpp"
 #include "util/error.hpp"
 #include "util/utils.hpp"
+#include "util/format.hpp"
 #include "setup/Mould.hpp"
 #include "setup/WiringMould.hpp"
 #include "suite/step/PathSetup.hpp"
@@ -127,7 +128,8 @@ class ExeCliMould
                               .addStep<SoundObservation>(output, pathSetup);
 
         auto baseline    = optionally(shallVerifySound(spec))
-                              .addStep<SoundJudgement>(*soundProbe, pathSetup, progressLog_);
+                              .addStep<SoundJudgement>(*soundProbe, pathSetup, progressLog_
+                                                      ,util::parseAs<double>(spec.at(KEY_warnLevel)));
 
                            optionally(shallVerifySound(spec))
                               .addStep<SoundRecord>(shallRecordBaseline_
