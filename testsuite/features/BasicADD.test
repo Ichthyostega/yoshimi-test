@@ -1,0 +1,32 @@
+#
+# Yoshimi-Testsuite: base Alogorithms
+#
+description = ADDSynth 5-line spectrum with bandpass
+
+[Test]
+Script
+    set part 1 ADD
+    set filter
+    set type band
+    set tracking 127
+    set center 64
+    set q 100
+    set gain 110
+    ..
+    set voice 1
+    set waveform
+    set harmonic 3 amp 85
+    set harmonic 5 amp 68
+    set harmonic 7 amp 66
+    set harmonic 7 amp 65
+    /
+    set test note 45
+    set duration 0.1
+    set holdfraction 0.75
+    set scalestep 2
+    set repetitions 12
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off
