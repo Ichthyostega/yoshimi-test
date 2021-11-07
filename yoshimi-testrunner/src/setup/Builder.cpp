@@ -36,6 +36,7 @@
 #include "util/format.hpp"
 #include "util/parse.hpp"
 #include "util/utils.hpp"
+#include "util/regex.hpp"
 #include "suite/Timings.hpp"
 
 #include <iostream>
@@ -66,6 +67,7 @@ struct SuiteCtx
 {
     const fs::path root;
     Config const& config;
+    util::Matcher filter;
     suite::PTimings timings;
 };
 
@@ -112,6 +114,7 @@ public:
 
 private:
     string selectSubject(string testTypeID);
+    StepSeq maybeBuildTest(fs::path);
     StepSeq buildTestcase(fs::path);
     StepSeq applyMould(MapS spec);
 };
@@ -151,7 +154,7 @@ Builder& Builder::buildTree()
 {
     for (auto subItem : items_)
         if (SubTraversal::isTestDefinition(ctx_.root / topic_ / subItem))
-            wiredSteps.moveAppendAll(buildTestcase(topic_ / subItem));
+            wiredSteps.moveAppendAll(maybeBuildTest(topic_ / subItem));
         else
             wiredSteps.moveAppendAll(Builder(ctx_, topic_ / subItem)
                                             .buildTree()
@@ -162,6 +165,13 @@ Builder& Builder::buildTree()
 
 
 
+
+/** apply filtering on Test cases and then possibly build this Test */
+StepSeq Builder::maybeBuildTest(fs::path topicPath)
+{
+    return ctx_.filter.matchesWithin(string{topicPath})? buildTestcase(topicPath)
+                                                       : StepSeq();
+}
 
 /**
  * Actually wire and build the TestStep elements for a single test case.
@@ -240,7 +250,7 @@ Builder& Builder::buildClosure()
 
 /**
  * @remarks
- *   - the testsuite is defined within a directory structure, which need to be traversed
+ *   - the testsuite is defined within a directory structure, which needs to be traversed
  *   - for the implementation we create a nested structure of Builder instances
  */
 StepSeq build(Config const& config)
@@ -249,7 +259,9 @@ StepSeq build(Config const& config)
     if (not fs::is_directory(suiteRoot))
         throw error::LogicBroken{"Entry point to Testsuite definition must be a Directory: "+formatVal(suiteRoot)};
 
-    SuiteCtx anchor{suiteRoot,config, Timings::setup(config)};
+    SuiteCtx anchor{suiteRoot,config
+                   ,util::Matcher{config.filter}
+                   ,Timings::setup(config)};
 
     return Builder(anchor)
                   .buildTree()

@@ -307,7 +307,8 @@ public:
      * capture current global timing statistics as a single time series data point.
      * @remark observing only actual delta against established baseline for each test.
      * @param avgPoints individual past measurements to pre-average for each test case data point
-     * @return current delta averaged over all test cases
+     * @return current delta averaged over all test cases,
+     *         and error propagation from the tolerance band of all included test cases
      */
     auto calcSuiteStatistics(uint avgPoints)
     {
@@ -335,7 +336,12 @@ public:
         statistic_.sdevDelta = util::sdev(deltas, avg);
         statistic_.tolerance = sqrt(err)/n;       // ~ 3·σ
         statistic_.timestamp = Config::timestamp; // current Testsuite run
-        return make_tuple(avg, double{statistic_.tolerance});
+
+        if ((n < 5 or max == 0.0) and 0 < statistic_.size())
+            statistic_.dropLastRow();             // unreliable statistics, possibly a filtered suite run
+                                                  // discard data to prevent poisoning global statistics
+        return make_tuple(double{statistic_.avgDelta}
+                         ,double{statistic_.tolerance});
     }
 
     /** calculate statistics over the past time series for the avgDelta */

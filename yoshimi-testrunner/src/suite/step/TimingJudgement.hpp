@@ -89,7 +89,7 @@ class TimingJudgement
         Result judgement = determineTestResult();
         succeeded = (ResCode::GREEN == judgement.code);
         resCode = judgement.code;
-        msg_ = judgement.summary;
+        msg_ = succeeded? "timing OK" : judgement.summary;
         return judgement;
     }
 

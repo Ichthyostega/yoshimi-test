@@ -49,6 +49,7 @@ using std::cout;
 using std::endl;
 
 using util::parseSpec;
+using util::contains;
 using util::isnil;
 using util::str;
 
@@ -89,7 +90,7 @@ string currSysTimeISO()
 /* ========= Program Commandline Options ========= */
 
 const char* PROG_DOC = "Perform automated test suite for the Yoshimi soft synth.";
-const char* ARGS_DOC = "<suitePath>";
+const char* ARGS_DOC = "<suitePath> [testCaseFiler]";
 
 /** @note the long option name _must match_ with the key and variable name used in
  *        class Config; the same key can then also be used within a config file */
@@ -100,6 +101,7 @@ const argp_option OPTIONS[] =
     ,{"verbose",   'v',  nullptr, 0, "verbose diagnostic output while running tests", 2}
     ,{"strict",     13,  nullptr, 0, "strict sound verification with low error tolerance", 2}
     ,{"report",     14,  "<file>",0, "save test report into the given file", 3}
+    ,{"arguments",  15,  "<args>",0, "arguments to pass to the subject", 3}
     ,{ nullptr }
     };
 
@@ -111,14 +113,23 @@ error_t handleOption (int key, char *arg, argp_state *state)
     switch (key)
     {
     case ARGP_KEY_ARG:  // positional argument...
-        if (state->arg_num >= 1)
-            argp_error(state
-                      ,"Got %d positional arguments; expect only the <suitePath>"
-                      , state->arg_num + 1);
-        settings.insert({"suitePath", arg});
+        if (state->arg_num < 1)   // mandatory first argument is testsuite directory
+            settings.insert({Config::KEY_suitePath, arg});
+        else
+        if (state->arg_num == 1)  // further arguments select/filter the tests to run
+            settings.insert({Config::KEY_filter, arg});
+        else
+        if (state->arg_num == 2)
+        {// more than one pattern given; combine into multi branch regular expression
+            string& filterExpr = settings[Config::KEY_filter];
+            filterExpr = "(?:"+filterExpr+")|(?:"+string{arg}+")";
+        }
+        else // extend multi branch regular expression
+            settings[Config::KEY_filter] += "|(?:"+string{arg}+")";
         break;
+
     case ARGP_KEY_END:
-        /* could do consistency checks here */
+        /* parsing complete; could do consistency checks here */
         break;
     default:
         for (uint i=0; OPTIONS[i].name != nullptr; ++i)

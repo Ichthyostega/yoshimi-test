@@ -136,7 +136,7 @@ namespace def {
     const double WARN_FAINT_PROBE = -60;  // dBFS
     const double DIFF_ERROR_LEVEL = -90;  // dB peakRMS against probe average RMS
     const double DIFF_WARN_LEVEL  = -120; // dB peakRMS against probe average RMS
-    const double DIFF_STRICT      = -180; // lowered trigger level for --strict
+    const double DIFF_STRICT      = -300; // lowered trigger level for --strict
 
     const size_t EXPECTED_TEST_CNT = 500; // used to reserve() vector allocations
 }
@@ -239,6 +239,7 @@ public:
     CFG_PARAM(bool,     baseline);
     CFG_PARAM(bool,     verbose);
     CFG_PARAM(bool,     strict);
+    CFG_PARAM(string,   filter);
     CFG_PARAM(fs::path, report);
 
     //--global-Facilities----
@@ -265,6 +266,7 @@ private: /* ===== Initialisation from raw settings ===== */
         , baseline    {rawParam[KEY_baseline].as<bool>()}
         , verbose     {rawParam[KEY_verbose].as<bool>()}
         , strict      {rawParam[KEY_strict].as<bool>()}
+        , filter      {rawParam[KEY_filter]}
         , report      {rawParam[KEY_report]}
         , progress    {setupProgressLog(verbose)}
     {
@@ -283,6 +285,7 @@ private: /* ===== Initialisation from raw settings ===== */
             CFG_DUMP(baseline);
             CFG_DUMP(verbose);
             CFG_DUMP(strict);
+            CFG_DUMP(filter);
             CFG_DUMP(report);
         }
     }

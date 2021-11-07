@@ -102,6 +102,8 @@ public:
         out_ << hr()
              << h1("Yoshimi-Testsuite") <<endl;
 
+        if (not isnil(config.filter))
+            out_ << strong("Filter")+" Test-cases: "+config.filter+"\n" <<endl;
         if (config.baseline)
             out_ << "+++ "+emph("Baseline capturing mode")+" +++\n\n" <<endl;
         if (config.calibrate)

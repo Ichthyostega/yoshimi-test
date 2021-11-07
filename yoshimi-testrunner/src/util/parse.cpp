@@ -42,8 +42,6 @@ namespace util {
 
 using std::string;
 using std::ifstream;
-using std::regex;
-using std::smatch;
 using std::regex_match;
 using std::regex_search;
 using std::filesystem::path;

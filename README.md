@@ -56,6 +56,10 @@ Recommendation is to repeat that *platform calibration* after performing the Tes
 Please read the chapter [Speed and Timing measurements](#speed-and-timing-measurements) to understand
 what this entails.
 
+It is possible to *filter the test cases,* and thus to perform only some tests: just add the filter expression(s)
+as additional (positional) arguments; if the filter matches somewhere in a test case name or relative path, the
+case is included in the current run (regular expression search).
+
 
 ### Configuration
 
@@ -129,7 +133,48 @@ extensions
   - `verifyTimes = On|Off` allows to compare the timing measurements against expected values (see below)
   - `cliTimeout = <integer number>` overrides the built-in timeout when waiting for response on CLI actions.
     Typically the testrunner waits for some specific token or prefix to appear in the output stream from the Yoshimi subprocess;
-    if the timeout threshold is exceeded, the subprocess will be killed and the test case counted as failure.
+    if the timeout threshold is exceeded, the subprocess will be killed and the test case counted as failure. Increasing this
+    timeout can e.g. be relevant when using a debugger to watch the computations within Yoshimi in detail.
+  - `warnLevel = <float>` allows to set an individual trigger level for this test case: *any sound difference below*
+    this decibel number is classified as "rounding error" and not counted as actual difference any more. The number is
+    in decibel peak RMS(30ms) compared to the overall RMS of the baseline WAV file (default warn level: -120dB RMS).
+
+
+### Detecting sound differences
+
+If a test case is enabled for `verifySound`, the computed sound samples are checked against a known *baseline WAV*.
+This reference waveform is given as a file `<testName>-baseline.wav` in the same directory as the test case; typically
+such reference files are created with a recent release build of Yoshimi and checked into the Test-Suite Git repository.
+The fundamental assumption is that sound computations are deterministic and can thus be reproduced to the last bit,
+assuming a proper test setup (especially (re)seeding the pseudo random number generator and only generating a single
+note). Thus developers should be able to detect inadvertent changes and fix the code, to keep Yoshimi's behaviour
+long-term stable. In practice, this goal can sometimes be hard to keep up, for the following reasons
+- the typical release build of Yoshimi uses `--fast-math` combined with `-O3` and SSE extensions.
+- under these conditions, the optimiser is allowed to reorder computations for sake of speed, thereby accepting
+  small numeric inaccuracies. Moreover, the optimisers on different compilers and platforms are free to choose
+  the appropriate means to reach this goal...
+- Yoshimi performs most sound computations using `float` numbers (not `double`). The float mantissa has 23 bits,
+  so a single least bit flip corresponds to -138dB(FS) and is thus far from any audible effect. However, errors can accumulate,
+  they might form patterns, and especially when a numeric error changes changes some frequency or filter coefficient, the
+  consequences *can* be audible at times.
+- unfortunately, sometimes the developers are *forced to change* minor details, often due to the evolution of platforms
+  and libraries, or similar reasons of maintainability. In such a case, baselines must be recomputed and updated in Git.
+
+The Testrunner computes a sample-for-sample difference of the generated sound against the given *baseline.* If there
+is *any* difference, a notice will be printed after the individual test case (visible only with `--verbose`). However,
+the actual assessment is based on RMS values, comparing the RMS of the difference (computed over a window of 30ms) against
+the overall RMS of the test sound. Differences below a warn level (default -120dB RMS) are ignored, to deal with "number dust".
+You may launch the Testrunner with the commandline argument `--strict` to force much smaller differences to be reported.
+
+Whenever a relevant change was detected (i.e. above warn level), then also the difference signal is stored into a WAV
+file with the name pattern `<testname>-residual.wav`. Since these WAV files use `float` samples, you often won't
+hear anything on playback; in these cases, please use a WAV editor and *normalise* the residual to -0dB to make the
+actual difference audible. The less noisy and the more sound-like a residual is, the more it might be a real concern.
+
+In case a difference is spotted (or when the baseline file is missing), you may store a new baseline WAV file by
+launching the Testsuite with the argument `--baseline` — but beware: this will recapture baseline WAV and timing
+expense factors for all deviant test cases. Tip: use the filter feature to only run some dedicated part of the testsuite
+if you only want *some* baselines to be changed; moreover, use Git to manage the actual changes.
 
 
 ### Speed and Timing measurements
@@ -288,3 +333,40 @@ When observing these constraints, it is possible to load (and even manipulate) t
   * "Delta (max)": maximum Δ encountered in any test case
   * "Delta (sdev)": standard deviation of the individual Δ around avgΔ
   * "Tolerance": error tolerance band, based on fluctuation of avgΔ over time
+
+
+
+## Hints and Tricks
+
+**Yoshimi settings**: by default, the Testrunner launches Yoshimi with `--null --no-gui`.
+Unfortunately Yoshimi remembers the last settings used, which means, after running the
+Testsuite, your regular Yoshimi may start without GUI and without audio / MIDI next time.
+As of 11/2021 the Yoshimi developers are aware of that problem, but haven't decided yet
+if, and how this should be addressed.
+
+**Experimentation**: you may setup your own test suite, dedicated to a specific purpose.
+This is the reason why the testsuite directory needs to be given for every invocation
+(unless you'll place a default into your private `setup.ini`). Such a special purpose
+test suite will have its own `defaults.ini`, its own `initial.state` and just the
+test definition(s) you'll need.
+
+**Debugging**: while it is straight forward to debug the test runner, watching Yoshimi's operations
+can be tricky, since by default we launch into a forked process, and then use a background thread
+to wait for feedback from the test subject. However, instead of Yoshimi itself, it is possible to
+launch `gdbserver`, to be remote controlled via some port. You may thus connect `gdb` (or your IDE)
+against this port and then single-step through the test execution within Yoshimi. Obviously, it
+is recommended just to run a single test case in the suite, and also to increase the `cliTimeout`
+(setting it e.g. to 3600, which gives you one hour for debugging).
+
+Example configuration (`setup.ini` or `defaults.ini` in a separate testsuite directory)
+
+    subject= /usr/bin/gdbserver
+    arguments=  hostname:2345 /path/to/build/yoshimi.special --null --no-gui --cmdline
+
+You'd then point `gdb` to the same executable (or another copy with debug informations, the actual
+running executable does not need to have debug infos in this case). After GDB started, connect
+to the server with
+
+    target remote hostname:2345
+
+Or use your favourite IDE (actually recommended for debugging) and create a suitable *launch configuration*
