@@ -1,0 +1,23 @@
+#
+# Yoshimi-Testsuite: AnalogFilter
+#
+description = Filter response Highpass 1 pole frequency up 2 octaves (90 ~ 4kHz)
+
+[Test]
+Script
+    set part 1 ADD
+    set filter
+    set type H1
+    set center 90
+    set gain 120
+    /
+    set test note 0
+    set scalestep 6
+    set repetitions 21
+    set duration 0.05
+    set holdfraction 0.5
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off

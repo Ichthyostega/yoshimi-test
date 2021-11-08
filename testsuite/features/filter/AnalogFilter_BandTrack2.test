@@ -1,0 +1,26 @@
+#
+# Yoshimi-Testsuite: AnalogFilter
+#
+description = Bandpass with really full frequency tracking (64 and range on)
+
+[Test]
+Script
+    set part 1 ADD
+    set filter
+    set type band
+    set range on
+    set tracking 64
+    set center 64
+    set q 100
+    set gain 110
+    /
+    set test note 45
+    set duration 0.05
+    set holdfraction 0.5
+    set scalestep 2
+    set repetitions 24
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off
