@@ -1,0 +1,24 @@
+#
+# Yoshimi-Testsuite: AnalogFilter
+#
+description = Filter response Stop(notch) (2pole) middle frequency narrow Q (90)
+
+[Test]
+Script
+    set part 1 ADD
+    set filter
+    set type Stop
+    set center 64
+    set q 90
+    set gain 120
+    /
+    set test note 0
+    set scalestep 6
+    set repetitions 21
+    set duration 0.05
+    set holdfraction 0.5
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off

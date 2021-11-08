@@ -6,13 +6,13 @@ description = PADSynth tone with spread and Chirp waveform
 [Test]
 Script
     set part 1
-    set add off
+    set ADD off
     ..
-    set pad on
+    set PAD on
     set profile Double
     set bandwidth 555
     set waveform Chirp
-    set apply
+    set APPLY
     /
     set test note 27
     set repetitions 7
