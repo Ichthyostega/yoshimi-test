@@ -337,7 +337,7 @@ public:
         statistic_.tolerance = sqrt(err)/n;       // ~ 3·σ
         statistic_.timestamp = Config::timestamp; // current Testsuite run
 
-        if ((n < 5 or max == 0.0) and 0 < statistic_.size())
+        if ((n < 5 or max == 0.0) and 1 < statistic_.size())
             statistic_.dropLastRow();             // unreliable statistics, possibly a filtered suite run
                                                   // discard data to prevent poisoning global statistics
         return make_tuple(double{statistic_.avgDelta}

@@ -293,6 +293,7 @@ public:
                 fs::rename(filename_, oldFile);
         }
         fs::rename(newFilename, filename_);
+        filename_ = consolidated(filename_); // lock onto absolute path
     }
 
 

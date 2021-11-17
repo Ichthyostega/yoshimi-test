@@ -77,6 +77,7 @@ class TimingJudgement
 {
     TimingObservation& timings_;
     suite::PTimings globalTimings_;
+    bool calibrationRun_;
     string msg_{"unknown timing result"};
     double runtime_{0.0};
 
@@ -103,7 +104,8 @@ class TimingJudgement
         runtime_ = runtime;
 
         if (tolerance == 0.0 or modelTolerance == 0.0)
-            return Result::Warn("Missing calibration. Can not judge runtime ("+formatVal(runtime)+"ms)");
+            return calibrationRun_? Result::Warn("Calibration run. Runtime ("+formatVal(runtime)+"ms) not judged")
+                                  : Result::Warn("Missing calibration. Can not judge runtime ("+formatVal(runtime)+"ms)");
 
         // check this single measurement against the tolerance band...
         if (currDelta < -overallTolerance)
@@ -151,9 +153,11 @@ class TimingJudgement
 
 public:
     TimingJudgement(TimingObservation& timings
-                   ,suite::PTimings aggregator)
+                   ,suite::PTimings aggregator
+                   ,bool calibrating)
         : timings_{timings}
         , globalTimings_{aggregator}
+        , calibrationRun_{calibrating}
     { }
 
     bool succeeded = false;

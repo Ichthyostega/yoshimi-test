@@ -139,7 +139,7 @@ class ExeCliMould
                               .addStep<TimingObservation>(output,suiteTimings_, pathSetup);
 
         auto timeTrend   = optionally(shallVerifyTimes(spec))
-                              .addStep<TimingJudgement>(*timings,suiteTimings_);
+                              .addStep<TimingJudgement>(*timings,suiteTimings_, shallCalibrateTiming_);
 
                            optionally(shallVerifyTimes(spec))
                               .addStep<PersistTimings>(shallRecordBaseline_, *timings, *timeTrend);
