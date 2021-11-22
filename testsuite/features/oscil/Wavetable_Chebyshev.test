@@ -1,0 +1,30 @@
+#
+# Yoshimi-Testsuite: Oscil Wavetable Generator
+#
+# Note: bypass all filters
+description = Wavetable Chebyshev
+
+#float OscilGen::basefunc_chebyshev(float x, float a)
+#{
+#    a = a * a * a * 30.0f + 1.0f;
+#    return cosf(acosf(x * 2.0f - 1.0f) * a);
+#}
+
+
+[Test]
+Script
+    set part 1 ADD
+    set volume 120
+    set voice 1
+    set bypass on
+    set waveform Chebyshev
+    /
+    set test note 32
+    set duration 0.04
+    set holdfraction 0.75
+    set scalestep 18
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off

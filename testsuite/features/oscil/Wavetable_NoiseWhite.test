@@ -1,0 +1,22 @@
+#
+# Yoshimi-Testsuite: Oscil Wavetable Generator
+#
+# Note: bypass all filters
+description = Wavetable generate White Noise
+
+[Test]
+Script
+    set part 1 ADD
+    set volume 120
+    set voice 1
+    set bypass on
+    set type white Noise
+    /
+    set test note 64
+    set duration 0.1
+    set holdfraction 0.75
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = On

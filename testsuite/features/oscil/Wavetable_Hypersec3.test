@@ -1,0 +1,24 @@
+#
+# Yoshimi-Testsuite: Oscil Wavetable Generator
+#
+# Note: bypass all filters
+description = Wavetable Hypersecans + Func-Par +24 (squashed narrow pulse, trumpet-like)
+
+[Test]
+Script
+    set part 1 ADD
+    set volume 120
+    set voice 1
+    set bypass on
+    set waveform Hypersec
+    set base par +24
+    /
+    set test note 32
+    set duration 0.04
+    set holdfraction 0.75
+    set scalestep 18
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off

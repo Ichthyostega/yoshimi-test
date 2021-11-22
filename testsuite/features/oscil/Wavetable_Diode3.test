@@ -1,0 +1,24 @@
+#
+# Yoshimi-Testsuite: Oscil Wavetable Generator
+#
+# Note: bypass all filters
+description = Wavetable simple Diode + Func-Par -50 (clamped cosine, strong negative DC offset)
+
+[Test]
+Script
+    set part 1 ADD
+    set volume 120
+    set voice 1
+    set bypass on
+    set waveform Diode
+    set base par -50
+    /
+    set test note 32
+    set duration 0.04
+    set holdfraction 0.75
+    set scalestep 18
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off
