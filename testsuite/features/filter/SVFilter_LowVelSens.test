@@ -1,0 +1,27 @@
+#
+# Yoshimi-Testsuite: State Variable Filter
+#
+description = Filter response Lowpass velocity sensing (velocity 64 → 127)
+
+[Test]
+Script
+    set part 1 ADD
+    set volume 100
+    set filter
+    set category State Var
+    set type Low
+    set center 72.33915
+    set gain 127
+    set q 20
+    /
+    set test note 0
+    set scalestep 6
+    set repetitions 21
+    set duration 0.05
+    set holdfraction 0.5
+    set velocity 127
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = On
