@@ -124,7 +124,7 @@ class TimingJudgement
         auto [socketLong,gradientLong,corrLong]    = timings_.calcDeltaTrend(longTerm);
 
         double shortTermTrend = gradientShort * shortTerm * fabs(corrShort);
-        double longTermTrend  = gradientLong * longTerm   * fabs(corrShort);
+        double longTermTrend  = gradientLong * longTerm   * fabs(corrLong);
         // Use slope of the regression as trend indicator, but weighted by correlation to sort out random peaks
         // Criterion: taken over the observation period, this indicator must be within random fluctuation band
         if (tolerance < shortTermTrend)
@@ -143,7 +143,7 @@ class TimingJudgement
                                +"% during the last "+formatVal(longTerm)+" test runs."
                                +" Current runtime: " +formatVal(runtime)+"ms.");
         if (longTermTrend < -tolerance)
-            return Result::Warn("Note: long-term downward trend on the run times: "
+            return Result::Warn("Observing long-term downward trend on the run times: "
                                +formatVal(100*longTermTrend / runtime)
                                +"% during the last "+formatVal(longTerm)+" test runs."
                                +" Current runtime: " +formatVal(runtime)+"ms.");

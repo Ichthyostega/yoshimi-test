@@ -46,6 +46,7 @@
 #include <string>
 //#include <utility>
 //#include <deque>
+#include <vector>
 #include <iostream>
 #include <fstream>
 
@@ -54,6 +55,7 @@ namespace suite {
 using std::cout;
 using std::endl;
 using std::string;
+using std::vector;
 
 using util::str;
 using util::isnil;
@@ -65,12 +67,13 @@ namespace {// Implementation details: Markdown formatting
 inline string h1(string txt) { return "# "+txt+"\n"; }
 inline string h2(string txt) { return "## "+txt+"\n"; }
 
-inline string hr()           { return string(40, '-') + "\n"; }
+inline string hr()           { return "--- "+string(40, '-') + "\n"; }
 
 inline string emph(string txt)   { return "*"+txt+"*"; }
+inline string code(string txt)   { return "`"+txt+"`"; }
 inline string strong(string txt) { return "**"+txt+"**"; }
 inline string bullet(string txt) { return "- "+txt +"\n"; }
-inline string code(string txt)   { return "`"+txt+"`"; }
+inline string bullet2(string txt){ return "  * "+txt +"\n"; }
 
 }//(End)Implementation details
 
@@ -99,6 +102,19 @@ public:
         /////////TODO do we want a "quiet" mode?
         out_.linkStream(std::cout);
 
+        renderPrelude(config);
+    }
+
+
+    void generate(TestLog const& results)
+    {
+        renderResults(results);
+        renderSummary(results);
+    }
+
+private:
+    void renderPrelude(Config const& config)
+    {
         out_ << hr()
              << h1("Yoshimi-Testsuite") <<endl;
 
@@ -115,28 +131,52 @@ public:
     }
 
 
-    void generate(TestLog const& results)
+    void renderResults(TestLog const& results)
     {
-        if (reportTimes_ or results.hasWarnings())
+        if (reportTimes_ or results.hasIncidents())
         {
-            out_ << hr()
+            out_ <<endl
+                 << hr()
                  << h2("Results")
                  <<endl;
         }
-        /////////////////TODO better way to render the individual results??
-        auto hasTimingSummary = [](Result const& res)
-                                {  return res.stats.has_value()
-                                      and res.stats->runtime_ms > 0.0;
-                                };
+        vector<string> incidents;
         for (auto& res : results)
         {
-            if (reportTimes_ and hasTimingSummary(res))
-                out_ << res.stats->topic.stem()<<": \t"<<res.stats->runtime_ms<<"ms" <<endl;
             if (res.code != ResCode::GREEN)
-                out_ << res.summary <<endl;
+                incidents.push_back(res.summary);
+            if (res.isCaseSummary())
+            {
+                if (reportTimes_ and res.hasTimingSummary())
+                    out_ << bullet(res.stats->topic.stem().string() +": \t"
+                                  +formatVal(res.stats->runtime_ms) + "ms");
+                else
+                if (not isnil(incidents))
+                {
+                    if (1 == incidents.size())
+                    {// print incident in the same line
+                        out_ << bullet(res.stats->topic.stem().string() +" ↯\t"+ incidents[0]);
+                        incidents.clear();
+                    }
+                    else
+                    {   // several incidents reported during this test case....
+                        out_ << bullet(res.stats->topic.stem().string() +" ↯↯");
+                }   }
+                for (auto& msg : incidents)
+                    out_ << bullet2(msg);
+                incidents.clear();
+            }
         }
+        // further trailing warnings or errors
+        for (auto& msg : incidents)
+            out_ << bullet("↯↯ "+msg);
 
-        //---Generate-Summary-------------------------
+        out_ << endl;
+    }
+
+
+    void renderSummary(TestLog const& results)
+    {
         out_ << hr() << "Performed "+emph(str(results.cntTests()))+" test cases.\n";
 
         if (results.hasMalfunction())
@@ -150,10 +190,10 @@ public:
         {   // any of the test cases was marked *in summary* as Warning or Violation
             out_ << hr();
             if (results.hasWarnings())
-                out_ << strong("Warnings")+": "+str(results.cntWarnings()) +"\n";
-            out_     << strong("Failures")+": "+str(results.cntFailures()) +"\n";
+                out_ << bullet(strong("Warnings")+": "+str(results.cntWarnings()));
+            out_     << bullet(strong("Failures")+": "+str(results.cntFailures()));
             results.forEachFailedCase([&](Result const& res){
-                out_ << bullet(formatVal(res.stats->topic)+": "+res.summary);
+                out_ << bullet2(formatVal(res.stats->topic)+": "+res.summary);
             });
             out_ << hr()
                  << strong(results.hasViolations()? "RED":"Yellow") +"\n"
