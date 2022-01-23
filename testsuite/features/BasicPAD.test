@@ -12,7 +12,7 @@ Script
     set profile Double
     set bandwidth 555
     set waveform Chirp
-    set APPLY
+    set APPLY FORCE
     /
     set test note 27
     set repetitions 7
