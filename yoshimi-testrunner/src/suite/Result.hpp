@@ -128,6 +128,12 @@ struct Result
     static Result OK()             { return Result{ResCode::GREEN}; }
     static Result Warn(string msg) { return Result{ResCode::WARNING, msg}; }
     static Result Fail(string msg) { return Result{ResCode::VIOLATION, msg}; }
+
+    bool is(ResCode severity) const { return code == severity; }
+    bool isCaseSummary()      const { return stats.has_value(); }
+    bool isIncident()         const { return code != ResCode::GREEN; }
+    bool isFailedCase()       const { return isCaseSummary() and ResCode::GREEN != stats->outcome; }
+    bool hasTimingSummary()   const { return isCaseSummary() and stats->runtime_ms > 0.0; }
 };
 
 
