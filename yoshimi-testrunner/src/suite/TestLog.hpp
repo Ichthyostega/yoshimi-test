@@ -62,6 +62,7 @@ public:
     bool hasFailedCases() const;
     bool hasViolations()  const;
     bool hasWarnings()    const;
+    bool hasIncidents()   const;
 
     uint cntTests()       const;
     uint cntFailures()    const;
@@ -84,63 +85,62 @@ inline TestLog& operator<<(TestLog& log, Result res)
     return log;
 }
 
+// shorthand for invoking a predicate on the result record....
+#define CHECK_RESULT(_PREDICATE_) \
+                       [](Result const& _res_){ return _res_._PREDICATE_; }
 
 inline bool TestLog::hasMalfunction()  const
 {
-    return std::any_of(results_.begin(), results_.end(),
-                       [](Result const& result){ return result.code == ResCode::MALFUNCTION; });
+    return std::any_of(results_.begin(), results_.end(), CHECK_RESULT(is(ResCode::MALFUNCTION)) );
 }
 
 inline bool TestLog::hasViolations()  const
 {
-    return std::any_of(results_.begin(), results_.end(),
-                       [](Result const& result){ return result.code == ResCode::VIOLATION; });
+    return std::any_of(results_.begin(), results_.end(), CHECK_RESULT(is(ResCode::VIOLATION)) );
 }
 
 inline bool TestLog::hasWarnings()  const
 {
-    return std::any_of(results_.begin(), results_.end(),
-                       [](Result const& result){ return result.code == ResCode::WARNING; });
+    return std::any_of(results_.begin(), results_.end(), CHECK_RESULT(is(ResCode::WARNING)) );
+}
+
+inline bool TestLog::hasIncidents()  const
+{
+    return std::any_of(results_.begin(), results_.end(), CHECK_RESULT(isIncident()) );
 }
 
 
-namespace {
-    inline bool isCaseSummary(Result const& result) { return result.stats.has_value(); }
-    inline bool isFailedCase(Result const& result)  { return isCaseSummary(result)
-                                                         and ResCode::GREEN != result.stats->outcome;  }
-}
-
-/** @remark by convention there one suite::Statistics entry is emitted for each test case */
+/** @remark by convention one suite::Statistics entry is emitted for each test case */
 inline uint TestLog::cntTests()  const
 {
-    return std::count_if(results_.begin(), results_.end(), isCaseSummary);
+    return std::count_if(results_.begin(), results_.end(), CHECK_RESULT(isCaseSummary()) );
 }
 
 
 inline uint TestLog::cntFailures()  const
 {
-    return std::count_if(results_.begin(), results_.end(),
-                         [](Result const& result){ return result.code == ResCode::VIOLATION; });
+    return std::count_if(results_.begin(), results_.end(), CHECK_RESULT(is(ResCode::VIOLATION)) );
 }
 
 
 inline uint TestLog::cntWarnings()  const
 {
-    return std::count_if(results_.begin(), results_.end(),
-                         [](Result const& result){ return result.code == ResCode::WARNING; });
+    return std::count_if(results_.begin(), results_.end(), CHECK_RESULT(is(ResCode::WARNING)) );
 }
 
 
 inline bool TestLog::hasFailedCases()  const
 {
-    return std::any_of(results_.begin(), results_.end(), isFailedCase);
+    return std::any_of(results_.begin(), results_.end(), CHECK_RESULT(isFailedCase()) );
 }
+
+#undef CHECK_RESULT
 
 
 inline void TestLog::forEachMalfunction(ResultHandler handleIt)  const
 {
     for (Result const& res : results_)
-        if (ResCode::MALFUNCTION == res.code or ResCode::DEBACLE == res.code)
+        if (res.is(ResCode::MALFUNCTION) or res.is(ResCode::DEBACLE))
             handleIt(res);
 }
 
@@ -148,7 +148,7 @@ inline void TestLog::forEachMalfunction(ResultHandler handleIt)  const
 inline void TestLog::forEachFailedCase(ResultHandler handleIt)  const
 {
     for (Result const& res : results_)
-        if (isFailedCase(res))
+        if (res.isFailedCase())
             handleIt(res);
 }
 

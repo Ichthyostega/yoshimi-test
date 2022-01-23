@@ -78,7 +78,7 @@ namespace { // handling the atomic flag...
 
     inline void enable(atomic<bool>& flag)
     {
-        bool expectFalse;
+        bool expectFalse{false};
         if (not flag.compare_exchange_strong(expectFalse, true, std::memory_order_acq_rel))
             throw error::LogicBroken{"Attempt to define a new MatchCond while "
                                      "an existing condition is still evaluated."};
