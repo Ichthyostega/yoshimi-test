@@ -1,0 +1,40 @@
+#
+# Bug 2022.01 "padthread" consecutive load into the same part
+# Symptom: first tone of 2nt instrument is garbled or (as in this case here) silent.
+# Steps
+#  - load first instrument
+#  - sound at least one note
+#  - load another instrument into the same part
+#  --> fist note is defect
+#
+description = Bug 2022.01 consecutive load into same part
+
+[Test]
+Script
+    set bank root 1
+    # switch to "Will_Godfrey_Companion"
+    set bank 115
+    ..
+    # load first instrument "Choir Stabs"
+    set part 1 program 122
+    #
+    # ensure PADtable build has completed
+    set PAD
+    set APPLY FORCE
+    /
+    # sound a tone to make SynthEngine pick up PADtable
+    set tone 1 76 2
+    set tone 1 76 0
+    #
+    # load second instrument "Ooo"
+    set part 1 program 118
+    /
+    set test note 60
+    set repetitions 3
+    set duration 0.08
+    set holdfraction 0.7
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off
