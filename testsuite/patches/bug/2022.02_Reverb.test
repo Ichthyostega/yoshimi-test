@@ -1,0 +1,41 @@
+#
+# Bug 2022.02 observe nondeterministic numbers instrument with reverb
+# Symptom: after fixing the "1st note problem" (2022.01), in about 50% of all test runs
+#          we still get minor discrepancies about -80db. Comparison of dumped intermediary numbers
+#          indicate the discrepancies arise within the Reverb effect.
+# Cause: Caused by a combination of several problems, largely due to incomplete Effect::cleanup()
+#        - output buffer not cleared on cleanup() -> reverb feeds back values from there
+#        - naiive comparison of interpolated float values for the HighPass / LowPass frequency,
+#          causing intermittent recalculation of the filter coefficients
+#        - read position in the comb filter pipelines not reset on cleanup()
+#        - InterpolatedValue not reset on cleanup()
+#        - Effect pangain initially set to 0.5 while it should be cos(¼π)
+#
+description = Bug 2022.02 investigate reproducibility of reverb
+
+[Test]
+Script
+# use simple rectangular pulse as source
+    set part 1 ADD
+    set volume 120
+    set voice 1
+    set bypass on
+    set waveform Pulse
+    set base par 0
+    /
+    set part 1
+    set effect 1 Reverb
+    set preset 4 # Hall-1
+    /
+    set test note 60
+    set repetitions 3
+    set duration 0.08
+    set holdfraction 0.7
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = On
+
+# 1h (debugging)
+#cliTimeout = 3600
