@@ -1,0 +1,29 @@
+#
+# Impact of NoteON events + Wavetable size
+#
+description = Runtime: PAD-Synth / 20 notes / overall 1.0133s (48640 samples) / 16k Wavetable
+
+[Test]
+Script
+    set part 1 ADD off
+    ..
+    set PAD on
+    set length 16
+    set bandwidth 711
+    set waveform ABSsine
+    set APPLY FORCE
+    ..
+    set filter type h2
+    set center 10
+    set Q 1
+    /
+    set test
+    set note 24
+    set duration 0.05
+    set holdfraction 0.9
+    set repetitions 20
+    execute
+End-Script
+
+verifySound = Off
+verifyTimes = On
