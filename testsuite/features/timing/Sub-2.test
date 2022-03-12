@@ -6,9 +6,9 @@ description = Runtime: Sub-Synth / 1 band / 1s
 [Test]
 Script
     set part 1
-    set add off
+    set ADD off
     ..
-    set sub on
+    set SUB on
     /
     set test
     set duration 1

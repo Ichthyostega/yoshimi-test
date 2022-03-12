@@ -1,0 +1,28 @@
+#
+# Impact of NoteON events
+#
+description = Runtime: PAD-Synth / 5 notes / overall 1.0133s (48640 samples)
+
+[Test]
+Script
+    set part 1 ADD off
+    ..
+    set PAD on
+    set bandwidth 711
+    set waveform ABSsine
+    set APPLY FORCE
+    ..
+    set filter type h2
+    set center 10
+    set Q 1
+    /
+    set test
+    set note 48
+    set duration 0.2
+    set holdfraction 0.9
+    set repetitions 5
+    execute
+End-Script
+
+verifySound = Off
+verifyTimes = On
