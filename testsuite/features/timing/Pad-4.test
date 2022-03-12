@@ -1,17 +1,19 @@
 #
 # Sample calculation time
 #
-description = Runtime: Sub-Synth / 1 band / 0.5s
+description = Runtime: PAD-Synth / 1 note / 5s
 
 [Test]
 Script
-    set part 1
-    set ADD off
+    set part 1 ADD off
     ..
-    set SUB on
+    set PAD on
+    set bandwidth 711
+    set waveform ABSsine
+    set APPLY FORCE
     /
     set test
-    set duration 0.5
+    set duration 5
     set holdfraction 1.0
     set repetitions 1
     execute
