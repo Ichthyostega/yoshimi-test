@@ -334,7 +334,7 @@ private:
         return points;
     }
 
-    /** determine the amplitude of local fluctuations */
+    /** determine the amplitude of _past_ local fluctuations */
     double calcLocalTolerance(size_t avgPoints) const
     {
         size_t siz = runtime_.size();
@@ -342,10 +342,10 @@ private:
         if (siz==1) // for the 1st value....
             return runtime_.delta; // just tolerate the actual delta
 
-        avgPoints = std::min(avgPoints, siz);
-        size_t oldest = siz - avgPoints;
+        avgPoints = std::min(avgPoints, siz-1);
+        size_t oldest = siz-1 - avgPoints;  // Note: excluding the last(=current) data point
         double variance = 0.0;
-        for (size_t i=siz; oldest < i; --i)
+        for (size_t i=siz-1; oldest < i; --i)
         {   // use moving average of the /previous/ points as guess for "the actual" value
             double avgVal = i>1? runtime_.maTime.data[i-2] : runtime_.maTime.data[i-1];
             double delta = runtime_.runtime.data[i-1] - avgVal;
