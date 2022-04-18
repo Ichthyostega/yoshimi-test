@@ -5,12 +5,15 @@ description = Runtime: PAD-Synth / 1 note / 10s
 
 [Test]
 Script
+    set config buildPAD Muted
+    # build PADSynth wavetable single threaded
+    # (avoid concurrency overhead for timings)
+    /
     set part 1 ADD off
     ..
     set PAD on
     set bandwidth 711
     set waveform ABSsine
-    set APPLY FORCE
     /
     set test
     set duration 10
