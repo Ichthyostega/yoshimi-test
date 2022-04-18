@@ -1,0 +1,28 @@
+#
+# Sample calculation time
+# Note: PAD wavetable is built in background
+#       but test itself runs in a single thread
+#       yet still we see significantly increased runtime
+#
+description = Runtime: PAD-Synth / 1 note / 0.1s / background build
+
+[Test]
+Script
+    set config buildPAD Background
+    # build PADSynth wavetable in background thread
+    /
+    set part 1 ADD off
+    ..
+    set PAD on
+    set bandwidth 711
+    set waveform ABSsine
+    /
+    set test
+    set duration 0.1
+    set holdfraction 1.0
+    set repetitions 1
+    execute
+End-Script
+
+verifySound = Off
+verifyTimes = On

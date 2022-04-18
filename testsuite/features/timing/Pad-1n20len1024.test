@@ -5,13 +5,16 @@ description = Runtime: PAD-Synth / 20 notes / overall 1.0133s (48640 samples) / 
 
 [Test]
 Script
+    set config buildPAD Muted
+    # build PADSynth wavetable single threaded
+    # (avoid concurrency overhead for timings)
+    /
     set part 1 ADD off
     ..
     set PAD on
     set length 1024
     set bandwidth 711
     set waveform ABSsine
-    set APPLY FORCE
     ..
     set filter type h2
     set center 10
