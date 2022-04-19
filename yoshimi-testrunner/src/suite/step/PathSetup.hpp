@@ -57,7 +57,7 @@ using std::string;
 using std::move;
 
 using util::isnil;
-using util::contains;
+using util::startsWith;
 using util::formatVal;
 
 
@@ -104,7 +104,7 @@ public:
     {
         if (not spec_.is_absolute()
             and not fs::exists(spec_)
-            and not contains(spec_.filename().string(), casePrefix))
+            and not startsWith(spec_.filename().string(), casePrefix+"-"))
         {
             spec_.replace_filename(casePrefix+"-"+string{spec_.filename()});
         }
