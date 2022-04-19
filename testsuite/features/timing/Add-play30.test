@@ -1,0 +1,23 @@
+#
+# ADSynth play extended amount of short notes (standard usage)
+#
+description = Runtime: AD-Synth standard usage / 30sec sound (1440000 smps)
+
+[Test]
+Script
+    set part 1 ADD on
+    set filter type h2
+    set center 10
+    set Q 1
+    /
+    set test
+    set note 12
+    set scalestep 1
+    set duration 0.2
+    set holdfraction 0.6
+    set repetitions 150
+    execute
+End-Script
+
+verifySound = Off
+verifyTimes = On
