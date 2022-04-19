@@ -1,0 +1,33 @@
+#
+# PADSynth play extended amount of short notes (standard usage)
+# Note: PAD wavetable is built in background
+#       but test itself runs in a single thread
+#
+description = Runtime: PAD-Synth standard usage / 100sec sound / background build
+
+[Test]
+Script
+    set config buildPAD Background
+    # build PADSynth wavetable in *background thread*
+    /
+    set part 1 ADD off
+    ..
+    set PAD on
+    set bandwidth 711
+    set waveform ABSsine
+    ..
+    set filter type h2
+    set center 10
+    set Q 1
+    /
+    set test
+    set note 12
+    set scalestep 1
+    set duration 0.2
+    set holdfraction 0.6
+    set repetitions 500
+    execute
+End-Script
+
+verifySound = Off
+verifyTimes = On
