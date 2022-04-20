@@ -1,0 +1,37 @@
+#
+# PADSynth: use background wavetable build on basic test
+#
+# Wavetable is built in background thread, while the test itself runs in a single thread.
+#
+#
+description = PADSynth simple test / background build
+
+[Test]
+Script
+    set config buildPAD Background
+    # build PADSynth wavetable in background thread
+    /
+    set part 1
+    set ADD off
+    ..
+    set PAD on
+    set profile Gauss
+    set bandwidth 555
+    # ad 7th partial (gives a wood like quality)
+    set waveform harmonic 7 amp 75
+    ..
+    # use only single wavetable for test
+    set base c4
+    set range 0
+    set samples 1
+    /
+    set test note 60
+    set scalestep 8
+    set duration 0.1
+    set repetitions 3
+    set holdfraction 1.0
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off
