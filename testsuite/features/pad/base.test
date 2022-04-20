@@ -1,0 +1,46 @@
+#
+# PADSynth: basic test settings
+#
+# The focus of this test series is on the Spectrum generation of PADSynth.
+# Thus we build only one wavetable and play 3 Notes minor sixth upwards, to cover
+# at least some relevant probes of this wavetable, since PADSynth starts notes at random phase,
+# and sampling upwards will "condense" the wavetable. For context: 128k Wavetable provides 2.6sec
+# and 1MiB provides 21.3 sec of unique sound at 48kHz sample rate.
+#
+# As start we choose a bandwidth to give just some fluctuation
+# * Autoscale : automatically stretch/squeeze profile into the defined bandwidth
+# * size : stretch/squeeze the profile as a whole (only effective when autoscale = off)
+# * expand (="str" in the GUI, modulator.pstretch in code) : add harmonics and change distribution
+# * width : size of an individual (sub)Line in the harmonic profile
+#
+description = PADSynth simple test setup
+
+[Test]
+Script
+    set config buildPAD Muted
+    # build PADSynth wavetable single threaded
+    /
+    set part 1
+    set ADD off
+    ..
+    set PAD on
+    set profile Gauss
+    set bandwidth 555
+    # ad 7th partial (gives a wood like quality)
+    set waveform harmonic 7 amp 75
+    ..
+    # use only single wavetable for test
+    set base c4
+    set range 0
+    set samples 1
+    /
+    set test note 60
+    set scalestep 8
+    set duration 0.1
+    set repetitions 3
+    set holdfraction 1.0
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off

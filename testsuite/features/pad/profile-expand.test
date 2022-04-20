@@ -1,0 +1,41 @@
+#
+# PADSynth: harmonic profile - expand
+#
+# * expand (="str" in the GUI, modulator.pstretch in code)
+#   : add harmonics and change distribution
+#   : here used to expand into 3 lines
+#
+description = PADSynth harmonic profile - expand 3 lines
+
+[Test]
+Script
+    set config buildPAD Muted
+    # build PADSynth wavetable single threaded
+    /
+    set part 1
+    set ADD off
+    ..
+    set PAD on
+    set profile Gauss
+    set bandwidth 555
+    set auto OFF
+    # expand profile to split in to 3 sub-lines
+    set expand 88
+    #
+    set waveform harmonic 7 amp 75
+    ..
+    # use only single wavetable for test
+    set base c4
+    set range 0
+    set samples 1
+    /
+    set test note 60
+    set scalestep 8
+    set duration 0.1
+    set repetitions 3
+    set holdfraction 1.0
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off
