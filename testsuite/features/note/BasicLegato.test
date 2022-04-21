@@ -1,0 +1,27 @@
+#
+# Yoshimi-Testsuite: base Note features : Legato
+#
+description = ADDSynth with legato notes
+
+[Test]
+Script
+    set part 1
+    set mode Legato
+    set ADD
+    set volume 120
+    set voice 1
+    set bypass on
+    set waveform Sine
+    /
+    set test note 74
+    set duration 0.2
+    set holdfraction 0.7
+    set repetitions 2
+    # play another overlapping note after half the duration
+    set aOffset 0.5
+    set aHold 0.3
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off
