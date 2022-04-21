@@ -1,0 +1,29 @@
+#
+# Yoshimi-Testsuite: base Note features : Portamento
+#
+description = ADDSynth with polyphonic-portamento
+
+[Test]
+Script
+    set part 1
+    set mode Poly
+    set portamento On
+    set ADD
+    set volume 120
+    set voice 1
+    set bypass on
+    set waveform Sine
+    /
+    set test note 54
+    set duration 0.6
+    set holdfraction 0.9
+    set repetitions 2
+    set scalestep 8
+    # play another overlapping note after half the duration
+    set aOffset 0.3
+    set aHold 0.5
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off

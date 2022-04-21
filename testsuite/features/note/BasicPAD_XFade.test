@@ -1,0 +1,35 @@
+#
+# Yoshimi-Testsuite: base Note features : X-Fade on PAD wavetable swap
+#
+description = PADSynth with x-fade
+
+[Test]
+Script
+    set config buildPAD Muted
+    # build PADSynth wavetable single threaded
+    /
+    set part 1
+    set ADD off
+    ..
+    set PAD on
+    set waveform Chirp
+    /
+    # build and mark this as 1st wavetable
+    set test
+    set swapWave 0.3
+    /
+    set part 1 PAD
+    set bandwidth 777
+    set xFade 500
+    /
+    # and use this second setting after the swap...
+    set test note 54
+    set duration 0.6
+    set holdfraction 0.9
+    set repetitions 2
+    set scalestep 6
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = Off
