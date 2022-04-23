@@ -91,6 +91,9 @@ class PlatformCalibration
 
     Result perform()  override
     {
+        if (2 > timings_->dataCnt())
+            return Result::Warn("Platform Calibration requires at least two independent test cases.");
+
         if (not timings_->isCalibrated())
             progressLog_.note("Calibration: +++ establish new Platform Model +++");
         else

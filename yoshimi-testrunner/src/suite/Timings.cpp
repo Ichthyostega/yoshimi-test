@@ -448,6 +448,9 @@ void Timings::attach(TimingTest& singleTestcaseData)
 
 void Timings::fitNewPlatformModel()
 {
+    if (dataCnt() < 2)
+        throw error::LogicBroken("Linear regression with less than two data points is pointless.");
+
     data_->buildPlatformModel(
             data_->preprocessRegressionData(baselineAvg));
 }
