@@ -251,11 +251,11 @@ public:
         expense_.points = baselineAvg;
         expense_.samples  = runtime_.samples;
         expense_.notes    = runtime_.notes;
-        expense_.platform = runtime_.platform;
 
         // define new baseline: average of the last timing measurements
-        expense_.runtime = averageLastN(runtime_.runtime.data, baselineAvg);
-        expense_.expense = expense_.runtime / expense_.platform;
+        expense_.runtime  = averageLastN(runtime_.runtime.data, baselineAvg);
+        expense_.platform = runtime_.platform > 0.0? runtime_.platform : expense_.runtime;
+        expense_.expense  = expense_.runtime / expense_.platform;
 
         // discard excess precision, since error band typically is well above 10%
         expense_.expense = round<2>(expense_.expense);
@@ -345,10 +345,11 @@ private:
         if (siz==1) // for the 1st value....
             return runtime_.delta; // just tolerate the actual delta
 
-        avgPoints = std::min(avgPoints, siz-1);
-        size_t oldest = siz-1 - avgPoints;  // Note: excluding the last(=current) data point
+        siz -= 1; //Note: excluding the last(=current) data point
+        avgPoints = std::min(avgPoints, siz);
+        size_t oldest = siz - avgPoints;
         double variance = 0.0;
-        for (size_t i=siz-1; oldest < i; --i)
+        for (size_t i=siz; oldest < i; --i)
         {   // use moving average of the /previous/ points as guess for "the actual" value
             double avgVal = i>1? runtime_.maTime.data[i-2] : runtime_.maTime.data[i-1];
             double delta = runtime_.runtime.data[i-1] - avgVal;
