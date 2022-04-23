@@ -271,13 +271,13 @@ When observing these constraints, it is possible to load (and even manipulate) t
   oldest measurements after `timingsKeep` rows. (&rarr; TimingObservation.cpp)
   * "Timestamp": the Testsuite run when this data record was captured
   * "Runtime ms": **actual timing measurement** for this test case (milliseconds)
-  * "Samples count": overall number of samples computed for this test case
-  * "Notes count": overall number of test notes (NoteOn &harr; NoteOff) in this test case
+  * "MA Time": moving average over the last `baselineAvg` data points to level out fluctuations
+  * "Samples": overall number of samples computed for this test case
+  * "Notes": overall number of test notes (NoteOn &harr; NoteOff) in this test case
   * "Platform ms": run time *predicted by current platform model*, given (samples,notes)
-  * "Expense Factor": this is the *established baseline* for this test case (expectation)
-  * "Expense Factor(current)": effective real expense for this actual runtime
+  * "Expense": this factor is the *established baseline* for this test case (expectation)
+  * "Expense(curr)": effective real expense factor for this actual runtime, computed as `runtime/plattform`
   * "Delta ms": absolute **difference** of current runtime **against expectation**
-  * "MA Time short": moving average over the last 5 data points to level out fluctuations
   * "Tolerance": error bandwidth based on the actual fluctuations observed over the last `baselineAvg`
     data points. Calculated as 3·σ around the moving average of the *preceding* data point; thus we can
     expect the Δ to fluctuate randomly within ± this band. Additionally, we have to take the *fitting error*
