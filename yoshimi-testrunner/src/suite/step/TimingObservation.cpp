@@ -56,6 +56,7 @@ namespace {
 
 using std::min;
 using util::isnil;
+using util::round;
 using util::backwards;
 using util::averageLastN;
 using util::computeTimeSeriesLinearRegression;
@@ -69,27 +70,27 @@ using util::Column;
  */
 struct TableRuntime
 {
-    Column<string>   timestamp{"Timestamp"};               ///< Timestamp of the Testsuite run
-    Column<double>     runtime{"Runtime ms"};              ///< the actual timing measurement in milliseconds
-    Column<size_t>     samples{"Samples count"};
-    Column<uint>         notes{"Notes count"};
-    Column<double>    platform{"Platform ms"};             ///< runtime predicted by platform model (in ms)
-    Column<double>     expense{"Expense Factor"};          ///< baseline(expected value) for the expense
-    Column<double> expenseCurr{"Expense Factor(current)"}; ///< `runtime == platform·expenseCurr`
-    Column<double>       delta{"Delta ms"};                ///< Δ of measured runtime against `platform·expense`
-    Column<double>      maTime{"MA Time short"};           ///< moving average of runtime (baselineAvg/2 points)
-    Column<double>   tolerance{"Tolerance"};               ///< tolerance band based on 3·σ observed (over baselineAvg points)
+    Column<string>   timestamp{"Timestamp"};       ///< Timestamp of the Testsuite run
+    Column<double>     runtime{"Runtime ms"};      ///< the actual timing measurement in milliseconds
+    Column<double>      maTime{"MA Time"};         ///< moving average of runtime (baselineAvg/2 points)
+    Column<size_t>     samples{"Samples"};
+    Column<uint>         notes{"Notes"};
+    Column<double>    platform{"Platform ms"};     ///< runtime predicted by platform model (in ms)
+    Column<double>     expense{"Expense"};         ///< baseline(expected value) for the expense factor
+    Column<double> expenseCurr{"Expense(curr)"};   ///< `runtime == platform·expenseCurr`
+    Column<double>       delta{"Delta ms"};        ///< Δ of measured runtime against `platform·expense`
+    Column<double>   tolerance{"Tolerance"};       ///< tolerance band based on 3·σ observed (over baselineAvg points)
 
     auto allColumns()
     {   return std::tie(timestamp
                        ,runtime
+                       ,maTime
                        ,samples
                        ,notes
                        ,platform
                        ,expense
                        ,expenseCurr
                        ,delta
-                       ,maTime
                        ,tolerance
                        );
     }
@@ -103,13 +104,13 @@ struct TableRuntime
  */
 struct TableExpense
 {
-    Column<string>   timestamp{"Timestamp"};               ///< Timestamp when setting this baseline
-    Column<uint>        points{"Averaged points"};         ///> Number of past data points averaged into this baseline
-    Column<double>     runtime{"Runtime(avg) ms"};         ///< averaged runtime used to define this baseline
-    Column<size_t>     samples{"Samples count"};           ///< samples count of the underlying test
-    Column<uint>         notes{"Notes count"};             ///< notes count of the underlying test
-    Column<double>    platform{"Platform ms"};             ///< runtime predicted by platform model for this baseline
-    Column<double>     expense{"Expense Factor"};          ///< expected value for the expense. This is the *actual baseline*.
+    Column<string>   timestamp{"Timestamp"};       ///< Timestamp when setting this baseline
+    Column<uint>        points{"Averaged points"}; ///> Number of past data points averaged into this baseline
+    Column<double>     runtime{"Runtime(avg) ms"}; ///< averaged runtime used to define this baseline
+    Column<size_t>     samples{"Samples count"};   ///< samples count of the underlying test
+    Column<uint>         notes{"Notes count"};     ///< notes count of the underlying test
+    Column<double>    platform{"Platform ms"};     ///< runtime predicted by platform model for this baseline
+    Column<double>     expense{"Expense Factor"};  ///< expected value for the expense. This is the *actual baseline*.
 
     auto allColumns()
     {   return std::tie(timestamp
@@ -207,14 +208,16 @@ public:
         r.notes = notes;
         r.samples = smps;
         r.runtime = rawTime / MILLISEC_per_NANOSEC;
-
-        r.platform = prediction / MILLISEC_per_NANOSEC; // all below in ms
+                                         // all below in ms
+        r.platform = round<6>(prediction / MILLISEC_per_NANOSEC);
         r.expense  = hasBaseline()? expense_.expense : 0.0;
 
         // apply the prediction model to factor out system dependency
         double expectedTime  = r.platform * r.expense;
-        r.expenseCurr = 0.0 < prediction?   r.runtime / r.platform : 0.0;
         r.delta       = 0.0 < expectedTime? r.runtime - expectedTime : 0.0;
+        r.expenseCurr = 0.0 < prediction?   r.runtime / r.platform : 0.0;
+        // discard excess precision to keep runtime.csv readable
+        r.expenseCurr = round<4>(r.expenseCurr);
 
         // moving average used as reference to establish a tolerance band
         r.maTime = averageLastN(r.runtime.data, 5);
@@ -228,9 +231,9 @@ public:
     void recalcCurrentPoint(double prediction)
     {
         auto& r = runtime_;
-        assert(0.0 < prediction);
-        r.platform = prediction / MILLISEC_per_NANOSEC; // all below in ms
-        r.expenseCurr = r.runtime / r.platform;
+        assert(0.0 < prediction);         // all below in ms
+        r.platform = round<6>(prediction / MILLISEC_per_NANOSEC);
+        r.expenseCurr = round<4>(r.runtime / r.platform);
         double expectedTime  = r.platform * r.expense;
         r.delta = 0.0 < expectedTime? r.runtime - expectedTime : 0.0;
         r.maTime = averageLastN(r.runtime.data, 5);
@@ -255,7 +258,7 @@ public:
         expense_.expense = expense_.runtime / expense_.platform;
 
         // discard excess precision, since error band typically is well above 10%
-        expense_.expense = std::round(expense_.expense*100)/100;
+        expense_.expense = round<2>(expense_.expense);
 
         // Timestamp of creating this new baseline
         expense_.timestamp = Config::timestamp;
