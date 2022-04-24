@@ -23,12 +23,11 @@
  ** The testsuite is assembled by a TestBuilder, which picks a suitable mould for each
  ** individual test case, to establish a graph of properly wired suite::TestStep components.
  ** The resulting network of steps is then integrated and performed as a Testsuite.
- ** 
- ** @todo WIP as of 7/21
+ **
  ** @see Builder.hpp usage
  ** @see TestStep.hpp
  ** @see \ref Suite
- ** 
+ **
  */
 
 
@@ -68,6 +67,7 @@ protected:
     StepSeq   steps_;
     RProgress progressLog_{Progress::null()};
     PTimings  suiteTimings_;
+    bool suppressHeuristics_{false};
     bool shallRecordBaseline_{false};
     bool shallCalibrateTiming_{false};
 
@@ -93,6 +93,11 @@ public:
     Mould& calibrateTiming(bool indeed)
     {
         shallCalibrateTiming_ = indeed;
+        return *this;
+    }
+    Mould& suppressHeuristics(bool indeed)
+    {
+        suppressHeuristics_ = indeed;
         return *this;
     }
 

@@ -35,13 +35,12 @@
  ** actual fluctuation of the timing values is observed relative to a moving average; additionally a
  ** linear regression over the time series of measurements can be computed, allowing to detect some
  ** systematic trend while levelling out single random outliers.
- ** 
- ** @todo WIP as of 9/21
+ **
  ** @see Invocation.hpp
  ** @see OututObservation.hpp
  ** @see Timings.hpp
  ** @see statistic.hpp
- ** 
+ **
  */
 
 
@@ -80,6 +79,7 @@ class TimingJudgement
     bool calibrationRun_;
     string msg_{"unknown timing result"};
     double runtime_{0.0};
+    double warnLevel_;
 
 
     Result perform()  override
@@ -100,20 +100,27 @@ class TimingJudgement
         double modelTolerance = globalTimings_->getModelTolerance();    // ±3σ covers 99% of all cases
         modelTolerance *= expense;   // since expense is normalised out of model values
                                      // the model error(stdev) underestimates the spread by this factor
-        double overallTolerance = util::errorSum(tolerance, modelTolerance);
         runtime_ = runtime;
 
         if (tolerance == 0.0 or modelTolerance == 0.0)
             return calibrationRun_? Result::Warn("Calibration run. Runtime ("+formatVal(runtime)+"ms) not judged")
                                   : Result::Warn("Missing calibration. Can not judge runtime ("+formatVal(runtime)+"ms)");
 
+        // define trigger points for warning and error based on statistical fluctuation band
+        // Note: lowered trigger point means we'll see statistical fluctuations;
+        //       for increased margin we'll additionally take the model fitting error into account
+        //       warnLevel_ can be set either via the --strict param, or from "timingAlarm" in the individual test
+        double overallTolerance = util::errorSum(tolerance, modelTolerance);
+        double warnPoint = warnLevel_ < def::TIME_WARN_LEVEL? warnLevel_*tolerance : warnLevel_*overallTolerance;
+        double errorLevel = def::TIME_ERROR_BOUND * warnPoint;
+
         // check this single measurement against the tolerance band...
-        if (currDelta < -overallTolerance)
+        if (currDelta < -warnPoint)
             return Result::Warn("Runtime "+formatVal(runtime)
                                +"ms decreased by "+formatVal(100*currDelta / runtime)+"% below baseline; Δ ="+formatVal(currDelta)+"ms");
-        if (overallTolerance < currDelta and currDelta <= 1.1 * overallTolerance)
+        if (warnPoint < currDelta and currDelta <= errorLevel)
             return Result::Warn("Runtime ("+formatVal(runtime)+"ms) slightly above established baseline; Δ = "+formatVal(currDelta)+"ms");
-        if (overallTolerance < currDelta)
+        if (errorLevel < currDelta)
             return Result::Fail("Test failed: Runtime +"+formatVal(100*currDelta / runtime)
                                +"% above established baseline; Δ = "+formatVal(currDelta)
                                +"ms Runtime="+formatVal(runtime)+"ms.");
@@ -154,10 +161,12 @@ class TimingJudgement
 public:
     TimingJudgement(TimingObservation& timings
                    ,suite::PTimings aggregator
-                   ,bool calibrating)
+                   ,bool calibrating
+                   ,double warnLevel)
         : timings_{timings}
         , globalTimings_{aggregator}
         , calibrationRun_{calibrating}
+        , warnLevel_{warnLevel}
     { }
 
     bool succeeded = false;

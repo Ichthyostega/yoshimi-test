@@ -28,11 +28,9 @@
  ** actually, global statistics calculation can refer directly to the individual data
  ** points observed in the testcases, because each local TimingObservation
  ** hooks itself into this global Timings aggregator.
- ** 
- ** @todo WIP as of 9/21
+ **
  ** @see [setup and wiring](\ref setup::build(Config const&))
  ** @see TimingObservation.hpp
- ** 
  */
 
 
@@ -115,7 +113,7 @@ public:
     string sumariseCalibration() const;
     double getModelTolerance() const;
 
-    void calcSuiteStatistics();
+    void calcSuiteStatistics(bool);
     array<double,3> getDeltaStatistics()  const;
 
     struct SuiteStatistics
