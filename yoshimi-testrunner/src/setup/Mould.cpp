@@ -132,17 +132,19 @@ class ExeCliMould
                                                       ,util::parseAs<double>(spec.at(KEY_warnLevel)));
 
                            optionally(shallVerifySound(spec))
-                              .addStep<SoundRecord>(shallRecordBaseline_
-                                                  ,*soundProbe, *baseline, pathSetup);
+                              .addStep<SoundRecord>(shallRecordBaseline_,suppressHeuristics_
+                                                   ,*soundProbe, *baseline, pathSetup);
 
         auto timings     = optionally(shallVerifyTimes(spec))
                               .addStep<TimingObservation>(output,suiteTimings_, pathSetup);
 
         auto timeTrend   = optionally(shallVerifyTimes(spec))
-                              .addStep<TimingJudgement>(*timings,suiteTimings_, shallCalibrateTiming_);
+                              .addStep<TimingJudgement>(*timings,suiteTimings_, shallCalibrateTiming_
+                                                       ,util::parseAs<double>(spec.at(KEY_timeAlarm)));
 
                            optionally(shallVerifyTimes(spec))
-                              .addStep<PersistTimings>(shallRecordBaseline_, *timings, *timeTrend);
+                              .addStep<PersistTimings>(shallRecordBaseline_,suppressHeuristics_
+                                                      ,*timings, *timeTrend);
 
         /*mark result*/    addStep<Summary>(spec.at(KEY_Test_topic)
                                            ,invocation
@@ -186,7 +188,7 @@ class ClosureMould
     {
         optionally(shallCalibrateTiming_)
            .addStep<PlatformCalibration>(progressLog_, suiteTimings_);
-        addStep<TrendObservation>(progressLog_, suiteTimings_);
+        addStep<TrendObservation>(progressLog_, suiteTimings_, suppressHeuristics_);
         addStep<TrendJudgement>(suiteTimings_);
         addStep<PersistModelTrend>(suiteTimings_, shallCalibrateTiming_);
     }

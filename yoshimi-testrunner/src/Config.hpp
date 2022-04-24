@@ -78,6 +78,7 @@ namespace def {
     const string KEY_verifyTimes  = "Test.verifyTimes";
     const string KEY_cliTimeout   = "Test.cliTimeout";
     const string KEY_warnLevel    = "Test.warnLevel";
+    const string KEY_timeAlarm    = "Test.timeAlarm";
 
     const string KEY_workDir      = "workDir";
     const string KEY_fileProbe    = "fileProbe";
@@ -134,9 +135,12 @@ namespace def {
     const double MINUS_INF{-std::numeric_limits<double>::infinity()};
 
     const double WARN_FAINT_PROBE = -60;  // dBFS
-    const double DIFF_ERROR_LEVEL = -90;  // dB peakRMS against probe average RMS
+    const double DIFF_ERROR_LEVEL = -75;  // dB peakRMS against probe average RMS
     const double DIFF_WARN_LEVEL  = -120; // dB peakRMS against probe average RMS
-    const double DIFF_STRICT      = -300; // lowered trigger level for --strict
+    const double DIFF_STRICT      = -300; // lowered trigger level for --strict  --> KEY_warnLevel
+    const double TIME_STRICT      = 0.5;  // lowered timing fluctuation tolerance -> KEY_timingAlarm
+    const double TIME_WARN_LEVEL  = 1.0;  // warning trigger relative to statistical fluctuation
+    const double TIME_ERROR_BOUND = 1.1;  // error trigger relative to warn level
 
     const size_t EXPECTED_TEST_CNT = 500; // used to reserve() vector allocations
 }
@@ -239,6 +243,7 @@ public:
     CFG_PARAM(bool,     baseline);
     CFG_PARAM(bool,     verbose);
     CFG_PARAM(bool,     strict);
+    CFG_PARAM(bool,     force);
     CFG_PARAM(string,   filter);
     CFG_PARAM(fs::path, report);
 
@@ -266,6 +271,7 @@ private: /* ===== Initialisation from raw settings ===== */
         , baseline    {rawParam[KEY_baseline].as<bool>()}
         , verbose     {rawParam[KEY_verbose].as<bool>()}
         , strict      {rawParam[KEY_strict].as<bool>()}
+        , force       {rawParam[KEY_force].as<bool>()}
         , filter      {rawParam[KEY_filter]}
         , report      {rawParam[KEY_report]}
         , progress    {setupProgressLog(verbose)}
@@ -285,6 +291,7 @@ private: /* ===== Initialisation from raw settings ===== */
             CFG_DUMP(baseline);
             CFG_DUMP(verbose);
             CFG_DUMP(strict);
+            CFG_DUMP(force);
             CFG_DUMP(filter);
             CFG_DUMP(report);
         }

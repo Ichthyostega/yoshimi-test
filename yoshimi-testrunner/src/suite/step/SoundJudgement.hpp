@@ -23,13 +23,11 @@
  ** After the actual test has been launched by the Invocation and the Observation steps
  ** have extracted and documented the behaviour, this step performs the assessment against
  ** the predefined baseline to decide if the subject's behaviour was within limits.
- ** 
- ** @todo WIP as of 9/21
+ **
  ** @see Invocation.hpp
  ** @see SoundObservation.hpp
- ** @see Conclusion.hpp
  ** @see TestStep.hpp
- ** 
+ **
  */
 
 
@@ -97,6 +95,7 @@ class SoundJudgement
             return Result::Fail("Assessment rejected: " + *mismatch);
 
         double peakRMS = soundProbe_.getDiffRMSPeak();
+        double errorLevel = def::DIFF_ERROR_LEVEL;
         if (peakRMS <= def::MINUS_INF)
             progressLog_.out("SoundJudgement: *no difference* against Baseline.");
         else
@@ -109,7 +108,7 @@ class SoundJudgement
         if (peakRMS < warnLevel_)
             return Result::OK();
         else
-        if (peakRMS < def::DIFF_ERROR_LEVEL)
+        if (peakRMS < errorLevel)
             return Result::Warn("Minor differences against baseline; peak Δ "+formatVal(peakRMS)+"dB(RMS)");
         else
             return Result::Fail("Test failed: generated sound differs. Δ is "+formatVal(peakRMS)+"dB(RMS)");

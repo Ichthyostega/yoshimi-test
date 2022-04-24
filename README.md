@@ -36,7 +36,7 @@ simplest form, the build can be started with...
 Note:
 - (*) we also need the C++17 `<filesystem>` — GCC-9 or above should be fine.
 - (**): we use libSndfile only for reading/writing WAV files. If further dependencies are problematic,
-you might `configure --disable-alsa --disable-external-libs` to omit ALSA, FLAC and Vorbis.
+you might build libSndfile with `configure --disable-alsa --disable-external-libs` to omit ALSA, FLAC and Vorbis.
 
 
 ## Launching the tests
@@ -174,7 +174,9 @@ actual difference audible. The less noisy and the more sound-like a residual is,
 In case a difference is spotted (or when the baseline file is missing), you may store a new baseline WAV file by
 launching the Testsuite with the argument `--baseline` — but beware: this will recapture baseline WAV and timing
 expense factors for all deviant test cases. Tip: use the filter feature to only run some dedicated part of the testsuite
-if you only want *some* baselines to be changed; moreover, use Git to manage the actual changes.
+if you only want *some* baselines to be changed; moreover, use Git to manage the actual changes. You can `--force`
+a re-computation of the baseline in cases where the actual deviation is below the threshold for small changes,
+and thus normally no baseline would be captured.
 
 
 ### Speed and Timing measurements
@@ -232,7 +234,7 @@ Thus...
 
 #### Usage in practice
 
-Typically you'll start by checking out the Testsuite from the Git repository — implying some existing test cases
+Typically you'll start by checking out the Testsuite from the Git repository — and this implies some existing test cases
 defined by other people are given, together with established timing baselines for those cases. However, when running
 the testsuite for the first time, your actual timing measurements can not be assessed, since the local *Platform Model*
 is yet unknown. Thus, we need to run the testsuite at least once with the `--calibrate` flag. After performing all
@@ -244,7 +246,7 @@ the reason an possibly need to rework the statistics for computing of the tolera
 However, *actual coding changes* might have *altered the runtime behaviour*, and you might get an alarm on some test cases
 when running the Testsuite. In such a case, either the code needs to be fixed, or otherwise the developers must reach
 the conclusion that the changed timings are inevitable or acceptable. In the latter case, run the Testsuite with the
-`--baseline` flag and check in the resulting expectation changes into Git. Likewise, when *adding new test cases*,
+`--baseline` flag and check-in the resulting expectation changes into Git. Likewise, when *adding new test cases*,
 a new baseline should be captured, preferably after having performed that test case at least 5-10 times.
 
 There is a certain amount of leeway built into this error detection logic, yet the Testsuite also watches for coherent
@@ -349,6 +351,24 @@ This is the reason why the testsuite directory needs to be given for every invoc
 (unless you'll place a default into your private `setup.ini`). Such a special purpose
 test suite will have its own `defaults.ini`, its own `initial.state` and just the
 test definition(s) you'll need.
+
+Special case **Statistics**: by default, the Testrunner employs some heuristics as to when *not*
+to compute general statistics. Especially when there are less than 5 tests with timing measurement,
+danger is to create lopsided statistics. Global statistic calculation is skipped in those cases,
+and thus it is also impossible to `--calibrate` the platform model. However, for "special investigations"
+you might setup a dedicated separate test suite, and you might deliberately want to calculate statistics,
+calibrate or rewrite baselines even when below error trigger limit. For these cases, you can overrule
+those heuristics with the `--force` flag, and you can also tighten the warning bounds with `--strict`.
+
+Pinpoint **Regressions** with `git-bisect`: To find the precise point in the Git history where a
+performance regression was introduced, a dedicated Testsuite can be rigged. Add *two test cases*
+to cover precisely the relevant feature with two quite distinct sample counts. Run this at least
+10 times, then `--force --calibrate` a platform model. Since we're using exactly two points,
+this model is a line through there two measurement points and thus the predicted runtime will
+be exactly the average of the last test runs. You may then check this testsuite into a special
+Git branch, and maybe even *manipulate* the tolerance value in the `*runtime.csv` files to suite
+the special investigation. Running this testsuite can then be automated with a shell script
+to be used as "oracle" for `git-bisect`.
 
 **Debugging**: while it is straight forward to debug the test runner, watching Yoshimi's operations
 can be tricky, since by default we launch into a forked process, and then use a background thread

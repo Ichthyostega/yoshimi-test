@@ -24,12 +24,11 @@
  **   the name of the current test, and to capture STDOUT of the subject silently
  ** - Progress::buildDiagnosticLog() configure a progress indicator also to dump
  **   all output directly to the Yoshimi-testrunner STDOUT while running the suite
- ** 
- ** @todo WIP as of 8/21
+ **
  ** @todo the purpose of Progress is still not totally clear
  ** @see Result.hpp
  ** @see TestLog.hpp
- ** 
+ **
  */
 
 

@@ -26,12 +26,11 @@
  **   test definition for further investigation.
  ** - moreover, in _baseline capturing mode,_ when the testrunner is started with
  **   the `--baseline` option, the status quo is persisted as new baseline waveform.
- ** 
- ** @todo WIP as of 9/21
+ **
  ** @see Invocation.hpp
  ** @see SoundJudgement.hpp
  ** @see TestStep.hpp
- ** 
+ **
  */
 
 
@@ -46,7 +45,6 @@
 #include "suite/step/SoundJudgement.hpp"
 #include "Config.hpp"
 
-//#include <string>
 
 namespace suite{
 namespace step {
@@ -65,6 +63,7 @@ class SoundRecord
     PathSetup&        pathSpec_;
 
     bool record_;
+    bool force_;
 
 
     Result perform()  override
@@ -80,7 +79,8 @@ class SoundRecord
             soundProbe_.saveResidual(residual);
         if (record_
             and (not fs::exists(baseline)
-                 or not judgement_.succeeded)
+                 or not judgement_.succeeded
+                 or force_)
            )
         {
             soundProbe_.saveProbe(baseline);
@@ -101,7 +101,7 @@ class SoundRecord
     }
 
 public:
-    SoundRecord(bool baselineMode
+    SoundRecord(bool baselineMode, bool force
                ,SoundObservation& sound
                ,SoundJudgement& judgement
                ,PathSetup& pathSetup)
@@ -109,6 +109,7 @@ public:
         , judgement_{judgement}
         , pathSpec_{pathSetup}
         , record_{baselineMode}
+        , force_{force}
     { }
 };
 

@@ -42,11 +42,10 @@
  ** - if a match is detected, the atomic flag is flipped to deactivate evaluation
  ** - and then the resulting `std::smatch` object is stored into the `promise`
  ** - which in turn will unblock the main thread waiting on the `future` end of the channel.
- ** 
- ** @todo WIP as of 8/21
+ **
  ** @see Watcher.hpp
  ** @see suite::step::ExeLauncher usage
- ** 
+ **
  */
 
 

@@ -4,7 +4,7 @@
 /.settings
 *.html
 setup.ini
-*.wav
+*residual.wav
 *.raw
 *.bak
 *.tmp

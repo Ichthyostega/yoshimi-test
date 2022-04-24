@@ -25,7 +25,6 @@
  ** actual test run, the Invocation step instance serves as information hub for the
  ** following evaluation, judgement and reporting steps.
  ** @see Scaffolding.hpp
- ** @see Conclusion.hpp
  ** @see TestStep.hpp
  **
  */

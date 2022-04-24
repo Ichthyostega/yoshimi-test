@@ -20,10 +20,8 @@
 
 /** @file MatchTasks.cpp
  ** Implementation details of matching on the output lines (from the subprocess).
- ** 
- ** @todo WIP as of 8/21
  ** @see ExeLauncher::triggerTest()
- ** 
+ **
  */
 
 

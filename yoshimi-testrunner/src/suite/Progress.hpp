@@ -27,11 +27,10 @@
  ** - for diagnostics, it can be necessary even to forward the STDOUT
  **   of the test subject (Yoshimi) to investigate where matters go wrong.
  ** - in case of a failure, we want to extract full output retroactively.
- ** 
- ** @todo WIP as of 7/21
+ **
  ** @see TestLog.hpp collecting the test results
  ** @see Stage::perform(Suite)
- ** 
+ **
  */
 
 

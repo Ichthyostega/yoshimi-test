@@ -27,11 +27,10 @@
  ** establish trend lines for some time span into the past. Ideally, there should
  ** not be any trend; yet reworking of the code base may cause a slow change,
  ** which hopefully can be detected through these statistics.
- ** 
- ** @todo WIP as of 9/21
+ **
  ** @see Timings.hpp
  ** @see TrendJudgement.hpp
- ** 
+ **
  */
 
 
@@ -69,6 +68,7 @@ class TrendObservation
 {
     Progress& progressLog_;
     PTimings  timings_;
+    bool noHeuristics_;
 
 
     Result perform()  override
@@ -78,7 +78,7 @@ class TrendObservation
         if (0 == points)
             return Result::Warn("Skip global statistics: no timings observed.");
 
-        timings_->calcSuiteStatistics();
+        timings_->calcSuiteStatistics(noHeuristics_);
         if (not timings_->isCalibrated())
             return Result::Fail("GlobalTrend: Observed timings can not be assessed (requires platform calibration).");
         else
@@ -93,7 +93,7 @@ class TrendObservation
 
             if (maxDelta == 0.0)
                 return Result::Warn("Missing calibration or timing baselines ⟹ no timing Δ observed.");
-            if (maxDelta < 0.1 or points < 5)
+            if ((maxDelta < 0.1 or points < 5) and not noHeuristics_)
                 return Result::Warn("Unreliable timing statistics. "
                                    +formatVal(points)+" data points "
                                    +"Δmax="+formatVal(maxDelta));
@@ -105,9 +105,11 @@ class TrendObservation
 public:
     TrendObservation(Progress& log
                     ,PTimings aggregator
+                    ,bool alwaysCalc
                     )
         : progressLog_{log}
         , timings_{aggregator}
+        , noHeuristics_{alwaysCalc}
     { }
 };
 

@@ -23,12 +23,11 @@
  ** During execution, observations and results from all suite::TestStep components
  ** are collected and aggregated within the suite::TestLog. Based on this data,
  ** the report generates a human readable summary.
- ** 
- ** @todo WIP as of 7/21
+ **
  ** @todo It is conceivable to generate output in JSON format eventually
  ** @see Stage.cpp usage
  ** @see TestLog.hpp
- ** 
+ **
  */
 
 
