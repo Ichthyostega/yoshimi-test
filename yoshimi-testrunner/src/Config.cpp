@@ -90,7 +90,7 @@ string currSysTimeISO()
 /* ========= Program Commandline Options ========= */
 
 const char* PROG_DOC = "Perform automated test suite for the Yoshimi soft synth.";
-const char* ARGS_DOC = "<suitePath> [testCaseFiler]";
+const char* ARGS_DOC = "<suitePath> [testCaseFilter]";
 
 /** @note the long option name _must match_ with the key and variable name used in
  *        class Config; the same key can then also be used within a config file */
@@ -98,6 +98,7 @@ const argp_option OPTIONS[] =
     {{"subject",    10,  "<exe>", 0, "Yoshimi executable (default /usr/bin/yoshimi)", 0}
     ,{"baseline",   11,  nullptr, 0, "activate baseline capturing mode: overwrite baseline WAV when detecting difference", 1}
     ,{"calibrate",  12,  nullptr, 0, "determine a platform factor to normalise timing measurements", 1}
+    ,{"force",     'f',  nullptr, 0, "force calibration or baseline capturing otherwise prevented by heuristics", 1}
     ,{"verbose",   'v',  nullptr, 0, "verbose diagnostic output while running tests", 2}
     ,{"strict",     13,  nullptr, 0, "strict sound verification with low error tolerance", 2}
     ,{"report",     14,  "<file>",0, "save test report into the given file", 3}

@@ -25,11 +25,10 @@
  ** for following test steps, and in some case the base name will even be changed dynamically.
  ** The setup of this naming scheme is based on the unique _»topic path«_ associated with
  ** each test case -- corresponding to the directory within the test suite definition tree.
- ** 
- ** @todo WIP as of 9/21
+ **
  ** @see suite::step::PrepareTestScript
  ** @see SoundObservation.hpp
- ** 
+ **
  */
 
 

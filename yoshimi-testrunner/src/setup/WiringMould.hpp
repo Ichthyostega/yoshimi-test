@@ -21,7 +21,7 @@
 /** @file WiringMould.hpp
  ** Implementation details of a builder to support wiring of test steps.
  ** @internal this is an _implementation header_ and shall only be included into mould.cpp
- ** 
+ **
  ** @remark The actual concrete Mould implementation has to provide a definition of the
  **         Mould::materialise() function, where the actual setup of the test steps is
  **         expected to happen. To simplify the setup and wiring of those steps, we provide
@@ -32,10 +32,8 @@
  **         into a helper-builder \ref WiringMould::Conditional. This setup allows to
  **         wire optional steps _guarded by a condition_ -- typical example is the
  **         verification of sound, which happens only when enabled in the test spec.
- ** 
- ** @todo WIP as of 8/21
+ **
  ** @see Mould.cpp usage
- ** 
  */
 
 

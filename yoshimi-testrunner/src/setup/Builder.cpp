@@ -193,8 +193,12 @@ StepSeq Builder::buildTestcase(fs::path topicPath)
 
     // trigger level for sound differences, usually the global default
     spec.insert({KEY_warnLevel,  formatVal(def::DIFF_WARN_LEVEL)});
+    spec.insert({KEY_timeAlarm,  formatVal(def::TIME_WARN_LEVEL)});
     if (ctx_.config.strict)
-        spec[KEY_warnLevel] = formatVal(def::DIFF_STRICT); // force any difference to trigger a warning
+    {// force lowered warning/alarm levels
+        spec[KEY_warnLevel]   = formatVal(def::DIFF_STRICT);
+        spec[KEY_timeAlarm]   = formatVal(def::TIME_STRICT);
+    }
 
     spec[KEY_workDir] = testWorkDir;
     spec[KEY_Test_args] += " --state="+string(ctx_.config.locateInitialState(testWorkDir));
@@ -219,6 +223,7 @@ StepSeq Builder::applyMould(MapS spec)
                     .withProgress(*ctx_.config.progress)
                     .recordBaseline(ctx_.config.baseline)
                     .calibrateTiming(ctx_.config.calibrate)
+                    .suppressHeuristics(ctx_.config.force)
                     .generateStps(spec);
 }
 

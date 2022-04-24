@@ -20,8 +20,8 @@
 
 /** @file Timings.cpp
  ** Implementation details of global statistics calculation.
- ** 
- ** @todo WIP as of 9/21
+ ** Especially the platform model fit and the actual computation
+ ** of global trends is implemented here in the TimingData PImpl.
  **
  */
 
@@ -310,7 +310,7 @@ public:
      * @return current delta averaged over all test cases,
      *         and error propagation from the tolerance band of all included test cases
      */
-    auto calcSuiteStatistics(uint avgPoints)
+    auto calcSuiteStatistics(uint avgPoints, bool force)
     {
         assert(not isnil(testData_));
         statistic_.dupRow();
@@ -337,7 +337,7 @@ public:
         statistic_.tolerance = sqrt(err)/n;       // ~ 3·σ
         statistic_.timestamp = Config::timestamp; // current Testsuite run
 
-        if ((n < 5 or max == 0.0) and 1 < statistic_.size())
+        if ((n < 5 or max == 0.0) and 1 < statistic_.size() and not force)
             statistic_.dropLastRow();             // unreliable statistics, possibly a filtered suite run
                                                   // discard data to prevent poisoning global statistics
         return make_tuple(double{statistic_.avgDelta}
@@ -455,13 +455,13 @@ void Timings::fitNewPlatformModel()
             data_->preprocessRegressionData(baselineAvg));
 }
 
-void Timings::calcSuiteStatistics()
+void Timings::calcSuiteStatistics(bool noHeuristics)
 {
     if (dataCnt() == 0)
         throw error::LogicBroken("No timing measurement performed yet.");
 
     tie(suite.currAvgDelta
-       ,suite.tolerance) = data_->calcSuiteStatistics(baselineAvg);
+       ,suite.tolerance) = data_->calcSuiteStatistics(baselineAvg, noHeuristics);
 
     uint availData = data_->stablePlatformTimespan();
     suite.shortTerm = std::min(availData, baselineAvg);

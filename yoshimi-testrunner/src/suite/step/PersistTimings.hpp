@@ -75,6 +75,7 @@ class PersistTimings
     TimingObservation& timings_;
     TimingJudgement& judgement_;
     bool recordBasline_;
+    bool force_;
 
 
     Result perform()  override
@@ -82,7 +83,7 @@ class PersistTimings
         if (not timings_)
             return Result::Warn("No Timing data to persist.");
 
-        bool createBaseline = recordBasline_ and not judgement_.succeeded;
+        bool createBaseline = recordBasline_ and (not judgement_.succeeded or force_);
         string idAndExpense = timings_.saveData(createBaseline);
         return createBaseline? Result::Warn("Store Baseline... "+idAndExpense)
                              : Result::OK();
@@ -100,12 +101,13 @@ class PersistTimings
     }
 
 public:
-    PersistTimings(bool baselineMode
+    PersistTimings(bool baselineMode, bool force
                   ,TimingObservation& timings
                   ,TimingJudgement& judgement)
         : timings_{timings}
         , judgement_{judgement}
         , recordBasline_{baselineMode}
+        , force_{force}
     { }
 };
 

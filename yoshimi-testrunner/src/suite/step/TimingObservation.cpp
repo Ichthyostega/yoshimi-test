@@ -220,8 +220,8 @@ public:
         r.expenseCurr = round<4>(r.expenseCurr);
 
         // moving average used as reference to establish a tolerance band
-        r.maTime = averageLastN(r.runtime.data, 5);
-        r.tolerance = calcLocalTolerance(baselineAvg);
+        r.maTime = averageLastN(r.runtime.data, baselineAvg);
+        r.tolerance = calcLocalTolerance(baselineAvg * 2);
 
         // Timestamp of current Testsuite run
         r.timestamp = Config::timestamp;
@@ -236,7 +236,6 @@ public:
         r.expenseCurr = round<4>(r.runtime / r.platform);
         double expectedTime  = r.platform * r.expense;
         r.delta = 0.0 < expectedTime? r.runtime - expectedTime : 0.0;
-        r.maTime = averageLastN(r.runtime.data, 5);
     }
 
     void persistRuntimes(uint rows2keep)
