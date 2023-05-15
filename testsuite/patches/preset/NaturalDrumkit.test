@@ -1,0 +1,24 @@
+#
+# Verify all parts of the "Natural Drumkit" preset, which exploits a lot of complex layered features
+#
+description = verify the Natural Drumkit preset
+
+[Test]
+Script
+    set bank root 1
+    # switch to the "Drums" bank
+    set bank 30
+    ..
+    # load the "4. Natural Drumkit"
+    set part 1 program 4
+    /
+    set test note 35
+    set scalestep 1
+    set repetitions 16
+    set duration 0.09
+    set holdfraction 0.6
+    execute
+End-Script
+
+verifySound = On
+verifyTimes = On
