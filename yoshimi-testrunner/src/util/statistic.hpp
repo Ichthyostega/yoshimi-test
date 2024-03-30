@@ -87,7 +87,7 @@ public:
     DataSpan(D const& begin, D const& end)
         : b_{&begin}
         , e_{&end}
-    {   if (e_ < b_) throw error::Invalid("End point before begin."); }
+    {   if (e_ < b_) throw error::Invalid{"End point before begin."}; }
 
     template<class CON>
     DataSpan(CON const& container)
@@ -96,14 +96,17 @@ public:
 
 
     using iterator = const D*;
+    using const_iterator = iterator;
 
     size_t size()  const { return e_ - b_; }
     bool empty()   const { return b_ == e_; }
 
     iterator begin() const { return b_; }
     iterator end()   const { return e_; }
+    friend const_iterator begin(DataSpan const& span){ return span.begin();}
+    friend const_iterator end  (DataSpan const& span){ return span.end();  }
 
-    D const& operator[](size_t i) const { return b_ + i; }
+    D const& operator[](size_t i) const { return *(b_ + i); }
     D const& at(size_t i) const
     {
         if (i >= size()) throw error::Invalid("Index "+str(i)+" beyond size="+str(size()));
