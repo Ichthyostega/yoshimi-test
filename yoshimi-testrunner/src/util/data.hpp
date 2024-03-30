@@ -235,9 +235,9 @@ public:
     void newRow()
     {
         forEach(TAB::allColumns(),
-                [](auto& col)
+                [siz = size()+1](auto& col)
                 {
-                    col.data.resize(col.data.size()+1);
+                    col.data.resize(siz);
                 });
     }
 
