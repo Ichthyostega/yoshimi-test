@@ -11,7 +11,7 @@ description = Bug 2022.01 consecutive load into same part
 
 [Test]
 Script
-    set bank root 1
+    set bank root 5
     # switch to "Will_Godfrey_Companion"
     set bank 115
     ..

@@ -1,53 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Yoshimi-data>
 <Yoshimi-data Yoshimi-author="Alan Ernest Calvert" Yoshimi-major="2"
-Yoshimi-minor="1">
+Yoshimi-minor="3" Yoshimi-revision="2">
 <INFORMATION>
 <string name="XMLtype">Session</string>
 </INFORMATION>
 <CONFIGURATION>
 <par name="defaultState" value="0" />
-<par name="sample_rate" value="48000" />
 <par name="sound_buffer_size" value="128" />
 <par name="oscil_size" value="512" />
-<par name="single_row_panel" value="1" />
 <par name="reports_destination" value="0" />
 <par name="console_text_size" value="12" />
+<par name="interpolation" value="0" />
+<par name="virtual_keyboard_layout" value="3" />
+<par name="saved_instrument_format" value="1" />
 <par name="hide_system_errors" value="0" />
 <par name="report_load_times" value="0" />
 <par name="report_XMLheaders" value="0" />
-<par name="virtual_keyboard_layout" value="1" />
 <par name="full_parameters" value="0" />
-<par_bool name="bank_highlight" value="no" />
-<par name="presetsCurrentRootID" value="0" />
-<par name="interpolation" value="0" />
+<par_bool name="bank_highlight" value="yes" />
 <par name="audio_engine" value="0" />
 <par name="midi_engine" value="0" />
-<par name="alsa_midi_type" value="1" />
+<string name="linux_jack_server">default</string>
+<string name="linux_jack_midi_dev"></string>
+<par name="connect_jack_audio" value="1" />
+<par name="alsa_midi_type" value="0" />
 <string name="linux_alsa_audio_dev">default</string>
 <string name="linux_alsa_midi_dev">default</string>
-<string name="linux_jack_server">default</string>
-<string name="linux_jack_midi_dev">default</string>
-<par name="connect_jack_audio" value="1" />
+<par name="sample_rate" value="48000" />
+<par name="presetsCurrentRootID" value="0" />
 <par name="midi_bank_root" value="0" />
 <par name="midi_bank_C" value="32" />
-<par name="midi_upper_voice_C" value="128" />
+<par name="midi_upper_voice_C" value="110" />
 <par name="ignore_program_change" value="0" />
 <par name="enable_part_on_voice_load" value="1" />
-<par name="saved_instrument_format" value="1" />
 <par_bool name="enable_incoming_NRPNs" value="yes" />
 <par name="ignore_reset_all_CCs" value="0" />
 <par_bool name="monitor-incoming_CCs" value="no" />
 <par_bool name="open_editor_on_learned_CC" value="yes" />
-<par name="check_pad_synth" value="1" />
 <par name="root_current_ID" value="5" />
 <par name="bank_current_ID" value="0" />
 </CONFIGURATION>
 <MASTER>
 <par name="current_midi_parts" value="16" />
 <par name="panning_law" value="1" />
-<par name="volume" value="90" />
+<par name="volume" value="90" exact_value="0x42B40000" />
 <par name="key_shift" value="64" />
+<par_real name="bpm_fallback" value="      120" exact_value="0x42F00000" />
 <par name="channel_switch_type" value="0" />
 <par name="channel_switch_CC" value="128" />
 <MICROTONAL>
@@ -56,7 +55,7 @@ Yoshimi-minor="1">
 <par_bool name="invert_up_down" value="no" />
 <par name="invert_up_down_center" value="60" />
 <par_bool name="enabled" value="no" />
-<par name="global_fine_detune" value="64" />
+<par name="global_fine_detune" value="64" exact_value="0x42800000" />
 <par name="a_note" value="69" />
 <par_real name="a_freq" value="      440" exact_value="0x43DC0000" />
 </MICROTONAL>
@@ -80,7 +79,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -133,7 +132,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -186,7 +185,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -239,7 +238,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -292,7 +291,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -345,7 +344,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -398,7 +397,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -451,7 +450,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -504,7 +503,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -557,7 +556,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -610,7 +609,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -663,7 +662,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -716,7 +715,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -769,7 +768,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -822,7 +821,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -875,7 +874,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -928,7 +927,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -981,7 +980,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1034,7 +1033,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1087,7 +1086,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1140,7 +1139,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1193,7 +1192,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1246,7 +1245,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1299,7 +1298,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1352,7 +1351,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1405,7 +1404,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1458,7 +1457,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1511,7 +1510,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1564,7 +1563,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1617,7 +1616,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1670,7 +1669,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1723,7 +1722,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1776,7 +1775,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1829,7 +1828,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1882,7 +1881,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1935,7 +1934,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -1988,7 +1987,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2041,7 +2040,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2094,7 +2093,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2147,7 +2146,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2200,7 +2199,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2253,7 +2252,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2306,7 +2305,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2359,7 +2358,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2412,7 +2411,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2465,7 +2464,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2518,7 +2517,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2571,7 +2570,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2624,7 +2623,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2677,7 +2676,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2730,7 +2729,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2783,7 +2782,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2836,7 +2835,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2889,7 +2888,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2942,7 +2941,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -2995,7 +2994,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -3048,7 +3047,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -3101,7 +3100,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -3154,7 +3153,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -3207,7 +3206,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -3260,7 +3259,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -3313,7 +3312,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -3366,7 +3365,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
@@ -3419,7 +3418,7 @@ Yoshimi-minor="1">
 <par name="destination" value="1" />
 <INSTRUMENT>
 <INFO>
-<string name="name"></string>
+<string name="name">No Title</string>
 <string name="author"></string>
 <string name="comments"></string>
 <par name="type" value="0" />
