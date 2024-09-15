@@ -5,7 +5,7 @@ description = verify the Natural Drumkit preset
 
 [Test]
 Script
-    set bank root 1
+    set bank root 5
     # switch to the "Drums" bank
     set bank 30
     ..
