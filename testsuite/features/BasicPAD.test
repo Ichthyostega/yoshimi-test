@@ -23,3 +23,6 @@ End-Script
 
 verifySound = On
 verifyTimes = Off
+
+# 1h (debugging)
+cliTimeout = 3600
